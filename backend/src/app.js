@@ -1,8 +1,13 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const authRoutes = require('./routes/auth.routes');
-
+const cors = require('cors');
 const app = express();
+app.use(cors({
+  origin: process.env.FRONTEND_ORIGIN || 'http://localhost:5173',
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+}));
 
 app.disable('x-powered-by');
 app.use(express.json({ limit: '16kb' }));

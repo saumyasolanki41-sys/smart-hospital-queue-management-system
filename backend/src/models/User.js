@@ -24,13 +24,22 @@ const userSchema = new mongoose.Schema(
       },
     },
 
-    passwordHash: {
-      type: String,
-      required: true,
-      select: false,
-      match: /^\$2[ab]\$\d{2}\$[./A-Za-z0-9]{53}$/,
-    },
-
+   passwordHash: {
+  type: String,
+  required: function () {
+    return !this.googleSubject;
+  },
+  select: false,
+  match: /^\$2[ab]\$\d{2}\$[./A-Za-z0-9]{53}$/,
+},
+ googleSubject: {
+  type: String,
+  minlength: 1,
+  maxlength: 255,
+  unique: true,
+  sparse: true,
+  immutable: true,
+},
     role: {
       type: String,
       enum: ['patient', 'doctor', 'receptionist', 'admin'],

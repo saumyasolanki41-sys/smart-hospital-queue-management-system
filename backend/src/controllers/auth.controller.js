@@ -1,5 +1,5 @@
 const registrationService = require('../services/registration.service');
-
+const googleLoginService = require('../services/google-login.service');
 async function register(req, res, next) {
   try {
     const data = await registrationService.requestRegistration(req.body);
@@ -33,4 +33,46 @@ async function register(req, res, next) {
   }
 }
 
-module.exports = { register };
+async function googleLogin(req, res, next) {
+  if (!req.is('application/json')) {
+    return res.status(415).json({
+      success: false,
+      error: {
+        code: 'UNSUPPORTED_MEDIA_TYPE',
+        message: 'Use application/json.',
+      },
+    });
+  }
+
+  try {
+    const data = await googleLoginService.googleLogin(req.body);
+
+    res.set('Cache-Control', 'no-store');
+
+    return res.status(200).json({
+      success: true,
+      data,
+    });
+  } catch (error) {
+    const publicErrors = {
+      INVALID_INPUT: 400,
+      INVALID_GOOGLE_TOKEN: 401,
+      EMAIL_VERIFICATION_REQUIRED: 403,
+      ACCOUNT_LINK_REQUIRED: 409,
+    };
+
+    if (!Object.hasOwn(publicErrors, error.code)) {
+      return next(error);
+    }
+
+    return res.status(publicErrors[error.code]).json({
+      success: false,
+      error: {
+        code: error.code,
+        message: error.message,
+      },
+    });
+  }
+}
+
+module.exports = { register,googleLogin};

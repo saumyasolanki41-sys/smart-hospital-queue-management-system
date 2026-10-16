@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Google Login Test</title>
+</head>
+<body>
+  <h2>Hospital Google Login Test</h2>
+  <div id="google-button"></div>
+  <pre id="result">Loading Google button...</pre>
+
+  <script>
+    const output = document.getElementById('result');
+
+    async function handleGoogleLogin(response) {
+      output.textContent = 'Checking with backend...';
+
+      try {
+        const res = await fetch(
+          'http://localhost:5000/api/auth/google',
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              idToken: response.credential,
+            }),
+          }
+        );
+
+        const body = await res.json();
+
+        if (!res.ok) {
+          output.textContent =
+            `HTTP ${res.status}\n` +
+            `${body.error?.code}\n${body.error?.message}`;
+          return;
+        }
+
+        if (!body.success || !body.data?.accessToken) {
+          output.textContent = 'Unexpected login response.';
+          return;
+        }
+
+        // Tokens ko screen, console ya localStorage mein nahi rakhte.
+        output.textContent = JSON.stringify({
+          status: res.status,
+          message: 'Google login successful',
+          jwtReceived: true,
+          expiresInSeconds: body.data.expiresIn,
+          user: body.data.user,
+        }, null, 2);
+      } catch {
+        output.textContent =
+          'Request failed. Backend server aur CORS configuration check karo.';
+      }
+    }
+
+    async function initGoogle() {
+      try {
+        const res = await fetch('/config');
+        if (!res.ok) throw new Error('Configuration unavailable');
+
+        const config = await res.json();
+
+        google.accounts.id.initialize({
+          client_id: config.clientId,
+          callback: handleGoogleLogin,
+          ux_mode: 'popup',
+          auto_select: false,
+        });
+
+        google.accounts.id.renderButton(
+          document.getElementById('google-button'),
+          { theme: 'outline', size: 'large' }
+        );
+
+        output.textContent = 'Click Sign in with Google.';
+      } catch {
+        output.textContent = 'Google button setup failed.';
+      }
+    }
+  </script>
+
+  <script
+    src="https://accounts.google.com/gsi/client"
+    async
+    defer
+    onload="initGoogle()"
+    onerror="output.textContent='Google script could not load.'">
+  </script>
+</body>
+</html>
