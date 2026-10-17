@@ -1,5 +1,6 @@
 const registrationService = require('../services/registration.service');
 const googleLoginService = require('../services/google-login.service');
+const verificationService = require('../services/registration-verification.service');
 async function register(req, res, next) {
   try {
     const data = await registrationService.requestRegistration(req.body);
@@ -74,5 +75,32 @@ async function googleLogin(req, res, next) {
     });
   }
 }
+async function verifyRegistration(req, res, next) {
+  try {
+    const data = await verificationService.verifyRegistration(req.body);
 
-module.exports = { register,googleLogin};
+    return res.status(201).json({
+      success: true,
+      data,
+    });
+  } catch (error) {
+    const publicErrors = {
+      VALIDATION_ERROR: 400,
+      INVALID_OR_EXPIRED_OTP: 400,
+      ACCOUNT_EXISTS: 409,
+    };
+
+    if (!Object.hasOwn(publicErrors, error.code)) {
+      return next(error);
+    }
+
+    return res.status(publicErrors[error.code]).json({
+      success: false,
+      error: {
+        code: error.code,
+        message: error.message,
+      },
+    });
+  }
+}
+module.exports = { register,googleLogin,verifyRegistration};

@@ -27,5 +27,18 @@ const googleLoginLimiter = rateLimit({
     },
   },
 });
+const verificationLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 30,
+  standardHeaders: 'draft-8',
+  legacyHeaders: false,
+  message: {
+    success: false,
+    error: {
+      code: 'RATE_LIMITED',
+      message: 'Too many OTP verification requests. Try again later.',
+    },
+  },
+});
 
-module.exports = { registrationLimiter,googleLoginLimiter };
+module.exports = { registrationLimiter,googleLoginLimiter,verificationLimiter };
