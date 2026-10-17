@@ -5,6 +5,17 @@ fake data. Replace email, passwords and OTPs with your own test account values.
 
 ## Base URL and access
 
+Shared development API:
+
+```text
+https://smart-hospital-queue-management-system-production.up.railway.app
+```
+
+The supplied Postman collection defaults to this shared URL. Local developers can
+change `baseUrl` to `http://localhost:5000`. Public health and missing/invalid-token
+checks were verified on 2026-10-17. Login and email flows must also be tested
+against this hosted URL before treating the full hosted authentication flow as verified.
+
 Set one configurable API base URL in each client, without a trailing slash.
 
 | Client location | Development base URL |

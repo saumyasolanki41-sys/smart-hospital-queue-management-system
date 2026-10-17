@@ -1,6 +1,6 @@
 {
   "info": {
-    "name": "Hospital Queue Authentication",
+    "name": "Hospital Queue API",
     "description": "Frontend and mobile authentication handoff. See AUTH-INTEGRATION.md. Set collection variables before use. Enter the latest email OTP manually for each flow. Do not run the whole collection unattended. Clear credentials and tokens before sharing a used export.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
@@ -10,7 +10,7 @@
   "variable": [
     {
       "key": "baseUrl",
-      "value": "http://localhost:5000",
+      "value": "https://smart-hospital-queue-management-system-production.up.railway.app",
       "type": "string"
     },
     {
@@ -50,6 +50,16 @@
     },
     {
       "key": "googleIdToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "departmentId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "doctorId",
       "value": "",
       "type": "string"
     }
@@ -408,6 +418,187 @@
         }
       ],
       "response": []
+    },
+    {
+      "name": "Departments and doctors",
+      "description": "These endpoints require deploying the new revision. Use localhost:8080 for local testing. Writes require a token for a trusted admin account. See HOSPITAL-API.md.",
+      "item": [
+        {
+          "name": "List departments",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/departments?page=1&limit=20",
+            "header": [],
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create department (admin)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/departments",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Cardiology\",\n  \"description\": \"Heart care\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  const response = pm.response.json();",
+                  "  pm.collectionVariables.set('departmentId', response.data.department._id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List doctors",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/doctors?page=1&limit=20",
+            "header": [],
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Filter available doctors",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/doctors?departmentId={{departmentId}}&isAvailable=true",
+            "header": [],
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create doctor (admin)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/doctors",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Dr Test Patient\",\n  \"departmentId\": \"{{departmentId}}\",\n  \"specialization\": \"Cardiologist\",\n  \"experienceYears\": 5,\n  \"consultationFee\": 500,\n  \"isAvailable\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  const response = pm.response.json();",
+                  "  pm.collectionVariables.set('doctorId', response.data.doctor._id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Doctor detail",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/doctors/{{doctorId}}",
+            "header": [],
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update doctor (admin)",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/api/doctors/{{doctorId}}",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"isAvailable\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
     }
   ]
 }
