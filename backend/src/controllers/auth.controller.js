@@ -2,6 +2,7 @@ const registrationService = require('../services/registration.service');
 const googleLoginService = require('../services/google-login.service');
 const verificationService = require('../services/registration-verification.service');
 const loginService = require('../services/login.service');
+const passwordResetService = require('../services/password-reset.service');
 async function register(req, res, next) {
   try {
     const data = await registrationService.requestRegistration(req.body);
@@ -155,4 +156,36 @@ async function verifyLogin(req, res, next) {
   }
 }
 
-module.exports = { register, googleLogin, verifyRegistration, login, verifyLogin };
+function getMe(req, res) {
+  return res.status(200).json({
+    success: true,
+    data: {
+      user: req.user,
+    },
+  });
+}
+
+async function forgotPassword(req, res, next) {
+  res.set('Cache-Control', 'no-store');
+  try {
+    const data = await passwordResetService.forgotPassword(req.body);
+    return res.status(202).json({ success: true, data });
+  } catch (error) {
+    return handleLoginError(error, res, next);
+  }
+}
+
+async function resetPassword(req, res, next) {
+  res.set('Cache-Control', 'no-store');
+  try {
+    const data = await passwordResetService.resetPassword(req.body);
+    return res.status(200).json({ success: true, data });
+  } catch (error) {
+    return handleLoginError(error, res, next);
+  }
+}
+
+module.exports = {
+  register, googleLogin, verifyRegistration, login, verifyLogin, getMe,
+  forgotPassword, resetPassword,
+};

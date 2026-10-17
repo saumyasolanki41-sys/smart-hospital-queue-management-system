@@ -40,6 +40,12 @@ const userSchema = new mongoose.Schema(
   sparse: true,
   immutable: true,
 },
+    tokenVersion: {
+      type: Number,
+      default: 0,
+      min: 0,
+      validate: Number.isInteger,
+    },
     role: {
       type: String,
       enum: ['patient', 'doctor', 'receptionist', 'admin'],

@@ -61,8 +61,8 @@ HTTP 200:
 
 The JWT uses HS256, subject=user ID, issuer=`hospital-queue-api`,
 audience=`hospital-queue-clients`, and a 15-minute expiry. The existing JWT secret is
-used; it remains separate from the OTP HMAC secret. Private routes still require
-JWT authentication middleware (the next feature). No refresh token is issued.
+used; it remains separate from the OTP HMAC secret. Private routes use the
+authentication middleware described below. No refresh token is issued.
 
 OTP verification uses a MongoDB transaction with majority write concern. Failed
 attempts commit before returning an error. Five wrong six-digit submissions exhaust
@@ -108,3 +108,124 @@ They do not send email or modify Atlas. Live Atlas/SMTP delivery and simultaneou
 transaction rollback/consumption require an integration check against a test account.
 The new LoginChallenge model initializes a collection and unique/TTL indexes when
 the running app connects; existing User/PendingRegistration schemas are unchanged.
+
+## GET /api/auth/me
+
+Protected profile endpoint. No request body. Use the application's `accessToken`
+from successful Google login or password + OTP verification:
+
+```text
+Authorization: Bearer YOUR_ACCESS_TOKEN
+```
+
+In Postman, select Authorization > Bearer Token and paste only the token value.
+The Google ID token, OAuth client ID, OTP and challenge ID are not API access tokens.
+
+HTTP 200:
+
+```json
+{
+  "success": true,
+  "data": {
+    "user": {
+      "id": "507f1f77bcf86cd799439012",
+      "name": "Test Patient",
+      "email": "patient@example.com",
+      "role": "patient"
+    }
+  }
+}
+```
+
+Each protected request verifies HS256 signature, issuer, audience, expiry and a
+maximum token age of 15 minutes. An expiry claim, issued-at time and valid MongoDB
+user ID subject are required. Only the Authorization header is accepted; query
+parameters and cookies are ignored. Invalid/missing/expired tokens return:
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "UNAUTHORIZED",
+    "message": "A valid login token is required."
+  }
+}
+```
+
+HTTP status is 401 with `WWW-Authenticate: Bearer`. Missing/deleted users,
+unverified accounts and unknown database roles also return 401. Database/config
+failures return the existing generic 500 response. Profile and authorization
+responses use `Cache-Control: no-store`.
+
+The middleware reads the user and current role from MongoDB on every request and
+attaches only `{ id, name, email, role }` to `req.user`. It never trusts a role from
+token claims, request bodies, query parameters or custom headers. Role changes
+therefore apply to the next protected request without reissuing the token.
+
+## Protecting staff and patient routes
+
+Import `authenticate` and `allowRoles` from `src/middleware/auth.middleware.js`.
+Place `authenticate` first, then the explicit role list, then the controller:
+
+```javascript
+router.post('/call-next', authenticate, allowRoles('doctor', 'receptionist', 'admin'), callNext);
+```
+
+This is a usage example for future queue routes, not an implemented endpoint.
+Supported roles are `patient`, `doctor`, `receptionist` and `admin`. Empty/unknown
+role configuration throws during route setup. Admin is allowed only when explicitly
+listed; there is no automatic role hierarchy. An authenticated user outside the
+allowed list receives HTTP 403 with `FORBIDDEN`. Missing authentication receives
+401. Patient resource ownership checks will be added with the patient APIs; role
+checks alone do not enforce ownership. Public registration still cannot assign
+staff roles. No user schema or role provisioning endpoint was changed.
+
+There is currently no logout denylist or refresh token. Password reset increments
+the user's `tokenVersion`, which invalidates previously issued tokens on protected
+routes. Existing accounts and legacy tokens without a version use version zero;
+no manual backfill is needed. New Google and password logins include the current
+version. Keep access tokens private and send them only over HTTPS in production.
+
+## Forgot password
+
+`POST /api/auth/forgot-password`
+
+```json
+{ "email": "patient@example.com" }
+```
+
+Returns 202 with a generic `data.message`. Unknown, unverified and Google-only
+accounts receive the same response without an email. Existing verified password
+accounts receive a six-digit password reset OTP. Resending within 60 seconds
+returns the same accepted response without sending another email. The OTP expires
+after five minutes. A successful resend replaces the previous OTP. Mail failure
+returns 503 `EMAIL_UNAVAILABLE` and removes only the failed challenge version.
+
+## Reset password
+
+`POST /api/auth/reset-password`
+
+```json
+{
+  "email": "patient@example.com",
+  "otp": "001234",
+  "newPassword": "NewPassword123!"
+}
+```
+
+Passwords require at least eight characters and at most 72 UTF-8 bytes. OTPs must
+be six-digit strings. Additional fields are rejected. Invalid input returns 400
+`VALIDATION_ERROR`. Invalid, expired, reused or exhausted OTPs return 400
+`INVALID_OR_EXPIRED_OTP`. Five incorrect OTP attempts lock that challenge.
+
+Successful reset returns 200 with `data.message`, without a login token. The
+transaction consumes the OTP, saves a bcrypt hash, increments `tokenVersion` and
+deletes pending login challenges. Log in again with the new password. Existing
+account names, roles and Google identities are preserved. A Google-only account
+cannot acquire a password through this endpoint.
+
+Both reset endpoints share an IP limit of 10 requests per 15 minutes, returning
+429 `RATE_LIMITED` when exceeded. Responses use `Cache-Control: no-store`.
+These limits are in memory and require shared storage for multiple server instances.
+Transactions require a replica set such as Atlas. Automated tests mock database
+transactions; real concurrent transaction behavior has not been independently tested.

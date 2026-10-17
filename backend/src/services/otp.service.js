@@ -23,7 +23,7 @@ function hashOtp(otp, challengeId, purpose = 'registration') {
     throw new Error('Challenge ID is required.');
   }
 
-  if (!['registration', 'login'].includes(purpose)) {
+  if (!['registration', 'login', 'password-reset'].includes(purpose)) {
     throw new Error('Unsupported OTP purpose.');
   }
 

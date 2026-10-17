@@ -11,6 +11,9 @@ async function sendOtpEmail(email, otp, purpose) {
   }
 
   const transporter = createMailTransport();
+  let subject = 'Verify your Hospital Queue registration';
+  if (purpose === 'login') subject = 'Your Hospital Queue login OTP';
+  if (purpose === 'password reset') subject = 'Reset your Hospital Queue password';
 
   try {
     const result = await transporter.sendMail({
@@ -19,9 +22,7 @@ async function sendOtpEmail(email, otp, purpose) {
         address: process.env.SMTP_USER.trim(),
       },
       to: email,
-      subject: purpose === 'login'
-        ? 'Your Hospital Queue login OTP'
-        : 'Verify your Hospital Queue registration',
+      subject,
       text: [
         `Your ${purpose} OTP is: ${otp}`,
         '',
@@ -50,4 +51,8 @@ function sendLoginOtp(email, otp) {
   return sendOtpEmail(email, otp, 'login');
 }
 
-module.exports = { sendRegistrationOtp, sendLoginOtp };
+function sendPasswordResetOtp(email, otp) {
+  return sendOtpEmail(email, otp, 'password reset');
+}
+
+module.exports = { sendRegistrationOtp, sendLoginOtp, sendPasswordResetOtp };

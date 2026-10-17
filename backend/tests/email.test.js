@@ -1,7 +1,16 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const nodemailer = require('nodemailer');
-const { sendRegistrationOtp, sendLoginOtp } = require('../src/services/email.service');
+const { sendRegistrationOtp, sendLoginOtp, sendPasswordResetOtp } = require('../src/services/email.service');
+
+test('reset email clearly identifies password reset and preserves OTP zeroes', async (t) => {
+  const { transport } = setupMail(t, async () => ({ accepted: ['patient@example.com'] }));
+  await sendPasswordResetOtp('patient@example.com', '001234');
+  const message = transport.sendMail.mock.calls[0].arguments[0];
+  assert.equal(message.subject, 'Reset your Hospital Queue password');
+  assert.ok(message.text.includes('Your password reset OTP is: 001234'));
+  assert.equal(transport.close.mock.callCount(), 1);
+});
 
 function setupMail(t, sendMail) {
   const oldUser = process.env.SMTP_USER;

@@ -68,7 +68,7 @@ async function googleLogin(body) {
   }
 
   return {
-    accessToken: tokenService.issueAccessToken(user._id),
+    accessToken: tokenService.issueAccessToken(user._id, user.tokenVersion),
     tokenType: 'Bearer',
     expiresIn: 900,
     user: {

@@ -10,8 +10,8 @@ function getJwtKey() {
   return Buffer.from(secret, 'hex');
 }
 
-function issueAccessToken(userId) {
-  return jwt.sign({}, getJwtKey(), {
+function issueAccessToken(userId, tokenVersion = 0) {
+  return jwt.sign({ tokenVersion }, getJwtKey(), {
     algorithm: 'HS256',
     subject: userId.toString(),
     issuer: 'hospital-queue-api',
