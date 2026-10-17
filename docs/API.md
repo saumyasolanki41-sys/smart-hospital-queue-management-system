@@ -1,5 +1,9 @@
 # Password and email OTP login
 
+For the complete frontend/mobile handoff, including registration, Google sign-in,
+network setup and importable Postman requests, see [AUTH-INTEGRATION.md](AUTH-INTEGRATION.md)
+and [auth.postman_collection.json](auth.postman_collection.json).
+
 Local API base: `http://localhost:5000`. Send JSON with `Content-Type: application/json`.
 Production clients must use HTTPS. OTPs, passwords and tokens must never be logged.
 
