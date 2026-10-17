@@ -23,7 +23,6 @@ async function connectDB() {
 
 module.exports = connectDB;
 
-// Directly run karne par connection test karke disconnect karega.
 if (require.main === module) {
   (async () => {
     try {

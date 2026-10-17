@@ -1,7 +1,7 @@
 const validator = require('validator');
 const createMailTransport = require('../config/mail');
 
-async function sendRegistrationOtp(email, otp) {
+async function sendOtpEmail(email, otp, purpose) {
   if (typeof email !== 'string' || !validator.isEmail(email)) {
     throw new Error('Valid email is required.');
   }
@@ -19,13 +19,15 @@ async function sendRegistrationOtp(email, otp) {
         address: process.env.SMTP_USER.trim(),
       },
       to: email,
-      subject: 'Verify your Hospital Queue registration',
+      subject: purpose === 'login'
+        ? 'Your Hospital Queue login OTP'
+        : 'Verify your Hospital Queue registration',
       text: [
-        `Your registration OTP is: ${otp}`,
+        `Your ${purpose} OTP is: ${otp}`,
         '',
         'This OTP expires five minutes after it was generated.',
         'Do not share this code with anyone.',
-        'If you did not request registration, ignore this email.',
+        `If you did not request ${purpose}, ignore this email.`,
       ].join('\n'),
     });
 
@@ -33,10 +35,19 @@ async function sendRegistrationOtp(email, otp) {
       throw new Error('Email was not accepted.');
     }
   } catch {
-    throw new Error('Registration email could not be sent.');
+    const label = purpose === 'login' ? 'Login' : 'Registration';
+    throw new Error(`${label} email could not be sent.`);
   } finally {
     transporter.close();
   }
 }
 
-module.exports = { sendRegistrationOtp };
+function sendRegistrationOtp(email, otp) {
+  return sendOtpEmail(email, otp, 'registration');
+}
+
+function sendLoginOtp(email, otp) {
+  return sendOtpEmail(email, otp, 'login');
+}
+
+module.exports = { sendRegistrationOtp, sendLoginOtp };

@@ -25,7 +25,6 @@ async function startServer() {
 
     console.log('Server closing...');
 
-    // Shutdown atak jaye toh 10 seconds baad exit.
     const timer = setTimeout(() => {
       console.error('Shutdown timed out.');
       process.exit(1);

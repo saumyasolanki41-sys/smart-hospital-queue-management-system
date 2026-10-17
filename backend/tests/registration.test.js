@@ -101,7 +101,6 @@ test('registration stores hashes and sends OTP', async (t) => {
     '001234',
   ]);
 
-  // Public response contains only the generic message.
   assert.deepEqual(Object.keys(result), ['message']);
 });
 

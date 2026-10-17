@@ -22,7 +22,6 @@ app.get('/', (req, res) => {
 });
 
 app.get('/config', (req, res) => {
-  // Client ID public hoti hai. Koi secret return nahi hota.
   res.json({ clientId });
 });
 

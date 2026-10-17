@@ -80,7 +80,6 @@ test('password length and byte limits are enforced', () => {
     }).data
   );
 
-  // Each emoji uses four UTF-8 bytes.
   assert.ok(
     validateRegistration({
       ...validData(),

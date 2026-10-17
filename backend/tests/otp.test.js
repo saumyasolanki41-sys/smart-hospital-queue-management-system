@@ -25,6 +25,12 @@ test('OTP hashing and verification work securely', () => {
 
     assert.match(hash, /^[a-f0-9]{64}$/);
     assert.equal(verifyOtp(otp, challengeId, hash), true);
+    const loginHash = hashOtp(otp, challengeId, 'login');
+    assert.notEqual(loginHash, hash);
+    assert.equal(verifyOtp(otp, challengeId, loginHash, 'login'), true);
+    assert.equal(verifyOtp(otp, challengeId, hash, 'login'), false);
+    assert.equal(verifyOtp(otp, challengeId, loginHash), false);
+    assert.throws(() => hashOtp(otp, challengeId, 'unknown'), /purpose/);
 
     
     assert.equal(verifyOtp('999999', challengeId, hash), false);

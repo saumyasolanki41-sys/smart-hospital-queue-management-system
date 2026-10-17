@@ -14,7 +14,7 @@ function generateOtp() {
   return crypto.randomInt(0, 1000000).toString().padStart(6, '0');
 }
 
-function hashOtp(otp, challengeId) {
+function hashOtp(otp, challengeId, purpose = 'registration') {
   if (typeof otp !== 'string' || !/^\d{6}$/.test(otp)) {
     throw new Error('OTP must be a six-digit string.');
   }
@@ -23,8 +23,12 @@ function hashOtp(otp, challengeId) {
     throw new Error('Challenge ID is required.');
   }
 
+  if (!['registration', 'login'].includes(purpose)) {
+    throw new Error('Unsupported OTP purpose.');
+  }
+
   const input = JSON.stringify([
-    'registration',
+    purpose,
     challengeId,
     otp,
   ]);
@@ -35,7 +39,7 @@ function hashOtp(otp, challengeId) {
     .digest('hex');
 }
 
-function verifyOtp(otp, challengeId, storedHash) {
+function verifyOtp(otp, challengeId, storedHash, purpose = 'registration') {
   if (typeof otp !== 'string' || !/^\d{6}$/.test(otp)) {
     return false;
   }
@@ -47,7 +51,7 @@ function verifyOtp(otp, challengeId, storedHash) {
     return false;
   }
 
-  const incomingHash = hashOtp(otp, challengeId);
+  const incomingHash = hashOtp(otp, challengeId, purpose);
 
   return crypto.timingSafeEqual(
     Buffer.from(incomingHash, 'hex'),

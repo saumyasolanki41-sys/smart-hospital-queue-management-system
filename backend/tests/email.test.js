@@ -1,7 +1,7 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const nodemailer = require('nodemailer');
-const { sendRegistrationOtp } = require('../src/services/email.service');
+const { sendRegistrationOtp, sendLoginOtp } = require('../src/services/email.service');
 
 function setupMail(t, sendMail) {
   const oldUser = process.env.SMTP_USER;
@@ -90,4 +90,13 @@ test('mail failures return a safe error and close connection', async (t) => {
   );
 
   assert.equal(transport.close.mock.callCount(), 2);
+});
+
+test('login email uses the login subject and preserves leading OTP zeroes', async (t) => {
+  const { transport } = setupMail(t, async () => ({ accepted: ['patient@example.com'] }));
+  await sendLoginOtp('patient@example.com', '001234');
+  const message = transport.sendMail.mock.calls[0].arguments[0];
+  assert.equal(message.subject, 'Your Hospital Queue login OTP');
+  assert.ok(message.text.includes('Your login OTP is: 001234'));
+  assert.equal(transport.close.mock.callCount(), 1);
 });

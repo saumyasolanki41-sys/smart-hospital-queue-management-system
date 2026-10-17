@@ -1,6 +1,7 @@
 const registrationService = require('../services/registration.service');
 const googleLoginService = require('../services/google-login.service');
 const verificationService = require('../services/registration-verification.service');
+const loginService = require('../services/login.service');
 async function register(req, res, next) {
   try {
     const data = await registrationService.requestRegistration(req.body);
@@ -103,4 +104,55 @@ async function verifyRegistration(req, res, next) {
     });
   }
 }
-module.exports = { register,googleLogin,verifyRegistration};
+function handleLoginError(error, res, next) {
+  let status;
+
+  if (error.code === 'VALIDATION_ERROR' || error.code === 'INVALID_OR_EXPIRED_OTP') {
+    status = 400;
+  } else if (error.code === 'INVALID_CREDENTIALS') {
+    status = 401;
+  } else if (error.code === 'LOGIN_COOLDOWN') {
+    status = 429;
+    res.set('Retry-After', '60');
+  } else if (error.code === 'EMAIL_UNAVAILABLE') {
+    status = 503;
+  } else {
+    return next(error);
+  }
+
+  return res.status(status).json({
+    success: false,
+    error: {
+      code: error.code,
+      message: error.message,
+    },
+  });
+}
+
+async function login(req, res, next) {
+  res.set('Cache-Control', 'no-store');
+  try {
+    const data = await loginService.requestLogin(req.body);
+    return res.status(202).json({
+      success: true,
+      data: data,
+    });
+  } catch (error) {
+    return handleLoginError(error, res, next);
+  }
+}
+
+async function verifyLogin(req, res, next) {
+  res.set('Cache-Control', 'no-store');
+  try {
+    const data = await loginService.verifyLogin(req.body);
+    return res.status(200).json({
+      success: true,
+      data: data,
+    });
+  } catch (error) {
+    return handleLoginError(error, res, next);
+  }
+}
+
+module.exports = { register, googleLogin, verifyRegistration, login, verifyLogin };

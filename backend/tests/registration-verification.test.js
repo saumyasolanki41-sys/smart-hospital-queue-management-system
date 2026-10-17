@@ -108,7 +108,6 @@ test('valid OTP creates patient using the stored password hash', async (t) => {
     'email', 'id', 'name', 'role',
   ]);
 
-  // The consumed challenge cannot be used again.
   await assert.rejects(verifyRegistration(input), {
     code: 'INVALID_OR_EXPIRED_OTP',
   });

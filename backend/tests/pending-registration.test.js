@@ -6,7 +6,6 @@ function validData() {
   return {
     name: 'Test Patient',
     email: 'patient@example.com',
-    // Sirf schema-test fixtures; real password/OTP hashes nahi hain.
     passwordHash: '$2b$12$' + 'a'.repeat(53),
     otpHash: 'a'.repeat(64),
     expiresAt: new Date(Date.now() + 5 * 60 * 1000),
