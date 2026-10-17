@@ -8,7 +8,6 @@ import {
   Bone,
   Check,
 } from "lucide-react";
-import Navbar from "../components/layout/Navbar";
 
 const AUDIENCES = [
   {
@@ -64,11 +63,10 @@ const DEPARTMENTS = [
 export default function About() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-sky-50 via-cyan-50 to-white">
-      <Navbar />
 
       <main>
         {/* Intro */}
-        <section className="mx-auto max-w-6xl px-6 pb-14 pt-10 md:pt-16">
+        <section id="about" className="mx-auto max-w-6xl px-6 pb-14 pt-10 md:pt-16">
           <p className="mb-3 text-base font-medium text-teal-700">About Smart Hospital</p>
           <h1 className="max-w-3xl text-4xl font-bold leading-tight text-slate-900 sm:text-5xl">
             Hospital visits should be about care, not crowded waiting rooms.

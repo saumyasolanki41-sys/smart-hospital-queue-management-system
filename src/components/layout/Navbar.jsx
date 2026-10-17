@@ -2,12 +2,11 @@ import { useState } from "react";
 import { Link, NavLink } from "react-router-dom";
 import { HeartPulse, Menu, X } from "lucide-react";
 
-// Page links use "to" (real routes). Section links use "href" (anchors on the landing page).
 const NAV_LINKS = [
   { label: "Home", to: "/" },
-  { label: "About", to: "/about" },
+  { label: "About", href: "/#about" },
   { label: "Features", href: "/#features" },
-  { label: "How It Works", href: "/about#how-it-works" },
+  { label: "How It Works", href: "/#how-it-works" },
 ];
 
 const baseLink = "border-b-2 pb-1 text-sm font-medium transition-colors";
@@ -53,7 +52,7 @@ export default function Navbar() {
   const [open, setOpen] = useState(false);
 
   return (
-    <header className="relative z-20">
+    <header className="sticky relative z-20">
       <nav className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2">
