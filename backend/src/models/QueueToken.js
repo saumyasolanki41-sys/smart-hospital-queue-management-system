@@ -17,5 +17,6 @@ queueTokenSchema.index({ patient: 1, doctor: 1, queueDate: 1 }, {
 });
 queueTokenSchema.index({ patient: 1, queueDate: 1, createdAt: -1 });
 queueTokenSchema.index({ doctor: 1 }, { unique: true, partialFilterExpression: { status: 'called' } });
+queueTokenSchema.index({ queueDate: 1, status: 1 });
 
 module.exports = mongoose.model('QueueToken', queueTokenSchema);

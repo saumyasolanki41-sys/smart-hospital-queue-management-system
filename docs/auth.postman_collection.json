@@ -872,6 +872,26 @@
             "description": "Admin token required. Set whole minutes from 1 to 120. Patient token status returns the estimated wait; this is not a guaranteed appointment time."
           },
           "response": []
+        },
+        {
+          "name": "Dashboard summary",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/staff/dashboard",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "Admin or receptionist token required. Returns current directory counts and token status counts for today in India. Optional ?date=YYYY-MM-DD filters token counts only. No body. See DASHBOARD-API.md. This revision must be deployed first."
+          },
+          "response": []
         }
       ]
     }
