@@ -1,3 +1,4 @@
+
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class SessionService {
@@ -9,14 +10,26 @@ class SessionService {
       : _storage = storage ?? const FlutterSecureStorage();
 
   Future<void> saveToken(String token) async {
+    final trimmedToken = token.trim();
+
+    if (trimmedToken.isEmpty) {
+      throw ArgumentError('Access token cannot be empty.');
+    }
+
     await _storage.write(
       key: _tokenKey,
-      value: token,
+      value: trimmedToken,
     );
   }
 
   Future<String?> getToken() async {
-    return _storage.read(key: _tokenKey);
+    final token = await _storage.read(key: _tokenKey);
+
+    if (token == null || token.trim().isEmpty) {
+      return null;
+    }
+
+    return token;
   }
 
   Future<void> clearToken() async {
