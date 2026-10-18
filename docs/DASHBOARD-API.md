@@ -26,7 +26,8 @@ Example HTTP 200 response:
       "waiting": 4,
       "called": 1,
       "completed": 3,
-      "cancelled": 2
+      "cancelled": 2,
+      "skipped": 0
     }
   }
 }
@@ -40,7 +41,9 @@ Actual counts depend on your database. All empty counters are zero.
 - doctors.available counts profiles with isAvailable true. This means accepting
   new bookings; it does not guarantee that the doctor is online or not busy.
 - tokens counts records with queueDate equal to the selected date, by their
-  current status. Total includes cancelled records and is not a unique patient count.
+  current status. Total includes cancelled and skipped records and is not a unique
+  patient count. skipped represents patients marked absent after being called;
+  it is distinct from a patient cancellation or completed consultation.
 - No names, patient IDs, emails, credentials or raw token records are returned.
 
 To request another day:

@@ -71,7 +71,8 @@ async function request(path, method = 'GET', data, token) {
 
 test('staff routes reject missing tokens and patient accounts before queue writes', async (t) => {
   const { state, write } = setup(t);
-  for (const [path, method] of [['/tokens', 'GET'], ['/call-next', 'POST'], [`/tokens/${tokenId}/complete`, 'PATCH']]) {
+  for (const [path, method] of [['/tokens', 'GET'], ['/call-next', 'POST'],
+    [`/tokens/${tokenId}/complete`, 'PATCH'], [`/tokens/${tokenId}/skip`, 'PATCH']]) {
     assert.equal((await request(path, method)).status, 401);
     state.role = 'patient';
     assert.equal((await request(path, method, undefined, issueAccessToken(userId))).status, 403);
@@ -102,6 +103,7 @@ test('doctor cannot call or complete a token in another doctor queue', async (t)
   const doctor = { id: userId, role: 'doctor' };
   await assert.rejects(service.callNext(doctor, doctorId), { code: 'FORBIDDEN' });
   await assert.rejects(service.completeToken(doctor, doctorId, tokenId), { code: 'FORBIDDEN' });
+  await assert.rejects(service.skipToken(doctor, doctorId, tokenId), { code: 'FORBIDDEN' });
   assert.equal(write.mock.callCount(), 0);
 });
 
@@ -166,6 +168,7 @@ test('malformed IDs, body overrides and invalid filters never reach token writes
   for (const body of [null, [], { tokenNumber: 20 }, { patientId: userId }, { status: 'completed' }]) {
     await assert.rejects(service.callNext(staff, doctorId, body), { code: 'VALIDATION_ERROR' });
     await assert.rejects(service.completeToken(staff, doctorId, tokenId, body), { code: 'VALIDATION_ERROR' });
+    await assert.rejects(service.skipToken(staff, doctorId, tokenId, body), { code: 'VALIDATION_ERROR' });
   }
   for (const query of [{ status: 'bad' }, { status: ['waiting'] }, { page: '0' },
     { limit: '51' }, { date: '2026-10-18' }, { patientId: userId }]) {
@@ -192,4 +195,59 @@ test('a partial unique index enforces one called token per doctor across all dat
   assert.equal(index[0].queueDate, undefined);
   assert.equal(QueueToken.schema.path('calledAt').instance, 'Date');
   assert.equal(QueueToken.schema.path('completedAt').instance, 'Date');
+});
+
+test('skip marks only a called token and releases the active slot with its own timestamp', async (t) => {
+  const { state, write } = setup(t);
+  state.token.status = 'skipped';
+  const response = await request(`/tokens/${tokenId}/skip`, 'PATCH', undefined, issueAccessToken(userId));
+  assert.equal(response.status, 200);
+  assert.equal((await response.json()).data.token.status, 'skipped');
+  const [filter, update, options] = write.mock.calls[0].arguments;
+  assert.deepEqual(filter, { _id: tokenId, doctor: doctorId, status: 'called', active: true });
+  assert.equal(update.$set.status, 'skipped');
+  assert.equal(update.$set.active, false);
+  assert.ok(update.$set.skippedAt instanceof Date);
+  assert.equal(update.$set.completedAt, undefined);
+  assert.equal(options.runValidators, true);
+});
+
+test('skip rejects absent and wrong-doctor tokens and tokens already in a terminal state', async (t) => {
+  const { state, write } = setup(t);
+  await assert.rejects(service.skipToken(staff, doctorId, 'bad'), { code: 'VALIDATION_ERROR' });
+  assert.equal(write.mock.callCount(), 0);
+  state.token = null;
+  await assert.rejects(service.skipToken(staff, doctorId, tokenId), { code: 'TOKEN_NOT_CALLED' });
+  state.exists = false;
+  await assert.rejects(service.skipToken(staff, doctorId, tokenId), { code: 'TOKEN_NOT_FOUND' });
+});
+
+test('competing complete and skip requests conditionally change the called token only once', async (t) => {
+  const { state, write } = setup(t);
+  write.mock.mockImplementation((filter, update) => ({
+    select() { return this; },
+    populate() { return this; },
+    async lean() {
+      if (state.token.status !== filter.status) return null;
+      Object.assign(state.token, update.$set);
+      return { ...state.token };
+    },
+  }));
+  const results = await Promise.allSettled([
+    service.completeToken(staff, doctorId, tokenId), service.skipToken(staff, doctorId, tokenId),
+  ]);
+  assert.equal(results.filter(result => result.status === 'fulfilled').length, 1);
+  const rejected = results.find(result => result.status === 'rejected');
+  assert.equal(rejected.reason.code, 'TOKEN_NOT_CALLED');
+  assert.equal(state.token.active, false);
+});
+
+test('staff can filter skipped tokens and the schema accepts skipped history', async (t) => {
+  const { find } = setup(t);
+  await service.listQueue(staff, doctorId, { status: 'skipped' });
+  assert.equal(find.mock.calls[0].arguments[0].status, 'skipped');
+  const token = new QueueToken({ patient: userId, doctor: doctorId,
+    queueDate: '2026-10-18', tokenNumber: 1, status: 'skipped', active: false, skippedAt: new Date() });
+  await token.validate();
+  assert.equal(QueueToken.schema.path('skippedAt').instance, 'Date');
 });

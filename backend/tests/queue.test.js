@@ -292,7 +292,7 @@ test('missing or future consultation timestamps use a full configured duration',
 
 test('historical, cancelled, called and completed tokens have no waiting estimate', async (t) => {
   const { state, findDoctor } = setup(t);
-  for (const status of ['cancelled', 'called', 'completed']) {
+  for (const status of ['cancelled', 'called', 'completed', 'skipped']) {
     state.token.status = status;
     const result = await service.tokenStatus(patientId, tokenId);
     assert.equal(result.estimatedWaitMinutes, null);

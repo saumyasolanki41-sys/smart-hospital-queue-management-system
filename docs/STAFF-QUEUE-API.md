@@ -16,6 +16,7 @@ Authorization: Bearer STAFF_ACCESS_TOKEN
 | GET | `/api/staff/queues/doctors/:doctorId/tokens` | View today's queue and current called token |
 | POST | `/api/staff/queues/doctors/:doctorId/call-next` | Call the lowest waiting token |
 | PATCH | `/api/staff/queues/doctors/:doctorId/tokens/:tokenId/complete` | Complete a called consultation |
+| PATCH | `/api/staff/queues/doctors/:doctorId/tokens/:tokenId/skip` | Mark a called patient as absent |
 
 All successful responses use HTTP 200 and `{ success: true, data: ... }`.
 POST/PATCH accept no body or `{}`. The server chooses the next token; do not
@@ -58,7 +59,7 @@ GET /api/staff/queues/doctors/ACTUAL_DOCTOR_ID/tokens?page=1&limit=20&status=wai
 ```
 
 Date is today's India date (UTC+05:30). Status defaults to waiting; supported
-filters: waiting, called, completed, cancelled. Page defaults to 1, maximum 100000;
+filters: waiting, called, completed, cancelled, skipped. Page defaults to 1, maximum 100000;
 limit defaults to 20, maximum 50. Other/repeated query fields are rejected.
 Tokens sort by tokenNumber ascending.
 
@@ -76,11 +77,11 @@ Tokens sort by tokenNumber ascending.
 ```
 
 Token fields: `_id`, `doctor` ID, `patient: { _id, name }`, queueDate, tokenNumber,
-status, createdAt, and calledAt/completedAt when set. Emails, credentials and
+status, createdAt, and calledAt/completedAt/skippedAt when set. Emails, credentials and
 other patient profile fields are not selected. A deleted user may populate as null.
 
 currentToken is the currently called token for this doctor, even if carried over
-from an earlier day. Its consultation must be completed before another is called.
+from an earlier day. It must be completed or skipped before another is called.
 The list and current token are read separately and can change during concurrent
 requests; refresh after actions. These patient names are available only to
 authorized staff and must not be placed on a public queue display.
@@ -94,7 +95,7 @@ calledAt. Response: `data.token`. Save its `_id` for completion.
 Only one token per doctor can have called status across all dates. A partial unique
 MongoDB index enforces this, including simultaneous call-next requests from separate
 staff members. A second call while busy returns 409 `QUEUE_BUSY`. No waiting tokens
-returns 409 `QUEUE_EMPTY`. Cancelled/completed tokens are skipped automatically.
+returns 409 `QUEUE_EMPTY`. Cancelled/completed/skipped tokens are ignored automatically.
 Doctor isAvailable controls new bookings; staff may still serve an existing queue
 when that flag is false.
 
@@ -104,10 +105,29 @@ its active booking flag. Response: `data.token`. The next patient can then be ca
 An old-day called token can also be completed. Completion cannot skip the waiting
 stage, revive a cancelled token or complete a token for a different doctor.
 
-Patient read endpoints report called/completed status after refresh. calledAt and
-completedAt are included when set. Once called, the patient cannot cancel the token.
-No real-time socket notifications, no-show/skip action or waiting-time prediction
-is included in this step.
+### Skip an absent patient
+
+PATCH `/api/staff/queues/doctors/ACTUAL_DOCTOR_ID/tokens/ACTUAL_QUEUE_TOKEN_ID/skip`
+with no body or `{}`. Use the currently called token ID, not the patient or doctor ID.
+Success is 200 with `data.token.status` equal to skipped and skippedAt set. The
+active booking flag is cleared, so the next patient can be called. This works for
+a called token carried over from an earlier day too. Waiting, cancelled, completed
+or already skipped tokens return 409 TOKEN_NOT_CALLED. Other/missing doctor tokens
+return 404. Permissions and doctor ownership are the same as completion.
+
+Completion and skipping both conditionally update called status; competing requests
+cannot both change the same token. There is no automatic timeout or recall endpoint.
+A skipped patient can join again through POST `/api/queue/tokens` if the doctor is
+available, receiving a new number at the end. The old number is never restored.
+This is a new active booking, not a second concurrent token.
+
+Patient read endpoints report called/completed/skipped status after refresh.
+calledAt, completedAt and skippedAt are included when set. Once called or skipped,
+the patient cannot cancel the token. Skipped records do not count toward waiting
+estimates. The dashboard includes a separate tokens.skipped count. Frontend/mobile
+status handling should accept the new skipped enum value.
+No real-time socket notifications are included. Configured-average waiting-time
+estimates are documented in QUEUE-API.md.
 
 ## Errors and limits
 
@@ -120,8 +140,8 @@ is included in this step.
 | 404 | TOKEN_NOT_FOUND | Token absent or belongs to a different doctor |
 | 409 | QUEUE_BUSY | A consultation is already called; refresh before retrying |
 | 409 | QUEUE_EMPTY | No waiting tokens for this doctor today |
-| 409 | TOKEN_NOT_CALLED | Waiting, cancelled or already completed token |
-| 429 | RATE_LIMITED | More than 100 call/complete requests per staff user per 15 minutes |
+| 409 | TOKEN_NOT_CALLED | Waiting, cancelled, skipped or already completed token |
+| 429 | RATE_LIMITED | More than 100 combined call/complete/skip requests per staff user per 15 minutes |
 | 500 | INTERNAL_ERROR | Unexpected database/backend failure |
 
 Write rate limits are process-local. Responses use Cache-Control no-store through
@@ -130,7 +150,9 @@ retrying: call-next is an action, not an idempotent lookup.
 
 ## Database and verification
 
-Additive schema fields: Doctor.user, QueueToken.calledAt, QueueToken.completedAt.
+Additive schema fields: Doctor.user, QueueToken.calledAt, QueueToken.completedAt,
+QueueToken.skippedAt. QueueToken.status also accepts skipped; existing records need
+no backfill. Schema/index changes are not live until the new revision is deployed.
 Indexes: unique sparse Doctor.user and one called token per doctor. The existing
 patient/doctor/day active-booking index is unchanged. call-next waits for QueueToken
 indexes to initialize; profile writes wait for Doctor indexes to initialize.

@@ -34,7 +34,7 @@ function today() {
   return new Date(Date.now() + 330 * 60000).toISOString().slice(0, 10);
 }
 
-const selection = 'patient doctor queueDate tokenNumber status calledAt completedAt createdAt';
+const selection = 'patient doctor queueDate tokenNumber status calledAt completedAt skippedAt createdAt';
 
 async function listQueue(user, doctorId, query) {
   await checkAccess(user, doctorId);
@@ -46,7 +46,7 @@ async function listQueue(user, doctorId, query) {
   const status = query.status === undefined ? 'waiting' : query.status;
   if (typeof page !== 'string' || !/^[1-9]\d*$/.test(page) || Number(page) > 100000 ||
       typeof limit !== 'string' || !/^[1-9]\d*$/.test(limit) || Number(limit) > 50 ||
-      !['waiting', 'called', 'completed', 'cancelled'].includes(status)) {
+      !['waiting', 'called', 'completed', 'cancelled', 'skipped'].includes(status)) {
     throw staffError(400, 'VALIDATION_ERROR', 'Send valid pagination and queue status.');
   }
   const date = today();
@@ -63,7 +63,7 @@ async function callNext(user, doctorId, body) {
   await checkAccess(user, doctorId);
   await QueueToken.init();
   if (await QueueToken.exists({ doctor: doctorId, status: 'called' })) {
-    throw staffError(409, 'QUEUE_BUSY', 'Complete the currently called token first.');
+    throw staffError(409, 'QUEUE_BUSY', 'Complete or skip the currently called token first.');
   }
   let token;
   try {
@@ -82,20 +82,31 @@ async function callNext(user, doctorId, body) {
   return { token };
 }
 
-async function completeToken(user, doctorId, tokenId, body) {
+async function finishCalledToken(user, doctorId, tokenId, body, status) {
   emptyBody(body);
   validId(tokenId);
   await checkAccess(user, doctorId);
+  const changes = { status, active: false };
+  if (status === 'completed') changes.completedAt = new Date();
+  if (status === 'skipped') changes.skippedAt = new Date();
   const token = await QueueToken.findOneAndUpdate({
     _id: tokenId, doctor: doctorId, status: 'called', active: true,
-  }, { $set: { status: 'completed', active: false, completedAt: new Date() } }, {
+  }, { $set: changes }, {
     returnDocument: 'after', runValidators: true,
   }).select(selection).populate('patient', 'name').lean();
   if (token) return { token };
   if (!await QueueToken.exists({ _id: tokenId, doctor: doctorId })) {
     throw staffError(404, 'TOKEN_NOT_FOUND', 'Queue token not found for this doctor.');
   }
-  throw staffError(409, 'TOKEN_NOT_CALLED', 'Only a currently called token can be completed.');
+  throw staffError(409, 'TOKEN_NOT_CALLED', 'Only a currently called token can be completed or skipped.');
 }
 
-module.exports = { listQueue, callNext, completeToken };
+function completeToken(user, doctorId, tokenId, body) {
+  return finishCalledToken(user, doctorId, tokenId, body, 'completed');
+}
+
+function skipToken(user, doctorId, tokenId, body) {
+  return finishCalledToken(user, doctorId, tokenId, body, 'skipped');
+}
+
+module.exports = { listQueue, callNext, completeToken, skipToken };

@@ -892,6 +892,46 @@
             "description": "Admin or receptionist token required. Returns current directory counts and token status counts for today in India. Optional ?date=YYYY-MM-DD filters token counts only. No body. See DASHBOARD-API.md. This revision must be deployed first."
           },
           "response": []
+        },
+        {
+          "name": "Skip called patient",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/api/staff/queues/doctors/{{doctorId}}/tokens/{{calledTokenId}}/skip",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [],
+            "description": "Use a staff token and the currently called token ID. No body. Sets skipped status and frees the queue. A repeated/invalid state returns 409. New revision must be deployed."
+          },
+          "response": []
+        },
+        {
+          "name": "List skipped patients",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/staff/queues/doctors/{{doctorId}}/tokens?status=skipped",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [],
+            "description": "Staff only. Returns skipped tokens for today; doctor role is limited to its linked profile."
+          },
+          "response": []
         }
       ]
     }

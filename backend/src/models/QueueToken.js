@@ -5,10 +5,11 @@ const queueTokenSchema = new mongoose.Schema({
   doctor: { type: mongoose.Schema.Types.ObjectId, ref: 'Doctor', required: true },
   queueDate: { type: String, required: true, match: /^\d{4}-\d{2}-\d{2}$/ },
   tokenNumber: { type: Number, required: true, min: 1, validate: Number.isInteger },
-  status: { type: String, enum: ['waiting', 'called', 'completed', 'cancelled'], default: 'waiting' },
+  status: { type: String, enum: ['waiting', 'called', 'completed', 'cancelled', 'skipped'], default: 'waiting' },
   active: { type: Boolean, default: true, select: false },
   calledAt: { type: Date },
   completedAt: { type: Date },
+  skippedAt: { type: Date },
 }, { timestamps: true });
 
 queueTokenSchema.index({ doctor: 1, queueDate: 1, tokenNumber: 1 }, { unique: true });

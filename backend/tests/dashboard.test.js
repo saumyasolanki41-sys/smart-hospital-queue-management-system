@@ -67,7 +67,7 @@ test('dashboard returns safe counts with India date and all token statuses', asy
   assert.equal(response.headers.get('cache-control'), 'no-store');
   assert.deepEqual(await response.json(), { success: true, data: {
     date: '2026-10-19', departments: 3, doctors: { total: 5, available: 4 },
-    tokens: { total: 10, waiting: 4, called: 1, completed: 3, cancelled: 2 },
+    tokens: { total: 10, waiting: 4, called: 1, completed: 3, cancelled: 2, skipped: 0 },
   } });
   assert.deepEqual(tokens.mock.calls[0].arguments[0][0], { $match: { queueDate: '2026-10-19' } });
   assert.deepEqual(doctors.mock.calls[0].arguments[0][0].$group.available,
@@ -90,10 +90,20 @@ test('empty database and missing statuses return zero counters', async (t) => {
   const result = await getDashboard({});
   assert.equal(result.departments, 0);
   assert.deepEqual(result.doctors, { total: 0, available: 0 });
-  assert.deepEqual(result.tokens, { total: 0, waiting: 0, called: 0, completed: 0, cancelled: 0 });
+  assert.deepEqual(result.tokens, { total: 0, waiting: 0, called: 0, completed: 0, cancelled: 0, skipped: 0 });
   state.tokens = [{ _id: 'completed', count: 2 }];
   assert.deepEqual((await getDashboard({})).tokens,
-    { total: 2, waiting: 0, called: 0, completed: 2, cancelled: 0 });
+    { total: 2, waiting: 0, called: 0, completed: 2, cancelled: 0, skipped: 0 });
+});
+
+test('dashboard includes skipped tokens as a separate status in the total', async (t) => {
+  const { state } = setup(t);
+  state.tokens.push({ _id: 'skipped', count: 2 });
+  const result = await getDashboard({});
+  assert.equal(result.tokens.skipped, 2);
+  assert.equal(result.tokens.completed, 3);
+  assert.equal(result.tokens.cancelled, 2);
+  assert.equal(result.tokens.total, 12);
 });
 
 test('invalid dates, duplicate dates and query overrides fail before database reads', async (t) => {

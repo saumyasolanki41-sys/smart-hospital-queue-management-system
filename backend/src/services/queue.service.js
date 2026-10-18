@@ -26,7 +26,7 @@ function checkDoctor(doctor) {
   if (!doctor.isAvailable) throw queueError(409, 'DOCTOR_UNAVAILABLE', 'Doctor is not accepting new queue tokens.');
 }
 
-const selection = 'doctor queueDate tokenNumber status calledAt completedAt createdAt';
+const selection = 'doctor queueDate tokenNumber status calledAt completedAt skippedAt createdAt';
 
 async function joinQueue(patientId, body) {
   if (!body || typeof body !== 'object' || Array.isArray(body) ||

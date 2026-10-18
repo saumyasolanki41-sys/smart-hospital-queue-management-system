@@ -36,10 +36,10 @@ async function getDashboard(query) {
     doctors.total = doctorCounts[0].total;
     doctors.available = doctorCounts[0].available;
   }
-  const tokens = { total: 0, waiting: 0, called: 0, completed: 0, cancelled: 0 };
+  const tokens = { total: 0, waiting: 0, called: 0, completed: 0, cancelled: 0, skipped: 0 };
   for (const row of tokenCounts) {
     tokens.total += row.count;
-    if (['waiting', 'called', 'completed', 'cancelled'].includes(row._id)) {
+    if (['waiting', 'called', 'completed', 'cancelled', 'skipped'].includes(row._id)) {
       tokens[row._id] = row.count;
     }
   }

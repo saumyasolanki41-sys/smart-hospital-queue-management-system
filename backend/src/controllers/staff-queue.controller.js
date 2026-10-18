@@ -30,4 +30,11 @@ async function completeToken(req, res, next) {
   } catch (error) { return handleError(error, res, next); }
 }
 
-module.exports = { listQueue, callNext, completeToken };
+async function skipToken(req, res, next) {
+  try {
+    const data = await service.skipToken(req.user, req.params.doctorId, req.params.tokenId, req.body);
+    return res.json({ success: true, data });
+  } catch (error) { return handleError(error, res, next); }
+}
+
+module.exports = { listQueue, callNext, completeToken, skipToken };

@@ -53,7 +53,7 @@ accepted. Patient ID, date, number and initial status are assigned by the server
 
 Queue day uses India time (UTC+05:30). Numbering starts at 1 separately for each
 doctor and date. Each patient can have one active token per doctor per day.
-Booking with different doctors is allowed. A cancelled token can be followed by
+Booking with different doctors is allowed. A cancelled or skipped token can be followed by
 a new booking, which gets a new number; old numbers are never reused.
 
 Doctor availability is checked again inside the booking transaction. Turning a
@@ -92,7 +92,7 @@ GET /api/queue/tokens/507f1f77bcf86cd799439013
 
 Returns `data.token` and `data.peopleAhead`. For a waiting token dated today,
 peopleAhead counts lower-numbered tokens still waiting for the same doctor/date.
-Cancelled, completed and called tokens are excluded from the count. This is a
+Cancelled, completed, skipped and called tokens are excluded from the count. This is a
 live count, not a guaranteed appointment position or estimated waiting time.
 It can change while requests are in flight. For historical or non-waiting tokens,
 peopleAhead is null. Other patients' tokens return the same 404 as missing tokens.
@@ -146,7 +146,7 @@ PATCH /api/queue/tokens/507f1f77bcf86cd799439013/cancel
 No request body, or an empty JSON object `{}`. Requires the token's owner and
 waiting status. Success returns `data.token` with status cancelled and releases
 the active booking constraint. Repeated cancellation returns 409. Missing or
-other patients' tokens return 404. Called/completed tokens cannot be cancelled.
+other patients' tokens return 404. Called/completed/skipped tokens cannot be cancelled.
 Historical tokens still marked waiting can be cancelled by their owners too.
 
 ## Errors and limits

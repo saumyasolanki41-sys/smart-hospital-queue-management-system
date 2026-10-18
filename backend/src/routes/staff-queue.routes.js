@@ -17,5 +17,6 @@ router.use(authenticate, allowRoles('admin', 'receptionist', 'doctor'));
 router.get('/doctors/:doctorId/tokens', controller.listQueue);
 router.post('/doctors/:doctorId/call-next', limiter, controller.callNext);
 router.patch('/doctors/:doctorId/tokens/:tokenId/complete', limiter, controller.completeToken);
+router.patch('/doctors/:doctorId/tokens/:tokenId/skip', limiter, controller.skipToken);
 
 module.exports = router;
