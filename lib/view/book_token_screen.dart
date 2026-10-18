@@ -133,7 +133,7 @@ class _BookTokenScreenState extends State<BookTokenScreen> {
 
               _buildLabel('Department'),
               DropdownButtonFormField<String>(
-                value: _selectedDepartment,
+               initialValue: _selectedDepartment,
                 decoration: _inputDecoration(
                   hint: 'Select department',
                   icon: Icons.local_hospital_outlined,
@@ -157,7 +157,7 @@ class _BookTokenScreenState extends State<BookTokenScreen> {
 
               _buildLabel('Doctor'),
               DropdownButtonFormField<String>(
-                value: _selectedDoctor,
+              initialValue: _selectedDoctor,
                 decoration: _inputDecoration(
                   hint: 'Select doctor',
                   icon: Icons.medical_services_outlined,
@@ -180,7 +180,7 @@ class _BookTokenScreenState extends State<BookTokenScreen> {
 
               _buildLabel('Visit Type'),
               DropdownButtonFormField<String>(
-                value: _visitType,
+         initialValue: _visitType,
                 decoration: _inputDecoration(
                   hint: 'Select visit type',
                   icon: Icons.event_note_outlined,
