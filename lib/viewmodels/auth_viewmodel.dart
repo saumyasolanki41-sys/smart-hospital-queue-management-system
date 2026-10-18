@@ -62,6 +62,8 @@ class AuthViewModel extends ChangeNotifier {
       );
 
       _pendingEmail = email.trim().toLowerCase();
+      _challengeId = null;
+
       return true;
     } catch (error) {
       _setError(error);
@@ -101,13 +103,23 @@ class AuthViewModel extends ChangeNotifier {
     _setLoading(true);
     _clearError();
 
+    _challengeId = null;
+    _pendingEmail = null;
+    _user = null;
+    _isAuthenticated = false;
+    _authService.logout();
+
     try {
-      _challengeId = await _authService.login(
+      await _sessionService.clearToken();
+
+      final challenge = await _authService.login(
         email: email,
         password: password,
       );
 
+      _challengeId = challenge;
       _pendingEmail = email.trim().toLowerCase();
+
       return true;
     } catch (error) {
       _setError(error);
@@ -120,7 +132,9 @@ class AuthViewModel extends ChangeNotifier {
   Future<bool> verifyLogin({
     required String otp,
   }) async {
-    if (_challengeId == null || _challengeId!.isEmpty) {
+    final challenge = _challengeId;
+
+    if (challenge == null || challenge.isEmpty) {
       _errorMessage = 'Please log in again to request a new OTP.';
       notifyListeners();
       return false;
@@ -130,19 +144,22 @@ class AuthViewModel extends ChangeNotifier {
     _clearError();
 
     try {
-      _user = await _authService.verifyLogin(
-        challengeId: _challengeId!,
+      final user = await _authService.verifyLogin(
+        challengeId: challenge,
         otp: otp,
       );
 
       final token = _authService.accessToken;
 
       if (token == null || token.isEmpty) {
-        throw ApiException('The server did not return an access token.');
+        throw ApiException(
+          'The server did not return an access token.',
+        );
       }
 
       await _sessionService.saveToken(token);
 
+      _user = user;
       _isAuthenticated = true;
       _challengeId = null;
       _pendingEmail = null;
@@ -150,8 +167,17 @@ class AuthViewModel extends ChangeNotifier {
       return true;
     } catch (error) {
       _setError(error);
+
       _user = null;
       _isAuthenticated = false;
+      _authService.logout();
+
+      try {
+        await _sessionService.clearToken();
+      } catch (_) {
+        // Preserve the original authentication error.
+      }
+
       return false;
     } finally {
       _setLoading(false);
@@ -164,23 +190,46 @@ class AuthViewModel extends ChangeNotifier {
     _setLoading(true);
     _clearError();
 
+    _user = null;
+    _isAuthenticated = false;
+    _authService.logout();
+
     try {
-      _user = await _authService.loginWithGoogle(idToken: idToken);
+      await _sessionService.clearToken();
+
+      final user = await _authService.loginWithGoogle(
+        idToken: idToken,
+      );
 
       final token = _authService.accessToken;
 
       if (token == null || token.isEmpty) {
-        throw ApiException('The server did not return an access token.');
+        throw ApiException(
+          'The server did not return an access token.',
+        );
       }
 
       await _sessionService.saveToken(token);
+
+      _user = user;
       _isAuthenticated = true;
+      _challengeId = null;
+      _pendingEmail = null;
 
       return true;
     } catch (error) {
       _setError(error);
+
       _user = null;
       _isAuthenticated = false;
+      _authService.logout();
+
+      try {
+        await _sessionService.clearToken();
+      } catch (_) {
+        // Preserve the original authentication error.
+      }
+
       return false;
     } finally {
       _setLoading(false);
@@ -197,18 +246,28 @@ class AuthViewModel extends ChangeNotifier {
       if (token == null || token.isEmpty) {
         _user = null;
         _isAuthenticated = false;
+        _authService.logout();
         return false;
       }
 
-      _user = await _authService.getCurrentUser(token: token);
+      final user = await _authService.getCurrentUser(
+        token: token,
+      );
+
+      _user = user;
       _isAuthenticated = true;
 
       return true;
-    } catch (error) {
+    } catch (_) {
       _user = null;
       _isAuthenticated = false;
       _authService.logout();
-      await _sessionService.clearToken();
+
+      try {
+        await _sessionService.clearToken();
+      } catch (_) {
+        // The session could not be cleared from storage.
+      }
 
       return false;
     } finally {
@@ -224,6 +283,7 @@ class AuthViewModel extends ChangeNotifier {
 
     try {
       await _authService.forgotPassword(email: email);
+
       _pendingEmail = email.trim().toLowerCase();
       return true;
     } catch (error) {
@@ -271,15 +331,15 @@ class AuthViewModel extends ChangeNotifier {
 
     try {
       await _sessionService.clearToken();
+    } catch (error) {
+      _setError(error);
+    } finally {
       _authService.logout();
-
       _user = null;
       _challengeId = null;
       _pendingEmail = null;
       _isAuthenticated = false;
-    } catch (error) {
-      _setError(error);
-    } finally {
+
       _setLoading(false);
     }
   }
