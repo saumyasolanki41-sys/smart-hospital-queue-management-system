@@ -1,7 +1,9 @@
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../viewmodels/auth_viewmodel.dart';
+
 enum OtpVerificationType {
   registration,
   login,
@@ -27,9 +29,6 @@ class _OtpVerificationScreenState
   final _formKey = GlobalKey<FormState>();
   final _otpController = TextEditingController();
 
-  bool get _isRegistration =>
-      widget.type == OtpVerificationType.registration;
-
   @override
   void dispose() {
     _otpController.dispose();
@@ -42,33 +41,20 @@ class _OtpVerificationScreenState
     final auth = context.read<AuthViewModel>();
     final otp = _otpController.text.trim();
 
-    final success = _isRegistration
-        ? await auth.verifyRegistration(
-            email: widget.email,
-            otp: otp,
-          )
-        : await auth.verifyLogin(otp: otp);
+    bool success;
+
+    if (widget.type == OtpVerificationType.registration) {
+      success = await auth.verifyRegistration(
+        email: widget.email,
+        otp: otp,
+      );
+    } else {
+      success = await auth.verifyLogin(otp: otp);
+    }
 
     if (!mounted) return;
 
-    if (success) {
-      if (_isRegistration) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Account verified successfully. Please log in.',
-            ),
-          ),
-        );
-
-        Navigator.of(context).popUntil((route) => route.isFirst);
-      } else {
-        Navigator.of(context).pushNamedAndRemoveUntil(
-          '/home',
-          (route) => false,
-        );
-      }
-    } else {
+    if (!success) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -76,108 +62,136 @@ class _OtpVerificationScreenState
           ),
         ),
       );
+      return;
+    }
+
+    if (widget.type == OtpVerificationType.registration) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Registration successful. Please log in.',
+          ),
+        ),
+      );
+
+      Navigator.of(context).popUntil(
+        (route) => route.isFirst,
+      );
+    } else {
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        '/home',
+        (route) => false,
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthViewModel>();
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final colors = Theme.of(context).colorScheme;
+
+    final isRegistration =
+        widget.type == OtpVerificationType.registration;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Verify OTP'),
+        title: Text(
+          isRegistration
+              ? 'Verify Registration'
+              : 'Verify Login',
+        ),
       ),
       body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Icon(
-                    Icons.mark_email_read_outlined,
-                    size: 76,
-                    color: colorScheme.primary,
-                  ),
-                  const SizedBox(height: 24),
-                  Text(
-                    'Email verification',
-                    textAlign: TextAlign.center,
-                    style: theme.textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    'Enter the six-digit code sent to',
-                    textAlign: TextAlign.center,
-                    style: theme.textTheme.bodyMedium,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    widget.email,
-                    textAlign: TextAlign.center,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 32),
-                  TextFormField(
-                    controller: _otpController,
-                    keyboardType: TextInputType.number,
-                    maxLength: 6,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 24,
-                      letterSpacing: 10,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    decoration: const InputDecoration(
-                      labelText: 'Enter OTP',
-                      hintText: '000000',
-                      counterText: '',
-                      border: OutlineInputBorder(),
-                    ),
-                    validator: (value) {
-                      final otp = value?.trim() ?? '';
-
-                      if (!RegExp(r'^\d{6}$').hasMatch(otp)) {
-                        return 'Enter a valid six-digit OTP';
-                      }
-
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 24),
-                  FilledButton(
-                    onPressed: auth.isLoading ? null : _verifyOtp,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        vertical: 14,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const SizedBox(height: 30),
+                Icon(
+                  Icons.mark_email_read_outlined,
+                  size: 84,
+                  color: colors.primary,
+                ),
+                const SizedBox(height: 24),
+                Text(
+                  'Enter your OTP',
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context)
+                      .textTheme
+                      .headlineSmall
+                      ?.copyWith(
+                        fontWeight: FontWeight.bold,
                       ),
-                      child: auth.isLoading
-                          ? const SizedBox(
-                              height: 22,
-                              width: 22,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                              ),
-                            )
-                          : const Text('Verify OTP'),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Enter the six-digit code sent to ${widget.email}.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: colors.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: 32),
+                TextFormField(
+                  controller: _otpController,
+                  keyboardType: TextInputType.number,
+                  textInputAction: TextInputAction.done,
+                  maxLength: 6,
+                  autofocus: true,
+                  decoration: const InputDecoration(
+                    labelText: 'Six-digit OTP',
+                    hintText: '000000',
+                    prefixIcon: Icon(
+                      Icons.password_outlined,
+                    ),
+                    counterText: '',
+                    border: OutlineInputBorder(),
+                  ),
+                  validator: (value) {
+                    if (value == null ||
+                        !RegExp(r'^\d{6}$').hasMatch(value)) {
+                      return 'Enter a valid six-digit OTP.';
+                    }
+
+                    return null;
+                  },
+                  onFieldSubmitted: (_) {
+                    if (!auth.isLoading) _verifyOtp();
+                  },
+                ),
+                const SizedBox(height: 24),
+                ElevatedButton(
+                  onPressed:
+                      auth.isLoading ? null : _verifyOtp,
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: const Size(
+                      double.infinity,
+                      52,
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'The OTP expires after five minutes.',
-                    textAlign: TextAlign.center,
-                    style: theme.textTheme.bodySmall,
-                  ),
-                ],
-              ),
+                  child: auth.isLoading
+                      ? const SizedBox(
+                          height: 22,
+                          width: 22,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : const Text('Verify OTP'),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'OTP expires after 5 minutes. '
+                  'If it expires, return to the previous screen '
+                  'and request a new code.',
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ],
             ),
           ),
         ),
