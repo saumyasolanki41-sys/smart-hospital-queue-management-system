@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../viewmodels/auth_viewmodel.dart';
 import '../viewmodels/queue_viewmodel.dart';
+import 'book_token_screen.dart';
 import 'login_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -19,8 +20,9 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      context.read<QueueViewModel>().checkBackendStatus();
+      if (mounted) {
+        context.read<QueueViewModel>().checkBackendStatus();
+      }
     });
   }
 
@@ -51,24 +53,44 @@ class _HomeScreenState extends State<HomeScreen> {
 
     Navigator.pushAndRemoveUntil(
       context,
-      MaterialPageRoute(
-        builder: (_) => const LoginScreen(),
-      ),
+      MaterialPageRoute(builder: (_) => const LoginScreen()),
       (route) => false,
+    );
+  }
+
+  void _openBookToken() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const BookTokenScreen(),
+      ),
+    );
+  }
+
+  void _showComingSoon(String feature) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('$feature will be available after API integration.'),
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final user = context.watch<AuthViewModel>().user;
+    final auth = context.watch<AuthViewModel>();
     final queue = context.watch<QueueViewModel>();
-    final theme = Theme.of(context);
-    final colors = theme.colorScheme;
+    final userName = auth.user?.name ?? 'Patient';
+
+    const primaryColor = Color(0xFF176B87);
+    const backgroundColor = Color(0xFFF4F7FA);
 
     return Scaffold(
+      backgroundColor: backgroundColor,
       appBar: AppBar(
+        backgroundColor: primaryColor,
+        foregroundColor: Colors.white,
         title: const Text(
-          'Smart Hospital Queue',
+          'Hospital Queue',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         actions: [
@@ -77,7 +99,6 @@ class _HomeScreenState extends State<HomeScreen> {
             tooltip: 'Logout',
             icon: const Icon(Icons.logout),
           ),
-          const SizedBox(width: 8),
         ],
       ),
       body: SafeArea(
@@ -87,19 +108,21 @@ class _HomeScreenState extends State<HomeScreen> {
             padding: const EdgeInsets.all(20),
             children: [
               Text(
-                'Hello, ${user?.name.isNotEmpty == true ? user!.name : 'Patient'}!',
-                style: theme.textTheme.headlineSmall?.copyWith(
+                'Hello, $userName!',
+                style: const TextStyle(
+                  fontSize: 26,
                   fontWeight: FontWeight.bold,
                 ),
               ),
               const SizedBox(height: 6),
               Text(
                 'Manage your hospital visit with ease.',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: colors.onSurfaceVariant,
+                style: TextStyle(
+                  fontSize: 15,
+                  color: Colors.grey.shade700,
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 22),
 
               _BackendStatusCard(
                 isChecking: queue.isChecking,
@@ -109,9 +132,11 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
 
               const SizedBox(height: 24),
-              Text(
-                'Hospital Services',
-                style: theme.textTheme.titleLarge?.copyWith(
+
+              const Text(
+                'Quick Actions',
+                style: TextStyle(
+                  fontSize: 20,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -121,53 +146,47 @@ class _HomeScreenState extends State<HomeScreen> {
                 crossAxisCount: 2,
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
-                mainAxisSpacing: 14,
                 crossAxisSpacing: 14,
+                mainAxisSpacing: 14,
                 childAspectRatio: 1.05,
                 children: [
                   _ActionCard(
                     title: 'Book Token',
-                    subtitle: 'Get your queue token',
-                    icon: Icons.confirmation_number_outlined,
-                    color: const Color(0xFF1479A4),
-                    onTap: () => _showMessage(
-                      'Token booking will be connected after the booking API is available.',
-                    ),
+                    subtitle: 'Request a queue token',
+                    icon: Icons.confirmation_num_outlined,
+                    color: primaryColor,
+                    onTap: _openBookToken,
                   ),
                   _ActionCard(
                     title: 'Live Queue',
-                    subtitle: 'Check patients ahead',
+                    subtitle: 'View patients waiting',
                     icon: Icons.people_alt_outlined,
-                    color: const Color(0xFF16866A),
-                    onTap: () => _showMessage(
-                      'Live queue requires the backend queue API.',
-                    ),
+                    color: Colors.orange.shade800,
+                    onTap: () => _showComingSoon('Live Queue'),
                   ),
                   _ActionCard(
                     title: 'Departments',
-                    subtitle: 'Explore hospital services',
+                    subtitle: 'Explore departments',
                     icon: Icons.local_hospital_outlined,
-                    color: const Color(0xFF8055B7),
-                    onTap: () => _showMessage(
-                      'Department information will be connected next.',
-                    ),
+                    color: Colors.green.shade700,
+                    onTap: () => _showComingSoon('Departments'),
                   ),
                   _ActionCard(
                     title: 'Ambulance ETA',
-                    subtitle: 'View arrival predictions',
+                    subtitle: 'Estimate arrival time',
                     icon: Icons.emergency_outlined,
-                    color: const Color(0xFFD97732),
-                    onTap: () => _showMessage(
-                      'Ambulance arrival prediction requires its API or ML integration.',
-                    ),
+                    color: Colors.red.shade700,
+                    onTap: () => _showComingSoon('Ambulance ETA'),
                   ),
                 ],
               ),
 
               const SizedBox(height: 24),
-              Text(
+
+              const Text(
                 'Queue Overview',
-                style: theme.textTheme.titleLarge?.copyWith(
+                style: TextStyle(
+                  fontSize: 20,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -175,31 +194,39 @@ class _HomeScreenState extends State<HomeScreen> {
 
               Card(
                 elevation: 0,
-                color: colors.surface,
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
+                color: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: const Padding(
+                  padding: EdgeInsets.all(20),
                   child: Row(
                     children: [
-                      Icon(
-                        Icons.schedule_outlined,
-                        size: 38,
-                        color: colors.primary,
+                      CircleAvatar(
+                        radius: 26,
+                        backgroundColor: Color(0xFFE5F2F6),
+                        child: Icon(
+                          Icons.schedule,
+                          color: primaryColor,
+                          size: 28,
+                        ),
                       ),
-                      const SizedBox(width: 16),
-                      const Expanded(
+                      SizedBox(width: 16),
+                      Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
                               'No active token',
                               style: TextStyle(
+                                fontSize: 17,
                                 fontWeight: FontWeight.bold,
-                                fontSize: 16,
                               ),
                             ),
                             SizedBox(height: 5),
                             Text(
-                              'Book a token to view your queue details here.',
+                              'Book a token to view your queue status.',
+                              style: TextStyle(color: Colors.black54),
                             ),
                           ],
                         ),
@@ -212,12 +239,6 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
       ),
-    );
-  }
-
-  void _showMessage(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
     );
   }
 }
@@ -237,75 +258,55 @@ class _BackendStatusCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
+    final online = isOnline == true;
+    final color = online ? Colors.green : Colors.red;
 
-    final statusColor = isChecking
-        ? colors.primary
-        : isOnline == true
-            ? Colors.green
-            : isOnline == false
-                ? colors.error
-                : colors.onSurfaceVariant;
-
-    final statusText = isChecking
-        ? 'Checking backend connection...'
-        : isOnline == true
-            ? 'Backend Connected'
-            : isOnline == false
-                ? 'Backend Unavailable'
-                : 'Connection not checked';
+    String status;
+    if (isChecking) {
+      status = 'Checking server connection...';
+    } else if (online) {
+      status = 'Server connected';
+    } else if (isOnline == false) {
+      status = errorMessage ?? 'Server unavailable';
+    } else {
+      status = 'Connection not checked';
+    }
 
     return Card(
       elevation: 0,
-      color: colors.surface,
+      color: Colors.white,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(18),
-        side: BorderSide(
-          color: colors.outlineVariant,
-        ),
+        borderRadius: BorderRadius.circular(14),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Row(
           children: [
-            if (isChecking)
-              SizedBox(
-                width: 26,
-                height: 26,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2.5,
-                  color: statusColor,
-                ),
-              )
-            else
-              Icon(
-                isOnline == true
-                    ? Icons.cloud_done_outlined
-                    : isOnline == false
-                        ? Icons.cloud_off_outlined
-                        : Icons.cloud_outlined,
-                size: 30,
-                color: statusColor,
-              ),
-            const SizedBox(width: 14),
+            Icon(
+              isChecking
+                  ? Icons.sync
+                  : online
+                      ? Icons.cloud_done_outlined
+                      : Icons.cloud_off_outlined,
+              color: isChecking ? Colors.blueGrey : color,
+              size: 28,
+            ),
+            const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    statusText,
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: statusColor,
-                    ),
+                  const Text(
+                    'Backend Status',
+                    style: TextStyle(fontWeight: FontWeight.bold),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 5),
                   Text(
-                    isOnline == true
-                        ? 'Your app can reach the server.'
-                        : errorMessage ??
-                            'Checking the hospital server status.',
-                    style: Theme.of(context).textTheme.bodySmall,
+                    status,
+                    style: TextStyle(
+                      color: Colors.grey.shade700,
+                      fontSize: 13,
+                    ),
                   ),
                 ],
               ),
@@ -341,42 +342,42 @@ class _ActionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       elevation: 0,
-      color: Theme.of(context).colorScheme.surface,
+      color: Colors.white,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(18),
-        side: BorderSide(
-          color: Theme.of(context).colorScheme.outlineVariant,
-        ),
+        borderRadius: BorderRadius.circular(16),
       ),
+      clipBehavior: Clip.antiAlias,
       child: InkWell(
-        borderRadius: BorderRadius.circular(18),
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.all(14),
+          padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Container(
-                padding: const EdgeInsets.all(10),
+                padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: color.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(icon, color: color, size: 27),
+                child: Icon(icon, color: color, size: 28),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 14),
               Text(
                 title,
                 style: const TextStyle(
+                  fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  fontSize: 15,
                 ),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 5),
               Text(
                 subtitle,
-                style: Theme.of(context).textTheme.bodySmall,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey.shade600,
+                ),
               ),
             ],
           ),
