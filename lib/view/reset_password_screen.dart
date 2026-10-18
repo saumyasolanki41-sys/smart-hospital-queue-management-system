@@ -1,4 +1,6 @@
 
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -25,6 +27,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
 
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
+  bool _isSubmitting = false;
 
   @override
   void dispose() {
@@ -35,36 +38,45 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   }
 
   Future<void> _resetPassword() async {
+    if (_isSubmitting) return;
     if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _isSubmitting = true);
 
     final auth = context.read<AuthViewModel>();
 
-    final success = await auth.resetPassword(
-      email: widget.email,
-      otp: _otpController.text.trim(),
-      newPassword: _passwordController.text,
-    );
-
-    if (!mounted) return;
-
-    if (success) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Password reset successful. Please log in with your new password.',
-          ),
-        ),
+    try {
+      final success = await auth.resetPassword(
+        email: widget.email.trim(),
+        otp: _otpController.text.trim(),
+        newPassword: _passwordController.text,
       );
 
-      Navigator.of(context).popUntil((route) => route.isFirst);
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            auth.errorMessage ?? 'Unable to reset password.',
+      if (!mounted) return;
+
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Password reset successful. Please log in with your new password.',
+            ),
           ),
-        ),
-      );
+        );
+
+        Navigator.of(context).popUntil((route) => route.isFirst);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              auth.errorMessage ?? 'Unable to reset password.',
+            ),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+      }
     }
   }
 
@@ -72,6 +84,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   Widget build(BuildContext context) {
     final auth = context.watch<AuthViewModel>();
     final colors = Theme.of(context).colorScheme;
+    final isBusy = _isSubmitting || auth.isLoading;
 
     return Scaffold(
       appBar: AppBar(
@@ -86,12 +99,15 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const SizedBox(height: 20),
+
                 Icon(
                   Icons.password_rounded,
                   size: 78,
                   color: colors.primary,
                 ),
+
                 const SizedBox(height: 20),
+
                 Text(
                   'Create a new password',
                   textAlign: TextAlign.center,
@@ -100,13 +116,16 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                       .headlineSmall
                       ?.copyWith(fontWeight: FontWeight.bold),
                 ),
+
                 const SizedBox(height: 12),
+
                 Text(
                   'Enter the six-digit reset OTP sent to ${widget.email}, '
                   'then choose your new password.',
                   textAlign: TextAlign.center,
                   style: TextStyle(color: colors.onSurfaceVariant),
                 ),
+
                 const SizedBox(height: 28),
 
                 TextFormField(
@@ -129,12 +148,16 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                     return null;
                   },
                 ),
+
                 const SizedBox(height: 20),
 
                 TextFormField(
                   controller: _passwordController,
                   obscureText: _obscurePassword,
                   textInputAction: TextInputAction.next,
+                  autofillHints: const [
+                    AutofillHints.newPassword,
+                  ],
                   decoration: InputDecoration(
                     labelText: 'New password',
                     hintText: 'At least 8 characters',
@@ -162,31 +185,25 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                       return 'Password must be at least 8 characters.';
                     }
 
-                    if (value.length > 72) {
-                      return 'Password is too long.';
-                    }
-
-                    if (RegExp(
-                      r'[\uD800-\uDBFF][\uDC00-\uDFFF]',
-                    ).hasMatch(value)) {
-                      // UTF-8 byte validation is also performed below.
-                    }
-
-                    if (value.codeUnits.length > 72) {
-                      return 'Password is too long.';
+                    if (utf8.encode(value).length > 72) {
+                      return 'Password must not exceed 72 UTF-8 bytes.';
                     }
 
                     return null;
                   },
                 ),
+
                 const SizedBox(height: 20),
 
                 TextFormField(
                   controller: _confirmPasswordController,
                   obscureText: _obscureConfirmPassword,
                   textInputAction: TextInputAction.done,
+                  autofillHints: const [
+                    AutofillHints.newPassword,
+                  ],
                   onFieldSubmitted: (_) {
-                    if (!auth.isLoading) _resetPassword();
+                    if (!isBusy) _resetPassword();
                   },
                   decoration: InputDecoration(
                     labelText: 'Confirm new password',
@@ -218,14 +235,15 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                     return null;
                   },
                 ),
+
                 const SizedBox(height: 28),
 
                 ElevatedButton(
-                  onPressed: auth.isLoading ? null : _resetPassword,
+                  onPressed: isBusy ? null : _resetPassword,
                   style: ElevatedButton.styleFrom(
                     minimumSize: const Size(double.infinity, 52),
                   ),
-                  child: auth.isLoading
+                  child: isBusy
                       ? const SizedBox(
                           height: 22,
                           width: 22,
