@@ -1,7 +1,8 @@
 const hospitalService = require('../services/hospital.service');
 
 function handleError(error, res, next) {
-  const codes = ['VALIDATION_ERROR', 'DEPARTMENT_EXISTS', 'DEPARTMENT_NOT_FOUND', 'DOCTOR_NOT_FOUND'];
+  const codes = ['VALIDATION_ERROR', 'DEPARTMENT_EXISTS', 'DEPARTMENT_NOT_FOUND', 'DOCTOR_NOT_FOUND',
+    'DOCTOR_ACCOUNT_NOT_FOUND', 'DOCTOR_ACCOUNT_LINKED'];
   if (!codes.includes(error.code)) return next(error);
   return res.status(error.status).json({
     success: false, error: { code: error.code, message: error.message },

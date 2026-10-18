@@ -67,6 +67,21 @@
       "key": "queueTokenId",
       "value": "",
       "type": "string"
+    },
+    {
+      "key": "staffAccessToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "doctorUserId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "calledTokenId",
+      "value": "",
+      "type": "string"
     }
   ],
   "item": [
@@ -690,7 +705,8 @@
                   "type": "string"
                 }
               ]
-            }
+            },
+            "description": "Patient token required. Returns own token, peopleAhead, estimatedWaitMinutes, averageConsultationMinutes and consultationOverdue. Estimate fields are null for historical/non-waiting tokens."
           },
           "response": []
         },
@@ -710,6 +726,150 @@
                 }
               ]
             }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Staff queue",
+      "description": "New revision must be deployed first. Set staffAccessToken from admin/receptionist/doctor login. Keep the patient accessToken separate. Doctors require an admin-linked profile. See STAFF-QUEUE-API.md.",
+      "item": [
+        {
+          "name": "Link verified doctor account (admin only)",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/api/doctors/{{doctorId}}",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{doctorUserId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "View doctor waiting queue",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/staff/queues/doctors/{{doctorId}}/tokens",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Call next patient",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/staff/queues/doctors/{{doctorId}}/call-next",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const response = pm.response.json();",
+                  "  pm.collectionVariables.set(\"calledTokenId\", response.data.token._id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Complete called consultation",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/api/staff/queues/doctors/{{doctorId}}/tokens/{{calledTokenId}}/complete",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Set average consultation time (admin only)",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/api/doctors/{{doctorId}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"averageConsultationMinutes\": 10\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Admin token required. Set whole minutes from 1 to 120. Patient token status returns the estimated wait; this is not a guaranteed appointment time."
           },
           "response": []
         }

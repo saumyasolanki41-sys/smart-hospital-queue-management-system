@@ -97,6 +97,46 @@ live count, not a guaranteed appointment position or estimated waiting time.
 It can change while requests are in flight. For historical or non-waiting tokens,
 peopleAhead is null. Other patients' tokens return the same 404 as missing tokens.
 
+### Estimated waiting time
+
+For today's waiting token, the status response also contains:
+
+```json
+{
+  "peopleAhead": 3,
+  "estimatedWaitMinutes": 43,
+  "averageConsultationMinutes": 12,
+  "consultationOverdue": false
+}
+```
+
+These fields are inside `data` alongside `token`. The estimate is the number of
+lower-numbered waiting patients multiplied by the doctor's configured average
+consultation duration, plus the estimated remaining time for the currently called
+consultation. Example: 3 waiting patients × 12 minutes + 7 minutes remaining = 43.
+Elapsed time since calledAt is subtracted from the current consultation's average.
+Results round the remaining time up to whole minutes. When a called consultation
+has reached/exceeded its average, consultationOverdue is true and its remaining
+contribution stays at a minimum of one minute until staff complete it. Missing or
+invalid calledAt uses a full average duration; a future calledAt is treated as
+zero elapsed time. A called token carried over from an earlier date also counts.
+
+No waiting patients ahead and no currently called consultation gives an estimate
+of zero. This means no estimated queue delay, not that a staff member is ready.
+Historical/non-waiting tokens have null values for estimatedWaitMinutes,
+averageConsultationMinutes and consultationOverdue. If the doctor profile has
+been removed, the waiting count remains available but all estimate fields are null.
+
+The doctor's average defaults to 10 minutes and is configurable by admin through
+POST/PATCH `/api/doctors`. Existing records with no valid configured duration use
+10 minutes for the estimate without a database backfill. The calculation is a
+configured-average estimate, not a model trained on completed consultations.
+It assumes consultations continue without staff breaks or emergencies. isAvailable
+only pauses new bookings and does not indicate whether staff are currently working.
+Counts and current consultation are read separately and may change concurrently.
+Frontend should label this as an estimated wait and refresh status as needed; do
+not display it as an exact appointment time or guarantee service within that time.
+
 ## Cancel a token
 
 ```text
@@ -135,6 +175,6 @@ database transactions and check query filters, schema indexes and failure paths;
 they do not prove live concurrent allocation/rollback behavior. Live booking,
 duplicate booking, ownership and cancellation checks are still needed.
 
-Statuses called/completed are reserved for the next staff queue-management step.
-This revision has no call-next/complete endpoint and no automatic overnight status
-change. Old waiting tokens stay in history and have no live peopleAhead value.
+Staff call-next/complete endpoints are documented in [STAFF-QUEUE-API.md](STAFF-QUEUE-API.md).
+There is no automatic overnight status change. Old waiting tokens stay in history
+and have no live peopleAhead value. Patients cannot cancel a called token.

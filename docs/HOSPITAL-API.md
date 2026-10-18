@@ -44,7 +44,8 @@ Names are trimmed and unique without regard to case. Duplicate names return 409
   "specialization": "Cardiologist",
   "experienceYears": 5,
   "consultationFee": 500,
-  "isAvailable": true
+  "isAvailable": true,
+  "averageConsultationMinutes": 10
 }
 ```
 
@@ -52,6 +53,10 @@ Replace departmentId with an existing department's real `_id`. Required fields:
 name, departmentId and specialization. Name and specialization contain 2–100
 characters. Experience is an integer 0–80, default 0. Consultation fee is a number
 0–100000 in INR, default 0. isAvailable is a boolean, default true.
+Optional averageConsultationMinutes is a whole number from 1 to 120, default 10.
+Admin can change it with PATCH; it supplies the patient waiting-time estimate.
+Legacy directory records may omit the field in lean read responses; token status
+still uses the 10-minute default when it is absent.
 
 Success returns:
 
@@ -66,15 +71,18 @@ Success returns:
       "specialization": "Cardiologist",
       "experienceYears": 5,
       "consultationFee": 500,
-      "isAvailable": true
+      "isAvailable": true,
+      "averageConsultationMinutes": 10
     }
   }
 }
 ```
 
 These are public directory profiles, separate from User authentication accounts.
-Creating a profile does not create login credentials, assign a doctor role or link
-an existing user. Linking profiles to staff accounts will be a separate feature.
+Creating a profile does not create login credentials or assign a doctor role.
+Admin may optionally supply userId when creating/updating a profile to link an
+existing verified doctor account. One account can link to one profile. Public
+responses omit the linked login ID. See [STAFF-QUEUE-API.md](STAFF-QUEUE-API.md).
 Availability is an admin-managed display flag; schedules, slots and appointment
 booking are not implemented in this step. Fees are informational; no payment is made.
 
@@ -112,7 +120,8 @@ Example PATCH body:
 
 Send at least one supported doctor field. You may change departmentId to another
 existing department. Updates return the same `data.doctor` shape as creation.
-Extra fields, including role, userId and MongoDB update operators, are rejected.
+Extra fields, including role and MongoDB update operators, are rejected. Optional
+userId must identify an existing verified doctor-role account; it cannot be null.
 There are no delete routes; temporarily hide availability using isAvailable.
 
 ## Errors and setup

@@ -26,7 +26,7 @@ function checkDoctor(doctor) {
   if (!doctor.isAvailable) throw queueError(409, 'DOCTOR_UNAVAILABLE', 'Doctor is not accepting new queue tokens.');
 }
 
-const selection = 'doctor queueDate tokenNumber status createdAt';
+const selection = 'doctor queueDate tokenNumber status calledAt completedAt createdAt';
 
 async function joinQueue(patientId, body) {
   if (!body || typeof body !== 'object' || Array.isArray(body) ||
@@ -104,13 +104,38 @@ async function tokenStatus(patientId, id) {
   const token = await QueueToken.findOne({ _id: validId(id), patient: patientId }).select(selection).lean();
   if (!token) throw queueError(404, 'TOKEN_NOT_FOUND', 'Queue token not found.');
   let peopleAhead = null;
+  let estimatedWaitMinutes = null;
+  let averageConsultationMinutes = null;
+  let consultationOverdue = null;
   if (token.status === 'waiting' && token.queueDate === today()) {
     peopleAhead = await QueueToken.countDocuments({
       doctor: token.doctor, queueDate: token.queueDate,
       status: 'waiting', tokenNumber: { $lt: token.tokenNumber },
     });
+    const doctor = await Doctor.findById(token.doctor).select('averageConsultationMinutes').lean();
+    if (doctor) {
+      averageConsultationMinutes = doctor.averageConsultationMinutes;
+      if (!Number.isInteger(averageConsultationMinutes) ||
+          averageConsultationMinutes < 1 || averageConsultationMinutes > 120) {
+        averageConsultationMinutes = 10;
+      }
+      const current = await QueueToken.findOne({ doctor: token.doctor, status: 'called' })
+        .select('calledAt').lean();
+      let remainingMinutes = 0;
+      consultationOverdue = false;
+      if (current) {
+        const startedAt = current.calledAt ? new Date(current.calledAt).getTime() : NaN;
+        let elapsedMinutes = 0;
+        if (Number.isFinite(startedAt)) {
+          elapsedMinutes = Math.max(0, (Date.now() - startedAt) / 60000);
+        }
+        consultationOverdue = elapsedMinutes >= averageConsultationMinutes;
+        remainingMinutes = Math.max(1, Math.ceil(averageConsultationMinutes - elapsedMinutes));
+      }
+      estimatedWaitMinutes = peopleAhead * averageConsultationMinutes + remainingMinutes;
+    }
   }
-  return { token, peopleAhead };
+  return { token, peopleAhead, estimatedWaitMinutes, averageConsultationMinutes, consultationOverdue };
 }
 
 async function cancelToken(patientId, id, body) {

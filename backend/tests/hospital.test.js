@@ -48,6 +48,7 @@ function setup(t) {
   const findDepartments = t.mock.method(Department, 'find', () => departments);
   const findDoctors = t.mock.method(Doctor, 'find', () => doctors);
   t.mock.method(Department, 'init', async () => {});
+  t.mock.method(Doctor, 'init', async () => {});
   const exists = t.mock.method(Department, 'exists', async () => state.departmentExists);
   const createDepartment = t.mock.method(Department, 'create', async () => {
     if (state.error) throw state.error;
@@ -164,7 +165,7 @@ test('doctor writes reject missing departments, invalid values and privileged fi
     { ...body, experienceYears: 1.5 }, { ...body, experienceYears: -1 },
     { ...body, consultationFee: '500' }, { ...body, consultationFee: Infinity },
     { ...body, consultationFee: -1 }, { ...body, isAvailable: 'false' },
-    { ...body, role: 'admin' }, { ...body, userId: departmentId }]) {
+    { ...body, role: 'admin' }, { ...body, userId: 'bad' }]) {
     await assert.rejects(service.createDoctor(data), { code: 'VALIDATION_ERROR' });
   }
   await assert.rejects(service.updateDoctor(doctorId, {}), { code: 'VALIDATION_ERROR' });
@@ -209,4 +210,50 @@ test('models enforce directory fields and department name uniqueness index', asy
   const index = Department.schema.indexes().find(([fields]) => fields.name === 1);
   assert.equal(index[1].unique, true);
   assert.equal(index[1].collation.strength, 2);
+});
+
+test('admin profile linking requires a verified doctor account and stores only its ID', async (t) => {
+  const { state, updateDoctor } = setup(t);
+  await assert.rejects(service.updateDoctor(doctorId, { userId: departmentId }), {
+    code: 'DOCTOR_ACCOUNT_NOT_FOUND',
+  });
+  state.role = 'doctor';
+  await service.updateDoctor(doctorId, { userId: departmentId });
+  assert.deepEqual(updateDoctor.mock.calls[0].arguments[1], { $set: { user: departmentId } });
+  t.mock.method(User, 'findById', () => ({ select: () => ({ lean: async () => null }) }));
+  await assert.rejects(service.updateDoctor(doctorId, { userId: departmentId }), {
+    code: 'DOCTOR_ACCOUNT_NOT_FOUND',
+  });
+});
+
+test('an already linked doctor account produces a safe 409 conflict', async (t) => {
+  const { state, createDoctor } = setup(t);
+  state.role = 'doctor';
+  createDoctor.mock.mockImplementation(async () => { throw { code: 11000 }; });
+  await assert.rejects(service.createDoctor({ ...body, userId: departmentId }), {
+    code: 'DOCTOR_ACCOUNT_LINKED', status: 409,
+  });
+  const userField = Doctor.schema.path('user');
+  assert.equal(userField.options.unique, true);
+  assert.equal(userField.options.sparse, true);
+});
+
+test('average consultation time accepts whole minutes only within the allowed range', async (t) => {
+  const { updateDoctor, createDoctor } = setup(t);
+  for (const duration of [0, -1, 121, 1.5, '10', null]) {
+    await assert.rejects(service.updateDoctor(doctorId, { averageConsultationMinutes: duration }), {
+      code: 'VALIDATION_ERROR',
+    });
+    await assert.rejects(service.createDoctor({ ...body, averageConsultationMinutes: duration }), {
+      code: 'VALIDATION_ERROR',
+    });
+  }
+  assert.equal(createDoctor.mock.callCount(), 0);
+  assert.equal(updateDoctor.mock.callCount(), 0);
+  await service.updateDoctor(doctorId, { averageConsultationMinutes: 15 });
+  assert.deepEqual(updateDoctor.mock.calls[0].arguments[1], { $set: { averageConsultationMinutes: 15 } });
+  const doctor = new Doctor({ name: body.name, department: departmentId, specialization: body.specialization });
+  assert.equal(doctor.averageConsultationMinutes, 10);
+  doctor.averageConsultationMinutes = 0;
+  await assert.rejects(doctor.validate());
 });

@@ -7,6 +7,8 @@ const queueTokenSchema = new mongoose.Schema({
   tokenNumber: { type: Number, required: true, min: 1, validate: Number.isInteger },
   status: { type: String, enum: ['waiting', 'called', 'completed', 'cancelled'], default: 'waiting' },
   active: { type: Boolean, default: true, select: false },
+  calledAt: { type: Date },
+  completedAt: { type: Date },
 }, { timestamps: true });
 
 queueTokenSchema.index({ doctor: 1, queueDate: 1, tokenNumber: 1 }, { unique: true });
@@ -14,5 +16,6 @@ queueTokenSchema.index({ patient: 1, doctor: 1, queueDate: 1 }, {
   unique: true, partialFilterExpression: { active: true },
 });
 queueTokenSchema.index({ patient: 1, queueDate: 1, createdAt: -1 });
+queueTokenSchema.index({ doctor: 1 }, { unique: true, partialFilterExpression: { status: 'called' } });
 
 module.exports = mongoose.model('QueueToken', queueTokenSchema);

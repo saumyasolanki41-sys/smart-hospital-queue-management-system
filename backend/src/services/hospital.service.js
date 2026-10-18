@@ -1,5 +1,6 @@
 const Department = require('../models/Department');
 const Doctor = require('../models/Doctor');
+const User = require('../models/User');
 
 function hospitalError(status, code, message) {
   const error = new Error(message);
@@ -67,8 +68,10 @@ async function createDepartment(body) {
 }
 
 function doctorFields(body, updating) {
-  checkFields(body, ['name', 'departmentId', 'specialization', 'experienceYears', 'consultationFee', 'isAvailable']);
+  checkFields(body, ['name', 'departmentId', 'specialization', 'experienceYears', 'consultationFee',
+    'isAvailable', 'userId', 'averageConsultationMinutes']);
   const data = {};
+  if (body.userId !== undefined) data.user = validId(body.userId);
   if (!updating || body.name !== undefined) data.name = text(body.name, 'Name', 2, 100);
   if (!updating || body.specialization !== undefined) {
     data.specialization = text(body.specialization, 'Specialization', 2, 100);
@@ -93,6 +96,13 @@ function doctorFields(body, updating) {
     }
     data.isAvailable = body.isAvailable;
   }
+  if (body.averageConsultationMinutes !== undefined) {
+    if (!Number.isInteger(body.averageConsultationMinutes) ||
+        body.averageConsultationMinutes < 1 || body.averageConsultationMinutes > 120) {
+      throw hospitalError(400, 'VALIDATION_ERROR', 'Average consultation time must be an integer from 1 to 120 minutes.');
+    }
+    data.averageConsultationMinutes = body.averageConsultationMinutes;
+  }
   return data;
 }
 
@@ -102,7 +112,7 @@ async function checkDepartment(id) {
   }
 }
 
-const doctorSelection = 'name department specialization experienceYears consultationFee isAvailable';
+const doctorSelection = 'name department specialization experienceYears consultationFee isAvailable averageConsultationMinutes';
 
 async function listDoctors(query) {
   const { page, limit } = pagination(query, ['page', 'limit', 'departmentId', 'isAvailable']);
@@ -129,17 +139,41 @@ async function getDoctor(id) {
 async function createDoctor(body) {
   const data = doctorFields(body, false);
   await checkDepartment(data.department);
-  const doctor = await Doctor.create(data);
+  await checkDoctorAccount(data.user);
+  await Doctor.init();
+  let doctor;
+  try {
+    doctor = await Doctor.create(data);
+  } catch (error) {
+    if (error.code === 11000) throw hospitalError(409, 'DOCTOR_ACCOUNT_LINKED', 'This account is already linked to a doctor profile.');
+    throw error;
+  }
   return getDoctor(doctor._id.toString());
+}
+
+async function checkDoctorAccount(userId) {
+  if (userId === undefined) return;
+  const user = await User.findById(userId).select('role emailVerifiedAt').lean();
+  if (!user || user.role !== 'doctor' || !user.emailVerifiedAt) {
+    throw hospitalError(404, 'DOCTOR_ACCOUNT_NOT_FOUND', 'Choose an existing verified doctor account.');
+  }
 }
 
 async function updateDoctor(id, body) {
   validId(id);
   const data = doctorFields(body, true);
   if (data.department) await checkDepartment(data.department);
-  const doctor = await Doctor.findByIdAndUpdate(id, { $set: data }, {
-    returnDocument: 'after', runValidators: true,
-  }).select(doctorSelection).populate('department', 'name').lean();
+  await checkDoctorAccount(data.user);
+  await Doctor.init();
+  let doctor;
+  try {
+    doctor = await Doctor.findByIdAndUpdate(id, { $set: data }, {
+      returnDocument: 'after', runValidators: true,
+    }).select(doctorSelection).populate('department', 'name').lean();
+  } catch (error) {
+    if (error.code === 11000) throw hospitalError(409, 'DOCTOR_ACCOUNT_LINKED', 'This account is already linked to a doctor profile.');
+    throw error;
+  }
   if (!doctor) throw hospitalError(404, 'DOCTOR_NOT_FOUND', 'Doctor not found.');
   return { doctor };
 }

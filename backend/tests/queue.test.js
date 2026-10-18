@@ -32,7 +32,7 @@ function setup(t) {
     day: { lastToken: 1 },
     token: { _id: tokenId, doctor: doctorId, patient: patientId,
       queueDate: '2026-10-19', tokenNumber: 1, status: 'waiting', active: true, createdAt: new Date(now) },
-    ahead: 2, owned: true,
+    ahead: 2, owned: true, current: null,
   };
   const session = {};
   function query(value) {
@@ -58,7 +58,8 @@ function setup(t) {
     if (state.createError) throw state.createError;
     return [state.token];
   });
-  const findOne = t.mock.method(QueueToken, 'findOne', () => query(() => state.token));
+  const findOne = t.mock.method(QueueToken, 'findOne', (filter) =>
+    query(() => filter.status === 'called' ? state.current : state.token));
   const list = query(() => [state.token]);
   const find = t.mock.method(QueueToken, 'find', () => list);
   const count = t.mock.method(QueueToken, 'countDocuments', async () => state.ahead);
@@ -244,4 +245,76 @@ test('token indexes enforce daily uniqueness and one active booking per patient 
   assert.deepEqual(active[1].partialFilterExpression, { active: true });
   await new QueueToken({ patient: patientId, doctor: doctorId, queueDate: '2026-10-19', tokenNumber: 1 }).validate();
   await assert.rejects(new QueueToken({ patient: patientId, doctor: doctorId, queueDate: '2026-10-19', tokenNumber: 0 }).validate());
+});
+
+test('waiting estimate uses configured duration plus remaining current consultation time', async (t) => {
+  const { state, findOne } = setup(t);
+  state.doctor.averageConsultationMinutes = 12;
+  state.ahead = 3;
+  state.current = { calledAt: new Date(Date.now() - 5 * 60000), patient: 'private-patient-id' };
+  const response = await request('/tokens/' + tokenId, 'GET', undefined, issueAccessToken(patientId));
+  assert.equal(response.status, 200);
+  const result = (await response.json()).data;
+  assert.equal(result.estimatedWaitMinutes, 43);
+  assert.equal(result.averageConsultationMinutes, 12);
+  assert.equal(result.consultationOverdue, false);
+  assert.equal(result.current, undefined);
+  assert.deepEqual(findOne.mock.calls[1].arguments[0], { doctor: doctorId, status: 'called' });
+});
+
+test('empty waiting queue without a current consultation estimates zero', async (t) => {
+  const { state } = setup(t);
+  state.ahead = 0;
+  const result = await service.tokenStatus(patientId, tokenId);
+  assert.equal(result.estimatedWaitMinutes, 0);
+  assert.equal(result.averageConsultationMinutes, 10);
+  assert.equal(result.consultationOverdue, false);
+});
+
+test('overdue consultations keep a minimum remaining minute and signal uncertainty', async (t) => {
+  const { state } = setup(t);
+  state.current = { calledAt: new Date(Date.now() - 20 * 60000) };
+  const result = await service.tokenStatus(patientId, tokenId);
+  assert.equal(result.estimatedWaitMinutes, 21);
+  assert.equal(result.consultationOverdue, true);
+});
+
+test('missing or future consultation timestamps use a full configured duration', async (t) => {
+  const { state } = setup(t);
+  state.ahead = 0;
+  for (const current of [{}, { calledAt: new Date(Date.now() + 60000) }, { calledAt: 'invalid' }]) {
+    state.current = current;
+    const result = await service.tokenStatus(patientId, tokenId);
+    assert.equal(result.estimatedWaitMinutes, 10);
+    assert.equal(result.consultationOverdue, false);
+  }
+});
+
+test('historical, cancelled, called and completed tokens have no waiting estimate', async (t) => {
+  const { state, findDoctor } = setup(t);
+  for (const status of ['cancelled', 'called', 'completed']) {
+    state.token.status = status;
+    const result = await service.tokenStatus(patientId, tokenId);
+    assert.equal(result.estimatedWaitMinutes, null);
+    assert.equal(result.averageConsultationMinutes, null);
+    assert.equal(result.consultationOverdue, null);
+  }
+  state.token.status = 'waiting';
+  state.token.queueDate = '2026-10-18';
+  assert.equal((await service.tokenStatus(patientId, tokenId)).estimatedWaitMinutes, null);
+  assert.equal(findDoctor.mock.callCount(), 0);
+});
+
+test('legacy duration defaults to ten minutes and missing doctor gives no estimate', async (t) => {
+  const { state } = setup(t);
+  for (const duration of [undefined, 0, 121, 1.5]) {
+    state.doctor.averageConsultationMinutes = duration;
+    const result = await service.tokenStatus(patientId, tokenId);
+    assert.equal(result.estimatedWaitMinutes, 20);
+    assert.equal(result.averageConsultationMinutes, 10);
+  }
+  state.doctor = null;
+  const result = await service.tokenStatus(patientId, tokenId);
+  assert.equal(result.peopleAhead, 2);
+  assert.equal(result.estimatedWaitMinutes, null);
 });
