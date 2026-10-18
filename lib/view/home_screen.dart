@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../viewmodels/auth_viewmodel.dart';
 import '../viewmodels/queue_viewmodel.dart';
 import 'book_token_screen.dart';
+import 'live_queue_screen.dart';
 import 'login_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -15,6 +16,8 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  static const Color primaryColor = Color(0xFF176B87);
+
   @override
   void initState() {
     super.initState();
@@ -67,10 +70,21 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  void _openLiveQueue() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const LiveQueueScreen(),
+      ),
+    );
+  }
+
   void _showComingSoon(String feature) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('$feature will be available after API integration.'),
+        content: Text(
+          '$feature will be available after API integration.',
+        ),
       ),
     );
   }
@@ -81,11 +95,8 @@ class _HomeScreenState extends State<HomeScreen> {
     final queue = context.watch<QueueViewModel>();
     final userName = auth.user?.name ?? 'Patient';
 
-    const primaryColor = Color(0xFF176B87);
-    const backgroundColor = Color(0xFFF4F7FA);
-
     return Scaffold(
-      backgroundColor: backgroundColor,
+      backgroundColor: const Color(0xFFF4F7FA),
       appBar: AppBar(
         backgroundColor: primaryColor,
         foregroundColor: Colors.white,
@@ -162,7 +173,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     subtitle: 'View patients waiting',
                     icon: Icons.people_alt_outlined,
                     color: Colors.orange.shade800,
-                    onTap: () => _showComingSoon('Live Queue'),
+                    onTap: _openLiveQueue,
                   ),
                   _ActionCard(
                     title: 'Departments',
