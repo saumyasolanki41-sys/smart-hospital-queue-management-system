@@ -1,5 +1,7 @@
 
+import 'dart:async';
 import 'dart:convert';
+
 import 'package:http/http.dart' as http;
 
 class ApiService {
@@ -14,11 +16,11 @@ class ApiService {
   Uri _uri(String path) => Uri.parse('$baseUrl$path');
 
   Map<String, dynamic> _decodeResponse(http.Response response) {
-    final dynamic decoded;
+    dynamic decoded;
 
     try {
       decoded = jsonDecode(response.body);
-    } catch (_) {
+    } on FormatException {
       throw ApiException(
         'The server returned an invalid response.',
         response.statusCode,
@@ -32,21 +34,24 @@ class ApiService {
       );
     }
 
-    if (response.statusCode < 200 ||
-        response.statusCode >= 300 ||
-        decoded['success'] == false) {
+    final isSuccessfulStatus =
+        response.statusCode >= 200 && response.statusCode < 300;
+
+    if (!isSuccessfulStatus || decoded['success'] == false) {
       final error = decoded['error'];
 
-      final message = error is Map<String, dynamic>
+      final message = error is Map
           ? error['message']?.toString()
+          : null;
+
+      final code = error is Map
+          ? error['code']?.toString()
           : null;
 
       throw ApiException(
         message ?? 'Request failed. Please try again.',
         response.statusCode,
-        error is Map<String, dynamic>
-            ? error['code']?.toString()
-            : null,
+        code,
       );
     }
 
@@ -61,7 +66,7 @@ class ApiService {
       final response = await _client
           .post(
             _uri(path),
-            headers: {
+            headers: const {
               'Content-Type': 'application/json',
               'Accept': 'application/json',
             },
@@ -72,6 +77,10 @@ class ApiService {
       return _decodeResponse(response);
     } on ApiException {
       rethrow;
+    } on TimeoutException {
+      throw ApiException(
+        'The request timed out. Please try again.',
+      );
     } catch (_) {
       throw ApiException(
         'Unable to connect to the server. Check your internet connection.',
@@ -93,12 +102,19 @@ class ApiService {
       }
 
       final response = await _client
-          .get(_uri(path), headers: headers)
+          .get(
+            _uri(path),
+            headers: headers,
+          )
           .timeout(const Duration(seconds: 20));
 
       return _decodeResponse(response);
     } on ApiException {
       rethrow;
+    } on TimeoutException {
+      throw ApiException(
+        'The request timed out. Please try again.',
+      );
     } catch (_) {
       throw ApiException(
         'Unable to connect to the server. Check your internet connection.',
@@ -106,7 +122,7 @@ class ApiService {
     }
   }
 
-  // Check backend and database connection.
+  // Check backend health.
   Future<Map<String, dynamic>> checkHealth() {
     return _get('/api/health');
   }
@@ -124,14 +140,14 @@ class ApiService {
     });
   }
 
-  // Verify registration OTP and create the account.
+  // Verify registration OTP.
   Future<Map<String, dynamic>> verifyRegistration({
     required String email,
     required String otp,
   }) {
     return _post('/api/auth/register/verify', {
       'email': email.trim().toLowerCase(),
-      'otp': otp,
+      'otp': otp.trim(),
     });
   }
 
@@ -146,14 +162,14 @@ class ApiService {
     });
   }
 
-  // Verify login OTP and receive the application token.
+  // Verify login OTP and receive an access token.
   Future<Map<String, dynamic>> verifyLogin({
     required String challengeId,
     required String otp,
   }) {
     return _post('/api/auth/login/verify', {
       'challengeId': challengeId,
-      'otp': otp,
+      'otp': otp.trim(),
     });
   }
 
@@ -176,7 +192,7 @@ class ApiService {
     );
   }
 
-  // Request a password reset OTP.
+  // Request a password-reset OTP.
   Future<Map<String, dynamic>> forgotPassword({
     required String email,
   }) {
@@ -185,7 +201,7 @@ class ApiService {
     });
   }
 
-  // Reset the password using the OTP.
+  // Reset password using the OTP.
   Future<Map<String, dynamic>> resetPassword({
     required String email,
     required String otp,
@@ -193,7 +209,7 @@ class ApiService {
   }) {
     return _post('/api/auth/reset-password', {
       'email': email.trim().toLowerCase(),
-      'otp': otp,
+      'otp': otp.trim(),
       'newPassword': newPassword,
     });
   }
