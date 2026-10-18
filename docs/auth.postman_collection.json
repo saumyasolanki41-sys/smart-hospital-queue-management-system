@@ -82,6 +82,11 @@
       "key": "calledTokenId",
       "value": "",
       "type": "string"
+    },
+    {
+      "key": "ambulanceId",
+      "value": "",
+      "type": "string"
     }
   ],
   "item": [
@@ -930,6 +935,130 @@
             },
             "header": [],
             "description": "Staff only. Returns skipped tokens for today; doctor role is limited to its linked profile."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Ambulance records",
+      "description": "Backend vehicle inventory only. All calls need admin/receptionist staffAccessToken; create is admin only. No external integrations. New revision must be deployed first. See AMBULANCE-API.md.",
+      "item": [
+        {
+          "name": "Create ambulance (admin)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/ambulances",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"vehicleNumber\": \"UP14AB1234\",\n  \"driverName\": \"Test Driver\",\n  \"driverPhone\": \"+919876543210\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  const response = pm.response.json();",
+                  "  pm.collectionVariables.set(\"ambulanceId\", response.data.ambulance._id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List available ambulances",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/ambulances?status=available&page=1&limit=20",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Ambulance detail",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/ambulances/{{ambulanceId}}",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update status and location",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/api/ambulances/{{ambulanceId}}",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"busy\",\n  \"location\": {\n    \"latitude\": 28.6692,\n    \"longitude\": 77.4538\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
           },
           "response": []
         }

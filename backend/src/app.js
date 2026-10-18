@@ -5,6 +5,7 @@ const hospitalRoutes = require('./routes/hospital.routes');
 const queueRoutes = require('./routes/queue.routes');
 const staffQueueRoutes = require('./routes/staff-queue.routes');
 const dashboardRoutes = require('./routes/dashboard.routes');
+const ambulanceRoutes = require('./routes/ambulance.routes');
 const cors = require('cors');
 const app = express();
 app.use(cors({
@@ -20,6 +21,7 @@ app.use('/api', hospitalRoutes);
 app.use('/api/queue', queueRoutes);
 app.use('/api/staff/queues', staffQueueRoutes);
 app.use('/api/staff/dashboard', dashboardRoutes);
+app.use('/api/ambulances', ambulanceRoutes);
 
 app.get('/api/health', (req, res) => {
   const connected = mongoose.connection.readyState === 1;
