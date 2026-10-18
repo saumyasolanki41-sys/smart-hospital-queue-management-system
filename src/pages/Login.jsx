@@ -1,14 +1,25 @@
 // src/pages/Login.jsx
 import { useState } from "react";
 import { Link, Navigate, useLocation } from "react-router-dom";
-import { login, verifyLogin, validateEmail, isValidOtp, errorMessage } from "../api/auth";
+import {
+  login,
+  verifyLogin,
+  validateEmail,
+  isValidOtp,
+  errorMessage,
+  roleMatches,
+  optionForRole,
+  roleMismatchMessage,
+} from "../api/auth";
 import { useAuth, ROLE_HOME } from "../components/context/AuthContext";
+import GoogleButton from "../components/auth/GoogleButton";
 import {
   AuthShell,
   TextField,
   PasswordField,
   Banner,
   SubmitButton,
+  RoleSelector,
   useCooldown,
 } from "../components/auth/AuthParts";
 
@@ -18,6 +29,7 @@ export default function Login() {
   const registeredEmail = location.state?.registeredEmail;
 
   const [step, setStep] = useState("credentials"); // "credentials" -> "otp"
+  const [role, setRole] = useState("patient"); // which portal: patient | doctor | staff
   const [form, setForm] = useState({ email: registeredEmail ?? "", password: "" });
   const [challengeId, setChallengeId] = useState("");
   const [otp, setOtp] = useState("");
@@ -76,7 +88,15 @@ export default function Login() {
     setServerError("");
     try {
       const data = await verifyLogin({ challengeId, otp });
-      signIn(data);
+      if (!roleMatches(role, data.user.role)) {
+        // Wrong option selected: don't sign in. Switch to the right one and start over.
+        setRole(optionForRole(data.user.role));
+        setServerError(roleMismatchMessage(data.user.role));
+        setStep("credentials");
+        setLoading(false);
+        return;
+      }
+      signIn(data); // the redirect above takes over once the user is set
     } catch (err) {
       setServerError(errorMessage(err));
       setLoading(false);
@@ -144,6 +164,7 @@ export default function Login() {
       }
     >
       <form onSubmit={handleCredentials} className="space-y-4" noValidate>
+        <RoleSelector value={role} onChange={setRole} />
         {registeredEmail && !serverError && (
           <Banner type="success">Account created. Log in to continue.</Banner>
         )}
@@ -167,6 +188,7 @@ export default function Login() {
         />
         <SubmitButton loading={loading}>Send login code</SubmitButton>
       </form>
+      <GoogleButton role={role} onWrongRole={(actual) => setRole(optionForRole(actual))} />
     </AuthShell>
   );
 }

@@ -1,6 +1,8 @@
+// src/components/auth/AuthParts.jsx — shared UI for the Login and Register pages.
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { HeartPulse, Eye, EyeOff, Loader, Info } from "lucide-react";
+import { HeartPulse, Eye, EyeOff, Loader, Info, User, Stethoscope, ClipboardList } from "lucide-react";
+import { ROLE_OPTIONS } from "../../api/auth";
 
 const inputClass = (error) =>
   `w-full rounded-xl border bg-white px-4 py-2.5 text-slate-900 outline-none transition focus:ring-2 focus:ring-teal-500/40 ${
@@ -97,6 +99,41 @@ export function SubmitButton({ loading, children, ...props }) {
       {loading && <Loader className="h-4 w-4 animate-spin" />}
       {children}
     </button>
+  );
+}
+
+const ROLE_ICONS = { patient: User, doctor: Stethoscope, staff: ClipboardList };
+
+export function RoleSelector({ value, onChange }) {
+  return (
+    <div>
+      <span className={labelClass}>I am a</span>
+      <div
+        role="radiogroup"
+        aria-label="Account type"
+        className="grid grid-cols-3 gap-1 rounded-2xl bg-slate-100 p-1"
+      >
+        {ROLE_OPTIONS.map(({ value: optionValue, label }) => {
+          const Icon = ROLE_ICONS[optionValue];
+          const active = optionValue === value;
+          return (
+            <button
+              key={optionValue}
+              type="button"
+              role="radio"
+              aria-checked={active}
+              onClick={() => onChange(optionValue)}
+              className={`flex items-center justify-center gap-1.5 rounded-xl px-2 py-2 text-sm font-medium transition ${
+                active ? "bg-white text-teal-700 shadow" : "text-slate-600 hover:text-slate-800"
+              }`}
+            >
+              <Icon className="h-4 w-4" />
+              {label}
+            </button>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 

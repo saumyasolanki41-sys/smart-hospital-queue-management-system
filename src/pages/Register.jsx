@@ -11,19 +11,22 @@ import {
   errorMessage,
 } from "../api/auth";
 import { useAuth, ROLE_HOME } from "../components/context/AuthContext";
+import GoogleButton from "../components/auth/GoogleButton";
 import {
   AuthShell,
   TextField,
   PasswordField,
   Banner,
   SubmitButton,
+  RoleSelector,
   useCooldown,
 } from "../components/auth/AuthParts";
 
 export default function Register() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [step, setStep] = useState("details");  
+  const [step, setStep] = useState("details"); // "details" -> "otp"
+  const [role, setRole] = useState("patient"); // only patients can self-register
   const [form, setForm] = useState({ name: "", email: "", password: "" });
   const [otp, setOtp] = useState("");
   const [errors, setErrors] = useState({});
@@ -36,6 +39,7 @@ export default function Register() {
   const email = form.email.trim().toLowerCase();
   const update = (field) => (e) => setForm((f) => ({ ...f, [field]: e.target.value }));
 
+  // Step 1 request, also used for "Resend code" (the docs say to call register again).
   async function sendCode() {
     setLoading(true);
     setServerError("");
@@ -148,35 +152,58 @@ export default function Register() {
         </>
       }
     >
-      <form onSubmit={handleDetails} className="space-y-4" noValidate>
-        {serverError && <Banner>{serverError}</Banner>}
-        <TextField
-          id="name"
-          label="Full name"
-          value={form.name}
-          onChange={update("name")}
-          error={errors.name}
-          autoComplete="name"
-        />
-        <TextField
-          id="email"
-          type="email"
-          label="Email"
-          value={form.email}
-          onChange={update("email")}
-          error={errors.email}
-          autoComplete="email"
-        />
-        <PasswordField
-          id="password"
-          label="Password"
-          value={form.password}
-          onChange={update("password")}
-          error={errors.password}
-          autoComplete="new-password"
-        />
-        <SubmitButton loading={loading}>Send verification code</SubmitButton>
-      </form>
+      <div className="space-y-5">
+        <RoleSelector value={role} onChange={setRole} />
+
+        {role !== "patient" ? (
+          <div className="space-y-4">
+            <Banner type="info">
+              {role === "doctor" ? "Doctor" : "Staff"} accounts are created by the hospital
+              administrator, so there is no sign-up here. Once your account is ready, log in
+              with the "{role === "doctor" ? "Doctor" : "Staff"}" option.
+            </Banner>
+            <Link
+              to="/login"
+              className="block w-full rounded-xl bg-teal-700 px-6 py-3 text-center font-medium text-white shadow-md transition-colors hover:bg-teal-800"
+            >
+              Go to login
+            </Link>
+          </div>
+        ) : (
+          <>
+            <form onSubmit={handleDetails} className="space-y-4" noValidate>
+              {serverError && <Banner>{serverError}</Banner>}
+              <TextField
+                id="name"
+                label="Full name"
+                value={form.name}
+                onChange={update("name")}
+                error={errors.name}
+                autoComplete="name"
+              />
+              <TextField
+                id="email"
+                type="email"
+                label="Email"
+                value={form.email}
+                onChange={update("email")}
+                error={errors.email}
+                autoComplete="email"
+              />
+              <PasswordField
+                id="password"
+                label="Password"
+                value={form.password}
+                onChange={update("password")}
+                error={errors.password}
+                autoComplete="new-password"
+              />
+              <SubmitButton loading={loading}>Send verification code</SubmitButton>
+            </form>
+            <GoogleButton />
+          </>
+        )}
+      </div>
     </AuthShell>
   );
 }

@@ -56,6 +56,8 @@ export const login = (payload) => request("/api/auth/login", { method: "POST", b
 export const verifyLogin = (payload) =>
   request("/api/auth/login/verify", { method: "POST", body: payload });
 export const getMe = (token) => request("/api/auth/me", { token });
+export const googleLogin = (idToken) =>
+  request("/api/auth/google", { method: "POST", body: { idToken } });
 
 // ---- Friendly error text ---------------------------------------------------
 
@@ -70,6 +72,12 @@ export function errorMessage(err) {
       return "That code is incorrect or has expired.";
     case "ACCOUNT_EXISTS":
       return "An account with this email already exists. Try logging in.";
+    case "INVALID_GOOGLE_TOKEN":
+      return "Google sign-in failed. Please try again.";
+    case "ACCOUNT_LINK_REQUIRED":
+      return "This email already has a password account. Please log in with your email and password instead.";
+    case "EMAIL_VERIFICATION_REQUIRED":
+      return "We couldn't verify this Google account's email. Please use another sign-in method.";
     default:
       return err.message || "Something went wrong. Please try again.";
   }
@@ -96,3 +104,25 @@ export function validateNewPassword(value) {
 }
 
 export const isValidOtp = (value) => /^\d{6}$/.test(value);
+
+// ---- Role options on the login/register pages ------------------------------
+// The real role always comes from the backend. The selector only picks which
+// portal you are signing in to; a mismatch is rejected after login.
+
+export const ROLE_OPTIONS = [
+  { value: "patient", label: "Patient", roles: ["patient"] },
+  { value: "doctor", label: "Doctor", roles: ["doctor"] },
+  { value: "staff", label: "Staff", roles: ["receptionist", "admin"] },
+];
+
+export const roleMatches = (selected, actualRole) =>
+  ROLE_OPTIONS.find((o) => o.value === selected)?.roles.includes(actualRole) ?? false;
+
+export const optionForRole = (actualRole) =>
+  ROLE_OPTIONS.find((o) => o.roles.includes(actualRole))?.value ?? "patient";
+
+export function roleMismatchMessage(actualRole) {
+  const option = ROLE_OPTIONS.find((o) => o.roles.includes(actualRole));
+  const label = option?.label ?? actualRole;
+  return `This is a ${label.toLowerCase()} account. Select "${label}" to log in.`;
+}
