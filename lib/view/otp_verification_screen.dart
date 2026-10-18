@@ -29,6 +29,8 @@ class _OtpVerificationScreenState
   final _formKey = GlobalKey<FormState>();
   final _otpController = TextEditingController();
 
+  bool _isSubmitting = false;
+
   @override
   void dispose() {
     _otpController.dispose();
@@ -36,53 +38,65 @@ class _OtpVerificationScreenState
   }
 
   Future<void> _verifyOtp() async {
+    if (_isSubmitting) return;
+
     if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _isSubmitting = true);
 
     final auth = context.read<AuthViewModel>();
     final otp = _otpController.text.trim();
 
-    bool success;
+    try {
+      final bool success;
 
-    if (widget.type == OtpVerificationType.registration) {
-      success = await auth.verifyRegistration(
-        email: widget.email,
-        otp: otp,
-      );
-    } else {
-      success = await auth.verifyLogin(otp: otp);
-    }
+      if (widget.type == OtpVerificationType.registration) {
+        success = await auth.verifyRegistration(
+          email: widget.email,
+          otp: otp,
+        );
+      } else {
+        success = await auth.verifyLogin(
+          otp: otp,
+        );
+      }
 
-    if (!mounted) return;
+      if (!mounted) return;
 
-    if (!success) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            auth.errorMessage ?? 'OTP verification failed.',
+      if (!success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              auth.errorMessage ?? 'OTP verification failed.',
+            ),
           ),
-        ),
-      );
-      return;
-    }
+        );
+        return;
+      }
 
-    if (widget.type == OtpVerificationType.registration) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Registration successful. Please log in.',
+      if (widget.type == OtpVerificationType.registration) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Registration successful. Please log in.',
+            ),
           ),
-        ),
-      );
+        );
 
-      Navigator.of(context).popUntil(
-        (route) => route.isFirst,
-      );
-    } else {
-      Navigator.pushNamedAndRemoveUntil(
-        context,
-        '/home',
-        (route) => false,
-      );
+        Navigator.of(context).popUntil(
+          (route) => route.isFirst,
+        );
+      } else {
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          '/home',
+          (route) => false,
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+      }
     }
   }
 
@@ -93,6 +107,8 @@ class _OtpVerificationScreenState
 
     final isRegistration =
         widget.type == OtpVerificationType.registration;
+
+    final isBusy = _isSubmitting || auth.isLoading;
 
     return Scaffold(
       appBar: AppBar(
@@ -111,12 +127,15 @@ class _OtpVerificationScreenState
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const SizedBox(height: 30),
+
                 Icon(
                   Icons.mark_email_read_outlined,
                   size: 84,
                   color: colors.primary,
                 ),
+
                 const SizedBox(height: 24),
+
                 Text(
                   'Enter your OTP',
                   textAlign: TextAlign.center,
@@ -127,7 +146,9 @@ class _OtpVerificationScreenState
                         fontWeight: FontWeight.bold,
                       ),
                 ),
+
                 const SizedBox(height: 12),
+
                 Text(
                   'Enter the six-digit code sent to ${widget.email}.',
                   textAlign: TextAlign.center,
@@ -135,19 +156,21 @@ class _OtpVerificationScreenState
                     color: colors.onSurfaceVariant,
                   ),
                 ),
+
                 const SizedBox(height: 32),
+
                 TextFormField(
                   controller: _otpController,
                   keyboardType: TextInputType.number,
                   textInputAction: TextInputAction.done,
                   maxLength: 6,
                   autofocus: true,
+                  autocorrect: false,
+                  enableSuggestions: false,
                   decoration: const InputDecoration(
                     labelText: 'Six-digit OTP',
                     hintText: '000000',
-                    prefixIcon: Icon(
-                      Icons.password_outlined,
-                    ),
+                    prefixIcon: Icon(Icons.password_outlined),
                     counterText: '',
                     border: OutlineInputBorder(),
                   ),
@@ -160,20 +183,23 @@ class _OtpVerificationScreenState
                     return null;
                   },
                   onFieldSubmitted: (_) {
-                    if (!auth.isLoading) _verifyOtp();
+                    if (!isBusy) {
+                      _verifyOtp();
+                    }
                   },
                 ),
+
                 const SizedBox(height: 24),
+
                 ElevatedButton(
-                  onPressed:
-                      auth.isLoading ? null : _verifyOtp,
+                  onPressed: isBusy ? null : _verifyOtp,
                   style: ElevatedButton.styleFrom(
                     minimumSize: const Size(
                       double.infinity,
                       52,
                     ),
                   ),
-                  child: auth.isLoading
+                  child: isBusy
                       ? const SizedBox(
                           height: 22,
                           width: 22,
@@ -183,11 +209,12 @@ class _OtpVerificationScreenState
                         )
                       : const Text('Verify OTP'),
                 ),
+
                 const SizedBox(height: 16),
+
                 Text(
-                  'OTP expires after 5 minutes. '
-                  'If it expires, return to the previous screen '
-                  'and request a new code.',
+                  'Your OTP expires after 5 minutes. '
+                  'If it expires, you may need to request a new code.',
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
