@@ -1,12 +1,13 @@
 import { useState } from "react";
-import { Link, NavLink } from "react-router-dom";
-import { HeartPulse, Menu, X } from "lucide-react";
+import { Link, NavLink, useNavigate } from "react-router-dom";
+import { HeartPulse, Menu, X, User, LogOut } from "lucide-react";
+import { useAuth, ROLE_HOME } from "../context/AuthContext";
 
 const NAV_LINKS = [
   { label: "Home", to: "/" },
-  { label: "About", href: "/#about" },
+  { label: "About", to: "/about" },
   { label: "Features", href: "/#features" },
-  { label: "How It Works", href: "/#how-it-works" },
+  { label: "How It Works", href: "/about#how-it-works" },
 ];
 
 const baseLink = "border-b-2 pb-1 text-sm font-medium transition-colors";
@@ -48,11 +49,68 @@ function NavItem({ link, onClick, mobile = false }) {
   );
 }
 
+function AuthActions({ onNavigate, mobile = false }) {
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
+
+  function handleLogout() {
+    signOut();
+    onNavigate?.();
+    navigate("/");
+  }
+
+  const wrapper = mobile ? "mt-3 flex gap-3" : "flex items-center gap-3";
+  const fill = mobile ? "flex-1" : "";
+
+  if (user) {
+    return (
+      <div className={wrapper}>
+        <Link
+          to={ROLE_HOME[user.role] ?? "/"}
+          onClick={onNavigate}
+          title={`${user.name} (${user.role})`}
+          className={`${fill} inline-flex items-center justify-center gap-2 rounded-lg bg-teal-50 px-4 py-2 text-sm font-medium text-teal-800 transition-colors hover:bg-teal-100`}
+        >
+          <User className="h-4 w-4" />
+          <span className="max-w-[9rem] truncate">{user.name.split(" ")[0]}</span>
+        </Link>
+        <button
+          type="button"
+          onClick={handleLogout}
+          className={`${fill} inline-flex items-center justify-center gap-2 rounded-lg border border-teal-600 px-4 py-2 text-sm font-medium text-teal-700 transition-colors hover:bg-teal-50`}
+        >
+          <LogOut className="h-4 w-4" />
+          Log out
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className={wrapper}>
+      <Link
+        to="/login"
+        onClick={onNavigate}
+        className={`${fill} rounded-lg border border-teal-600 px-5 py-2 text-center text-sm font-medium text-teal-700 transition-colors hover:bg-teal-50`}
+      >
+        Login
+      </Link>
+      <Link
+        to="/login"
+        onClick={onNavigate}
+        className={`${fill} rounded-lg bg-teal-700 px-5 py-2 text-center text-sm font-medium text-white shadow-sm transition-colors hover:bg-teal-800`}
+      >
+        Get Started
+      </Link>
+    </div>
+  );
+}
+
 export default function Navbar() {
   const [open, setOpen] = useState(false);
 
   return (
-    <header className="sticky relative z-20">
+    <header className="relative z-20">
       <nav className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2">
@@ -71,20 +129,9 @@ export default function Navbar() {
           ))}
         </ul>
 
-        {/* Desktop buttons */}
-        <div className="hidden items-center gap-3 md:flex">
-          <Link
-            to="/login"
-            className="rounded-lg border border-teal-600 px-5 py-2 text-sm font-medium text-teal-700 transition-colors hover:bg-teal-50"
-          >
-            Login
-          </Link>
-          <Link
-            to="/login"
-            className="rounded-lg bg-teal-700 px-5 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-teal-800"
-          >
-            Get Started
-          </Link>
+        {/* Desktop actions */}
+        <div className="hidden md:block">
+          <AuthActions />
         </div>
 
         {/* Mobile toggle */}
@@ -109,22 +156,7 @@ export default function Navbar() {
               </li>
             ))}
           </ul>
-          <div className="mt-3 flex gap-3">
-            <Link
-              to="/login"
-              onClick={() => setOpen(false)}
-              className="flex-1 rounded-lg border border-teal-600 py-2 text-center text-sm font-medium text-teal-700"
-            >
-              Login
-            </Link>
-            <Link
-              to="/login"
-              onClick={() => setOpen(false)}
-              className="flex-1 rounded-lg bg-teal-700 py-2 text-center text-sm font-medium text-white"
-            >
-              Get Started
-            </Link>
-          </div>
+          <AuthActions mobile onNavigate={() => setOpen(false)} />
         </div>
       )}
     </header>

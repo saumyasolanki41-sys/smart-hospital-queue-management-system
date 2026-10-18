@@ -1,4 +1,3 @@
-// src/pages/Login.jsx
 import { useState } from "react";
 import { Link, Navigate, useLocation } from "react-router-dom";
 import {
@@ -28,8 +27,8 @@ export default function Login() {
   const { user, signIn } = useAuth();
   const registeredEmail = location.state?.registeredEmail;
 
-  const [step, setStep] = useState("credentials"); // "credentials" -> "otp"
-  const [role, setRole] = useState("patient"); // which portal: patient | doctor | staff
+  const [step, setStep] = useState("credentials"); 
+  const [role, setRole] = useState("patient"); 
   const [form, setForm] = useState({ email: registeredEmail ?? "", password: "" });
   const [challengeId, setChallengeId] = useState("");
   const [otp, setOtp] = useState("");
@@ -38,13 +37,11 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [cooldown, startCooldown] = useCooldown();
 
-  // Already signed in (this also handles the redirect right after a successful login).
-  if (user) return <Navigate to={ROLE_HOME[user.role] ?? "/"} replace />;
+  if (user) return <Navigate to={location.state?.from ?? ROLE_HOME[user.role] ?? "/"} replace />;
 
   const email = form.email.trim().toLowerCase();
   const update = (field) => (e) => setForm((f) => ({ ...f, [field]: e.target.value }));
 
-  // Step 1 request, also used for "Resend code". Always keep the latest challengeId.
   async function requestCode() {
     setLoading(true);
     setServerError("");
@@ -89,14 +86,13 @@ export default function Login() {
     try {
       const data = await verifyLogin({ challengeId, otp });
       if (!roleMatches(role, data.user.role)) {
-        // Wrong option selected: don't sign in. Switch to the right one and start over.
         setRole(optionForRole(data.user.role));
         setServerError(roleMismatchMessage(data.user.role));
         setStep("credentials");
         setLoading(false);
         return;
       }
-      signIn(data); // the redirect above takes over once the user is set
+      signIn(data);
     } catch (err) {
       setServerError(errorMessage(err));
       setLoading(false);

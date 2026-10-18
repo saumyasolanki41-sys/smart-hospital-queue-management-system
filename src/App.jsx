@@ -1,6 +1,7 @@
 import { Routes, Route } from "react-router-dom";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import { AuthProvider } from "./components/context/AuthContext";
+import ProtectedRoute from "./components/layout/ProtectedRoute";
 import LandingPage from "./pages/LandingPage";
 import About from "./pages/About";
 import Login from "./pages/Login";
@@ -14,11 +15,17 @@ export default function App() {
     <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
       <AuthProvider>
         <Routes>
+          {/* Public */}
           <Route path="/" element={<LandingPage />} />
           <Route path="/about" element={<About />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          <Route path="/home" element={<Home />} />
+
+          {/* Any signed-in user */}
+          <Route element={<ProtectedRoute />}>
+            <Route path="/home" element={<Home />} />
+          </Route>
+          {/* Role-specific routes */}
         </Routes>
       </AuthProvider>
     </GoogleOAuthProvider>
