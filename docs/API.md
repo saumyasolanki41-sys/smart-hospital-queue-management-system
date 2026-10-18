@@ -1,6 +1,7 @@
 # Password and email OTP login
 
 Department and doctor endpoints are documented in [HOSPITAL-API.md](HOSPITAL-API.md).
+Patient queue tokens are documented in [QUEUE-API.md](QUEUE-API.md).
 
 For the complete frontend/mobile handoff, including registration, Google sign-in,
 network setup and importable Postman requests, see [AUTH-INTEGRATION.md](AUTH-INTEGRATION.md)

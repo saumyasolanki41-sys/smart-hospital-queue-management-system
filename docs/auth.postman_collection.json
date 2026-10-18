@@ -62,6 +62,11 @@
       "key": "doctorId",
       "value": "",
       "type": "string"
+    },
+    {
+      "key": "queueTokenId",
+      "value": "",
+      "type": "string"
     }
   ],
   "item": [
@@ -594,6 +599,116 @@
                   "language": "json"
                 }
               }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Patient queue",
+      "description": "New revision must be deployed first. Log in as a patient, not admin. Set doctorId from an available doctor profile. See QUEUE-API.md.",
+      "item": [
+        {
+          "name": "Join queue (patient)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/queue/tokens",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"doctorId\": \"{{doctorId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  const response = pm.response.json();",
+                  "  pm.collectionVariables.set(\"queueTokenId\", response.data.token._id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "My tokens today",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/queue/tokens/mine",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "My token status",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/queue/tokens/{{queueTokenId}}",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Cancel my waiting token",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/api/queue/tokens/{{queueTokenId}}/cancel",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
             }
           },
           "response": []
