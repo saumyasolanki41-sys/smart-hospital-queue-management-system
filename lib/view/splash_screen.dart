@@ -1,6 +1,8 @@
-
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../viewmodels/auth_viewmodel.dart';
+import 'login_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -13,12 +15,31 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
+    _initializeApp();
+  }
 
-    Timer(const Duration(seconds: 3), () {
-      if (mounted) {
-        // Replace this with your LoginScreen or HomeScreen navigation.
-      }
-    });
+  Future<void> _initializeApp() async {
+    await Future.delayed(const Duration(seconds: 3));
+
+    if (!mounted) return;
+
+    final auth = context.read<AuthViewModel>();
+    final isLoggedIn = await auth.restoreSession();
+
+    if (!mounted) return;
+
+    if (isLoggedIn) {
+      Navigator.of(context).pushNamedAndRemoveUntil(
+        '/home',
+        (route) => false,
+      );
+    } else {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (_) => const LoginScreen(),
+        ),
+      );
+    }
   }
 
   @override
@@ -26,7 +47,6 @@ class _SplashScreenState extends State<SplashScreen> {
     return Scaffold(
       body: Stack(
         children: [
-          // Background
           Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
@@ -40,8 +60,6 @@ class _SplashScreenState extends State<SplashScreen> {
               ),
             ),
           ),
-
-          // Decorative waves
           Positioned(
             top: -80,
             left: -70,
@@ -63,7 +81,6 @@ class _SplashScreenState extends State<SplashScreen> {
               ),
             ),
           ),
-
           Positioned(
             bottom: -100,
             left: -50,
@@ -86,14 +103,10 @@ class _SplashScreenState extends State<SplashScreen> {
               ),
             ),
           ),
-
-          // Main content
           SafeArea(
             child: Column(
               children: [
                 const Spacer(flex: 4),
-
-                // Medical heart logo
                 Container(
                   width: 150,
                   height: 140,
@@ -130,10 +143,7 @@ class _SplashScreenState extends State<SplashScreen> {
                     ],
                   ),
                 ),
-
                 const SizedBox(height: 32),
-
-                // App name
                 RichText(
                   textAlign: TextAlign.center,
                   text: const TextSpan(
@@ -158,9 +168,7 @@ class _SplashScreenState extends State<SplashScreen> {
                     ],
                   ),
                 ),
-
                 const SizedBox(height: 5),
-
                 const Text(
                   'Queue Management System',
                   textAlign: TextAlign.center,
@@ -170,9 +178,7 @@ class _SplashScreenState extends State<SplashScreen> {
                     fontWeight: FontWeight.w400,
                   ),
                 ),
-
                 const SizedBox(height: 55),
-
                 const Text(
                   'Less waiting. More care.',
                   style: TextStyle(
@@ -180,9 +186,7 @@ class _SplashScreenState extends State<SplashScreen> {
                     color: Color(0xFF69889B),
                   ),
                 ),
-
                 const SizedBox(height: 30),
-
                 Container(
                   width: 48,
                   height: 3,
@@ -191,19 +195,14 @@ class _SplashScreenState extends State<SplashScreen> {
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
-
                 const Spacer(flex: 5),
-
-                // Loading indicator
                 const CircularProgressIndicator(
                   valueColor: AlwaysStoppedAnimation<Color>(
                     Color(0xFF32C9D7),
                   ),
                   strokeWidth: 4,
                 ),
-
                 const SizedBox(height: 20),
-
                 const Text(
                   'Starting...',
                   style: TextStyle(
@@ -211,7 +210,6 @@ class _SplashScreenState extends State<SplashScreen> {
                     color: Colors.white,
                   ),
                 ),
-
                 const SizedBox(height: 45),
               ],
             ),
@@ -222,7 +220,6 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 }
 
-// Top decorative wave
 class TopWaveClipper extends CustomClipper<Path> {
   @override
   Path getClip(Size size) {
@@ -251,7 +248,6 @@ class TopWaveClipper extends CustomClipper<Path> {
   }
 }
 
-// Bottom decorative wave
 class BottomWaveClipper extends CustomClipper<Path> {
   @override
   Path getClip(Size size) {
