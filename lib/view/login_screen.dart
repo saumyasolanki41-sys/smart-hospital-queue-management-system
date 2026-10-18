@@ -20,6 +20,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordController = TextEditingController();
 
   bool _obscurePassword = true;
+  bool _isSubmitting = false;
 
   @override
   void dispose() {
@@ -29,37 +30,45 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _login() async {
+    if (_isSubmitting) return;
     if (!_formKey.currentState!.validate()) return;
 
-    final auth = context.read<AuthViewModel>();
+    setState(() => _isSubmitting = true);
 
+    final auth = context.read<AuthViewModel>();
     final email = _emailController.text.trim();
 
-    final success = await auth.login(
-      email: email,
-      password: _passwordController.text,
-    );
-
-    if (!mounted) return;
-
-    if (success) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => OtpVerificationScreen(
-            type: OtpVerificationType.login,
-            email: email,
-          ),
-        ),
+    try {
+      final success = await auth.login(
+        email: email,
+        password: _passwordController.text,
       );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            auth.errorMessage ?? 'Login failed. Please try again.',
+
+      if (!mounted) return;
+
+      if (success) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => OtpVerificationScreen(
+              type: OtpVerificationType.login,
+              email: email,
+            ),
           ),
-        ),
-      );
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              auth.errorMessage ?? 'Login failed. Please try again.',
+            ),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+      }
     }
   }
 
@@ -85,6 +94,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     final auth = context.watch<AuthViewModel>();
     final colors = Theme.of(context).colorScheme;
+    final isBusy = _isSubmitting || auth.isLoading;
 
     return Scaffold(
       body: SafeArea(
@@ -112,9 +122,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     style: Theme.of(context)
                         .textTheme
                         .headlineMedium
-                        ?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                        ?.copyWith(fontWeight: FontWeight.bold),
                   ),
 
                   const SizedBox(height: 8),
@@ -122,9 +130,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   Text(
                     'Sign in to manage your hospital visits.',
                     textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: colors.onSurfaceVariant,
-                    ),
+                    style: TextStyle(color: colors.onSurfaceVariant),
                   ),
 
                   const SizedBox(height: 36),
@@ -134,6 +140,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     keyboardType: TextInputType.emailAddress,
                     textInputAction: TextInputAction.next,
                     autocorrect: false,
+                    autofillHints: const [AutofillHints.email],
                     decoration: const InputDecoration(
                       labelText: 'Email address',
                       hintText: 'Enter your email',
@@ -163,8 +170,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     controller: _passwordController,
                     obscureText: _obscurePassword,
                     textInputAction: TextInputAction.done,
+                    autofillHints: const [AutofillHints.password],
                     onFieldSubmitted: (_) {
-                      if (!auth.isLoading) _login();
+                      if (!isBusy) _login();
                     },
                     decoration: InputDecoration(
                       labelText: 'Password',
@@ -198,9 +206,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   Align(
                     alignment: Alignment.centerRight,
                     child: TextButton(
-                      onPressed: auth.isLoading
-                          ? null
-                          : _openForgotPassword,
+                      onPressed: isBusy ? null : _openForgotPassword,
                       child: const Text('Forgot Password?'),
                     ),
                   ),
@@ -208,14 +214,11 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(height: 16),
 
                   ElevatedButton(
-                    onPressed: auth.isLoading ? null : _login,
+                    onPressed: isBusy ? null : _login,
                     style: ElevatedButton.styleFrom(
-                      minimumSize: const Size(
-                        double.infinity,
-                        52,
-                      ),
+                      minimumSize: const Size(double.infinity, 52),
                     ),
-                    child: auth.isLoading
+                    child: isBusy
                         ? const SizedBox(
                             height: 22,
                             width: 22,
@@ -241,9 +244,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         child: Text("Don't have an account?"),
                       ),
                       TextButton(
-                        onPressed: auth.isLoading
-                            ? null
-                            : _openSignup,
+                        onPressed: isBusy ? null : _openSignup,
                         child: const Text('Sign Up'),
                       ),
                     ],
