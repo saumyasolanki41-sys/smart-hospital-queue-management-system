@@ -18,8 +18,8 @@ class AuthService {
     required String password,
   }) async {
     await _apiService.register(
-      name: name,
-      email: email,
+      name: name.trim(),
+      email: email.trim(),
       password: password,
     );
   }
@@ -29,11 +29,19 @@ class AuthService {
     required String otp,
   }) async {
     final response = await _apiService.verifyRegistration(
-      email: email,
-      otp: otp,
+      email: email.trim(),
+      otp: otp.trim(),
     );
 
-    final data = response['data'] as Map<String, dynamic>;
+    final data = response['data'];
+
+    if (data is! Map<String, dynamic> ||
+        data['user'] is! Map<String, dynamic>) {
+      throw ApiException(
+        'Invalid registration response from server.',
+      );
+    }
+
     final userJson = data['user'] as Map<String, dynamic>;
 
     return UserModel.fromJson(userJson);
@@ -43,16 +51,28 @@ class AuthService {
     required String email,
     required String password,
   }) async {
+    // A new login attempt must not reuse an old session.
+    _accessToken = null;
+
     final response = await _apiService.login(
-      email: email,
+      email: email.trim(),
       password: password,
     );
 
-    final data = response['data'] as Map<String, dynamic>;
+    final data = response['data'];
+
+    if (data is! Map<String, dynamic>) {
+      throw ApiException(
+        'Invalid login response from server.',
+      );
+    }
+
     final challengeId = data['challengeId']?.toString();
 
     if (challengeId == null || challengeId.isEmpty) {
-      throw ApiException('The server did not return a login challenge.');
+      throw ApiException(
+        'The server did not return a login challenge.',
+      );
     }
 
     return challengeId;
@@ -62,16 +82,33 @@ class AuthService {
     required String challengeId,
     required String otp,
   }) async {
+    _accessToken = null;
+
     final response = await _apiService.verifyLogin(
       challengeId: challengeId,
-      otp: otp,
+      otp: otp.trim(),
     );
 
-    final data = response['data'] as Map<String, dynamic>;
+    final data = response['data'];
+
+    if (data is! Map<String, dynamic>) {
+      throw ApiException(
+        'Invalid login verification response.',
+      );
+    }
+
     final token = data['accessToken']?.toString();
 
     if (token == null || token.isEmpty) {
-      throw ApiException('The server did not return an access token.');
+      throw ApiException(
+        'The server did not return an access token.',
+      );
+    }
+
+    if (data['user'] is! Map<String, dynamic>) {
+      throw ApiException(
+        'User information is missing from the response.',
+      );
     }
 
     final userJson = data['user'] as Map<String, dynamic>;
@@ -82,19 +119,35 @@ class AuthService {
     return user;
   }
 
-
   Future<UserModel> loginWithGoogle({
     required String idToken,
   }) async {
+    _accessToken = null;
+
     final response = await _apiService.loginWithGoogle(
       idToken: idToken,
     );
 
-    final data = response['data'] as Map<String, dynamic>;
+    final data = response['data'];
+
+    if (data is! Map<String, dynamic>) {
+      throw ApiException(
+        'Invalid Google login response.',
+      );
+    }
+
     final token = data['accessToken']?.toString();
 
     if (token == null || token.isEmpty) {
-      throw ApiException('The server did not return an access token.');
+      throw ApiException(
+        'The server did not return an access token.',
+      );
+    }
+
+    if (data['user'] is! Map<String, dynamic>) {
+      throw ApiException(
+        'User information is missing from the response.',
+      );
     }
 
     final userJson = data['user'] as Map<String, dynamic>;
@@ -111,43 +164,60 @@ class AuthService {
     final currentToken = token ?? _accessToken;
 
     if (currentToken == null || currentToken.isEmpty) {
-      throw ApiException('Please sign in to continue.');
+      throw ApiException(
+        'Please sign in to continue.',
+      );
     }
 
-    final response = await _apiService.getCurrentUser(
-      accessToken: currentToken,
-    );
+    try {
+      final response = await _apiService.getCurrentUser(
+        accessToken: currentToken,
+      );
 
-    final data = response['data'] as Map<String, dynamic>;
-    final userJson = data['user'] as Map<String, dynamic>;
+      final data = response['data'];
 
-    _accessToken = currentToken;
+      if (data is! Map<String, dynamic> ||
+          data['user'] is! Map<String, dynamic>) {
+        throw ApiException(
+          'Invalid current-user response.',
+        );
+      }
 
-    return UserModel.fromJson(userJson);
+      final userJson = data['user'] as Map<String, dynamic>;
+      final user = UserModel.fromJson(userJson);
+
+      _accessToken = currentToken;
+
+      return user;
+    } catch (_) {
+      // Do not retain a token rejected by the server.
+      _accessToken = null;
+      rethrow;
+    }
   }
 
   Future<void> forgotPassword({
     required String email,
   }) async {
-    await _apiService.forgotPassword(email: email);
+    await _apiService.forgotPassword(
+      email: email.trim(),
+    );
   }
 
-  
   Future<void> resetPassword({
     required String email,
     required String otp,
     required String newPassword,
   }) async {
     await _apiService.resetPassword(
-      email: email,
-      otp: otp,
+      email: email.trim(),
+      otp: otp.trim(),
       newPassword: newPassword,
     );
 
     _accessToken = null;
   }
 
- 
   void logout() {
     _accessToken = null;
   }
