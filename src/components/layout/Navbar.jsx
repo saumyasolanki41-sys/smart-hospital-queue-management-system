@@ -5,10 +5,10 @@ import { useAuth, ROLE_HOME } from "../context/AuthContext";
 
 const NAV_LINKS = [
   { label: "Home", to: "/" },
-  { label: "About", to: "/about" },
+  { label: "About", href: "/#about" },
   { label: "Departments", to: "/departments" },
   { label: "Features", href: "/#features" },
-  { label: "How It Works", href: "/about#how-it-works" },
+  { label: "How It Works", href: "/#how-it-works" },
 ];
 
 const ROLE_LINK = {
@@ -125,9 +125,13 @@ export default function Navbar() {
   const extra = user && ROLE_LINK[user.role];
   const links = NAV_LINKS.filter(
     (link) => !isStaff || !["Home", "About", "Features", "How It Works"].includes(link.label)
-  ).map((link) =>
-    link.label === "Home" ? { ...link, to: homePath } : link
-  );
+  ).map((link) => {
+    if (link.label === "Home") return { ...link, to: homePath };
+    if (link.label === "About" && user?.role === "patient") {
+      return { label: link.label, to: "/about" };
+    }
+    return link;
+  });
   if (isStaff) links.push(AMBULANCE_LINK);
   if (extra) links.push(extra);
 
