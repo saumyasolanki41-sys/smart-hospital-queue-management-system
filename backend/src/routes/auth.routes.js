@@ -1,6 +1,6 @@
 const express = require('express');
 const {
-  register, googleLogin, verifyRegistration, login, verifyLogin, getMe,
+  register, googleLogin, linkGoogle, verifyRegistration, login, verifyLogin, getMe,
   forgotPassword, resetPassword,
 } = require('../controllers/auth.controller');
 const {
@@ -14,6 +14,7 @@ const router = express.Router();
 router.post('/register', registrationLimiter, register);
 router.post('/register/verify', verificationLimiter, verifyRegistration);
 router.post('/google', googleLoginLimiter, googleLogin);
+router.post('/google/link', authenticate, googleLoginLimiter, linkGoogle);
 router.post('/login', passwordLoginLimiter, login);
 router.post('/login/verify', loginVerificationLimiter, verifyLogin);
 router.get('/me', authenticate, getMe);

@@ -1,6 +1,8 @@
 # Password and email OTP login
 
 Backend scope, review fixes and remaining verification are in [BACKEND-REVIEW.md](BACKEND-REVIEW.md).
+Existing accounts can explicitly link matching Google identities after login;
+see the linking flow in [AUTH-INTEGRATION.md](AUTH-INTEGRATION.md).
 ML setup, prediction sources and fallback behavior are in [ML-INTEGRATION.md](ML-INTEGRATION.md).
 
 Department and doctor endpoints are documented in [HOSPITAL-API.md](HOSPITAL-API.md).

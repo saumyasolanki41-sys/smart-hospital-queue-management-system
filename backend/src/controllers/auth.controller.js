@@ -77,6 +77,21 @@ async function googleLogin(req, res, next) {
     });
   }
 }
+async function linkGoogle(req, res, next) {
+  if (!req.is('application/json')) {
+    return res.status(415).json({ success: false, error: { code: 'UNSUPPORTED_MEDIA_TYPE', message: 'Use application/json.' } });
+  }
+  try {
+    const data = await googleLoginService.linkGoogle(req.user.id, req.body);
+    return res.json({ success: true, data });
+  } catch (error) {
+    const statuses = { INVALID_INPUT: 400, INVALID_GOOGLE_TOKEN: 401, UNAUTHORIZED: 401,
+      EMAIL_VERIFICATION_REQUIRED: 403, GOOGLE_EMAIL_MISMATCH: 409, GOOGLE_ALREADY_LINKED: 409,
+      GOOGLE_ACCOUNT_IN_USE: 409, ACCOUNT_CHANGED: 409 };
+    if (!Object.hasOwn(statuses, error.code)) return next(error);
+    return res.status(statuses[error.code]).json({ success: false, error: { code: error.code, message: error.message } });
+  }
+}
 async function verifyRegistration(req, res, next) {
   try {
     const data = await verificationService.verifyRegistration(req.body);
@@ -186,6 +201,6 @@ async function resetPassword(req, res, next) {
 }
 
 module.exports = {
-  register, googleLogin, verifyRegistration, login, verifyLogin, getMe,
+  register, googleLogin, linkGoogle, verifyRegistration, login, verifyLogin, getMe,
   forgotPassword, resetPassword,
 };

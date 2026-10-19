@@ -339,6 +339,40 @@
       "response": []
     },
     {
+      "name": "Link Google to current account",
+      "request": {
+        "method": "POST",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{accessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"idToken\": \"{{googleIdToken}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": "{{baseUrl}}/api/auth/google/link",
+        "description": "First complete password login + OTP for the existing account. Set accessToken to that application token, and googleIdToken to a fresh Google ID token for the same email. This explicitly links the current account. Success keeps the existing session and role. See AUTH-INTEGRATION.md. New backend revision must be deployed first."
+      },
+      "response": []
+    },
+    {
       "name": "Current user",
       "request": {
         "method": "GET",

@@ -17,7 +17,7 @@ function accountConflict() {
   );
 }
 
-async function googleLogin(body) {
+function validateBody(body) {
   if (
     !body ||
     typeof body !== 'object' ||
@@ -32,6 +32,10 @@ async function googleLogin(body) {
     );
   }
 
+}
+
+async function googleLogin(body) {
+  validateBody(body);
   const identity = await googleService.verifyGoogleToken(body.idToken);
 
   tokenService.getJwtKey();
@@ -80,4 +84,42 @@ async function googleLogin(body) {
   };
 }
 
-module.exports = { googleLogin };
+async function linkGoogle(userId, body) {
+  validateBody(body);
+  const identity = await googleService.verifyGoogleToken(body.idToken);
+  await User.init();
+  const user = await User.findById(userId).select('email emailVerifiedAt googleSubject');
+  if (!user || !user.emailVerifiedAt) {
+    throw loginError(401, 'UNAUTHORIZED', 'Log in again before linking Google.');
+  }
+  if (user.email.toLowerCase() !== identity.email.toLowerCase()) {
+    throw loginError(409, 'GOOGLE_EMAIL_MISMATCH', 'Choose the Google account with the same email as your current account.');
+  }
+  if (user.googleSubject && user.googleSubject !== identity.googleSubject) {
+    throw loginError(409, 'GOOGLE_ALREADY_LINKED', 'A different Google identity is already linked to your account.');
+  }
+  const response = { googleLinked: true, message: 'Google linked successfully. You can now sign in with Google.' };
+  if (user.googleSubject === identity.googleSubject) return response;
+  try {
+    const updated = await User.updateOne({
+      _id: user._id, email: user.email, emailVerifiedAt: user.emailVerifiedAt,
+      googleSubject: { $exists: false },
+    }, { $set: { googleSubject: identity.googleSubject } }, {
+      runValidators: true, overwriteImmutable: true,
+    });
+    if (updated.modifiedCount !== 1) {
+      const current = await User.findById(userId).select('googleSubject');
+      if (current?.googleSubject !== identity.googleSubject) {
+        throw loginError(409, 'ACCOUNT_CHANGED', 'Account changed. Log in again before linking Google.');
+      }
+    }
+  } catch (error) {
+    if (error.code === 11000) {
+      throw loginError(409, 'GOOGLE_ACCOUNT_IN_USE', 'This Google identity is already linked to another account.');
+    }
+    throw error;
+  }
+  return response;
+}
+
+module.exports = { googleLogin, linkGoogle };

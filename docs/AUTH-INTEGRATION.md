@@ -50,8 +50,8 @@ Native mobile HTTP calls are not subject to browser CORS; Flutter Web is.
 
 ## Endpoint overview
 
-Every POST below uses `Content-Type: application/json`. Only `/me` needs the
-application's Bearer access token. Do not send extra fields such as `role`.
+Every POST below uses `Content-Type: application/json`. `/me` and `/google/link`
+need the application's Bearer access token. Do not send extra fields such as `role`.
 
 | Method | Path | Success | Purpose |
 | --- | --- | --- | --- |
@@ -60,6 +60,7 @@ application's Bearer access token. Do not send extra fields such as `role`.
 | POST | `/api/auth/login` | 202 | Check password and request login OTP |
 | POST | `/api/auth/login/verify` | 200 | Verify login OTP and receive access token |
 | POST | `/api/auth/google` | 200 | Exchange Google ID token for application access token |
+| POST | `/api/auth/google/link` | 200 | Link matching Google identity to the authenticated account |
 | GET | `/api/auth/me` | 200 | Read current signed-in user |
 | POST | `/api/auth/forgot-password` | 202 | Request password reset OTP |
 | POST | `/api/auth/reset-password` | 200 | Set a new password using reset OTP |
@@ -188,10 +189,57 @@ verified. Never put a Google client secret in the client app.
 
 New Google accounts become patients. If the email already belongs to a separate
 password account, the API returns 409 `ACCOUNT_LINK_REQUIRED`; show the original
-login option. Account linking is not implemented. Google-only accounts use Google
+login option, then offer the explicit linking flow below. Google-only accounts use Google
 sign-in rather than password login/reset. Non-Gmail identities without a verified
 Workspace domain can return 403 `EMAIL_VERIFICATION_REQUIRED`; no additional
 verification flow for these Google identities is implemented yet.
+
+### Link Google to an existing account
+
+On ACCOUNT_LINK_REQUIRED, show email/password login. Complete the existing login
+OTP flow to get an application accessToken. Then show an explicit Link Google
+action, obtain a fresh Google ID token for the same email, and call:
+
+```text
+POST /api/auth/google/link
+Authorization: Bearer EXISTING_ACCOUNT_ACCESS_TOKEN
+Content-Type: application/json
+```
+
+```json
+{ "idToken": "FRESH_GOOGLE_ID_TOKEN" }
+```
+
+The Google ID token goes in the body; the backend application token goes in the
+Authorization header. Never swap them. The request cannot select a target user
+or role: the server links only the authenticated account, after Google signature,
+audience and authoritative verified-email checks. Google email must match the
+current account email. This does not automatically link accounts just by email.
+
+Success 200 returns `data.googleLinked: true` and a message. Continue using the
+current application session; no new access token is returned. Future Google
+sign-in through `/api/auth/google` opens the same user ID, role and records.
+An existing password remains valid, including its OTP login flow. Linking does
+not create a password for Google-only users or merge/delete user records.
+Staff accounts may explicitly link their own matching Google identity too.
+
+Repeating the same link is safe. A different identity cannot overwrite an existing
+link. The unique Google subject index prevents linking one identity to two users.
+The schema remains immutable by default; only this guarded missing-subject update
+allows initializing the Google subject. No unlink/change-identity endpoint exists.
+
+Additional errors: 409 GOOGLE_EMAIL_MISMATCH (select matching Google account),
+GOOGLE_ALREADY_LINKED, GOOGLE_ACCOUNT_IN_USE or ACCOUNT_CHANGED. 401 requires a
+valid login/Google token; 403 EMAIL_VERIFICATION_REQUIRED follows existing Google
+identity rules; 415 requires JSON. The existing Google request limiter applies.
+No token/password/Google subject is returned by the linking endpoint. Backend
+tests verify HTTP authorization, rejected input, ownership, idempotency, conflicts
+and preserved password/role with a mocked Google verifier. A real browser Google
+link still requires a fresh Google token from the frontend and deployment first.
+
+Frontend sequence: Google login conflict -> password plus OTP login -> explicit
+Link Google button -> Google credential callback -> authenticated link request ->
+show linked confirmation. Do not automatically retry linking on every page load.
 
 ## 4. Read current user
 
