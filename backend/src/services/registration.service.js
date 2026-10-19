@@ -68,7 +68,7 @@ async function requestRegistration(body) {
       },
       {
         upsert: true,
-        new: true,
+        returnDocument: 'after',
         runValidators: true,
       }
     );

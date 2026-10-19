@@ -12,7 +12,9 @@ https://smart-hospital-queue-management-system-production.up.railway.app
 ```
 
 The supplied Postman collection defaults to this shared URL. Local developers can
-change `baseUrl` to `http://localhost:5000`. Public health and missing/invalid-token
+change `baseUrl` to `http://localhost:8080` when the backend uses `PORT=8080`.
+The code and `.env.example` default to 5000; match the actual server port.
+Public health and missing/invalid-token
 checks were verified on 2026-10-17. Login and email flows must also be tested
 against this hosted URL before treating the full hosted authentication flow as verified.
 
@@ -20,14 +22,14 @@ Set one configurable API base URL in each client, without a trailing slash.
 
 | Client location | Development base URL |
 | --- | --- |
-| Browser on the backend computer | `http://localhost:5000` |
-| Android Studio standard emulator on the backend computer | `http://10.0.2.2:5000` |
-| Physical phone or teammate computer on the same network | `http://BACKEND_COMPUTER_LAN_IP:5000` |
+| Browser on the backend computer | `http://localhost:8080` |
+| Android Studio standard emulator on the backend computer | `http://10.0.2.2:8080` |
+| Physical phone or teammate computer on the same network | `http://BACKEND_COMPUTER_LAN_IP:8080` |
 | Remote teammate over the internet | Shared deployed HTTPS URL, when available |
 
 `localhost` always refers to the device running the client. Sharing a localhost
 URL does not give another developer access to your backend. LAN use requires the
-backend to be running, both devices on a reachable network, and port 5000 allowed
+backend to be running, both devices on a reachable network, and its listening port allowed
 through the host firewall. Mobile platform network settings may also need to allow
 local HTTP during development. Use HTTPS for a shared deployed environment.
 

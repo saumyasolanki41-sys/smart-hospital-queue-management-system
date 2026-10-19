@@ -102,7 +102,7 @@ async function requestLogin(body) {
       },
       {
         upsert: true,
-        new: true,
+        returnDocument: 'after',
         runValidators: true,
       }
     );

@@ -24,9 +24,9 @@ function validateInput(body, resetting) {
     throw resetError('VALIDATION_ERROR', 'Send a valid email address.');
   }
   if (resetting && (typeof body.otp !== 'string' || !/^\d{6}$/.test(body.otp) ||
-      typeof body.newPassword !== 'string' || body.newPassword.length < 8 ||
+      typeof body.newPassword !== 'string' || body.newPassword.length < 8 || body.newPassword.trim().length === 0 ||
       Buffer.byteLength(body.newPassword, 'utf8') > 72)) {
-    throw resetError('VALIDATION_ERROR', 'Send a six-digit OTP and a password of at least 8 characters, up to 72 bytes.');
+    throw resetError('VALIDATION_ERROR', 'Send a six-digit OTP and a password of at least 8 characters, up to 72 bytes, not only whitespace.');
   }
   return body.email.trim().toLowerCase();
 }

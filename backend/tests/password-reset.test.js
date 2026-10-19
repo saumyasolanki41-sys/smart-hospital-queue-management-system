@@ -200,9 +200,17 @@ test('validation rejects unexpected fields, non-string OTP and invalid passwords
     await assert.rejects(forgotPassword(body), { code: 'VALIDATION_ERROR' });
   }
   for (const body of [{ ...input, otp: 123456 }, { ...input, newPassword: 'short' },
-    { ...input, newPassword: 'a'.repeat(73) }, { ...input, role: 'admin' }]) {
+    { ...input, newPassword: 'a'.repeat(73) }, { ...input, newPassword: ' '.repeat(8) },
+    { ...input, newPassword: '\t'.repeat(8) }, { ...input, role: 'admin' }]) {
     await assert.rejects(resetPassword(body), { code: 'VALIDATION_ERROR' });
   }
   assert.equal(transaction.mock.callCount(), 0);
   assert.equal(write.mock.callCount(), 0);
+});
+
+test('password reset preserves meaningful leading and trailing spaces when hashing', async (t) => {
+  const { hashPassword } = setup(t);
+  const newPassword = '  NewPassword123!  ';
+  await resetPassword({ ...input, newPassword });
+  assert.deepEqual(hashPassword.mock.calls[0].arguments, [newPassword, 12]);
 });

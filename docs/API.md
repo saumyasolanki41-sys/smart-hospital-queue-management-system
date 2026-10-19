@@ -1,5 +1,7 @@
 # Password and email OTP login
 
+Backend scope, review fixes and remaining verification are in [BACKEND-REVIEW.md](BACKEND-REVIEW.md).
+
 Department and doctor endpoints are documented in [HOSPITAL-API.md](HOSPITAL-API.md).
 Patient queue tokens are documented in [QUEUE-API.md](QUEUE-API.md).
 Staff queue management is documented in [STAFF-QUEUE-API.md](STAFF-QUEUE-API.md).
@@ -12,7 +14,9 @@ For the complete frontend/mobile handoff, including registration, Google sign-in
 network setup and importable Postman requests, see [AUTH-INTEGRATION.md](AUTH-INTEGRATION.md)
 and [auth.postman_collection.json](auth.postman_collection.json).
 
-Local API base: `http://localhost:5000`. Send JSON with `Content-Type: application/json`.
+Current local API base: `http://localhost:8080` with `PORT=8080` in the local `.env`.
+The code and `.env.example` default to 5000; always match the port printed by your server.
+Send JSON with `Content-Type: application/json`.
 Production clients must use HTTPS. OTPs, passwords and tokens must never be logged.
 
 ## POST /api/auth/login
