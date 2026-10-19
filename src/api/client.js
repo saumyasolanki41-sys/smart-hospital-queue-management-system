@@ -1,4 +1,4 @@
-    
+
 const BASE_URL = (
   import.meta.env.VITE_API_BASE_URL ||
   "https://smart-hospital-queue-management-system-production.up.railway.app"
@@ -35,7 +35,7 @@ export async function request(path, { method = "GET", body, token } = {}) {
     json = await res.json();
   } catch {
 
-    }
+  }
 
   if (!res.ok || !json?.success) {
     throw new ApiError(json?.error?.message || "Something went wrong. Please try again.", {
