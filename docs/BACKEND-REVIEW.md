@@ -33,7 +33,7 @@ server logout endpoint is implemented; access tokens expire after 15 minutes.
 - Registration/login challenge updates use returnDocument after instead of the
   deprecated new option that was producing Mongoose warnings.
 - Local authentication examples now use the project's current 8080 setup and
-  explain that the source/.env.example default remains 5000.
+  use 8080. The source/.env.example default was subsequently aligned to 8080.
 
 ## Verification and limits
 

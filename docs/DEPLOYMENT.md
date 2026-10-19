@@ -77,6 +77,5 @@ development setup. Multi-instance deployment needs a shared rate-limit store.
 5. Verify invalid/expired tokens are rejected and browser requests pass CORS.
 6. Give teammates the HTTPS base URL. Update the Postman collection's `baseUrl`.
 
-No live deployment or Brevo delivery has been verified yet. The standalone
-`check-mail.js` and `send-test-mail.js` scripts test Gmail SMTP only; use the API
-flows to verify Brevo integration.
+Use the API flows above to verify email delivery and Google login on the deployed
+revision. The optional standalone SMTP and Google test helpers have been removed.

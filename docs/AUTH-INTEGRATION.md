@@ -13,7 +13,7 @@ https://smart-hospital-queue-management-system-production.up.railway.app
 
 The supplied Postman collection defaults to this shared URL. Local developers can
 change `baseUrl` to `http://localhost:8080` when the backend uses `PORT=8080`.
-The code and `.env.example` default to 5000; match the actual server port.
+The code and `.env.example` default to 8080; match the actual server port.
 Public health and missing/invalid-token
 checks were verified on 2026-10-17. Login and email flows must also be tested
 against this hosted URL before treating the full hosted authentication flow as verified.

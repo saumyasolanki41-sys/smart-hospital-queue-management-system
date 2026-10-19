@@ -15,7 +15,7 @@ network setup and importable Postman requests, see [AUTH-INTEGRATION.md](AUTH-IN
 and [auth.postman_collection.json](auth.postman_collection.json).
 
 Current local API base: `http://localhost:8080` with `PORT=8080` in the local `.env`.
-The code and `.env.example` default to 5000; always match the port printed by your server.
+The code and `.env.example` default to 8080; always match the port printed by your server.
 Send JSON with `Content-Type: application/json`.
 Production clients must use HTTPS. OTPs, passwords and tokens must never be logged.
 
