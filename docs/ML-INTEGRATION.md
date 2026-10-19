@@ -150,6 +150,21 @@ requires a fresh vehicle location and an owner/staff token. No runtime dependenc
 
 ## Next steps for the team
 
+Hosted verification on 2026-10-19 used temporary test patients, an isolated test
+doctor, queue tokens and an ambulance request. The real hosted queue flow passed:
+one consultation was called, a different patient booked a waiting token, and its
+status returned source ml with a 10.34 minute estimate. Another patient's access
+to that token returned 404 as expected. Temporary records were deleted afterward
+and zero remaining fixture records were confirmed.
+
+The initial hosted ambulance check hit routing-provider HTTP 403. After the
+correct active key was saved, the direct local routing check and the hosted
+assigned-request ETA both passed. Hosted ETA returned source ml, reason null,
+36.88 minutes and a 16.354 km road distance for synthetic test coordinates.
+Completing the test request released the vehicle to available. All temporary
+accounts, vehicle and request records were deleted and zero remaining fixture
+records were confirmed. These smoke tests verify integration, not model accuracy.
+
 1. Add ML_SERVICE_URL locally and in Railway; restart/redeploy. Test an owned
    waiting token's status and inspect prediction.source/reason.
 2. Generate routing key, add it privately to both environments.
