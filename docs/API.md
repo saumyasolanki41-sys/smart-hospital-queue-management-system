@@ -4,6 +4,7 @@ Department and doctor endpoints are documented in [HOSPITAL-API.md](HOSPITAL-API
 Patient queue tokens are documented in [QUEUE-API.md](QUEUE-API.md).
 Staff queue management is documented in [STAFF-QUEUE-API.md](STAFF-QUEUE-API.md).
 Staff dashboard counts are documented in [DASHBOARD-API.md](DASHBOARD-API.md).
+Doctor dashboard counts are documented in [DOCTOR-DASHBOARD-API.md](DOCTOR-DASHBOARD-API.md).
 Ambulance records and location are documented in [AMBULANCE-API.md](AMBULANCE-API.md).
 Patient transport and staff assignments are documented in [AMBULANCE-REQUEST-API.md](AMBULANCE-REQUEST-API.md).
 

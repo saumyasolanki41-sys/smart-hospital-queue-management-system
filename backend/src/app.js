@@ -5,6 +5,7 @@ const hospitalRoutes = require('./routes/hospital.routes');
 const queueRoutes = require('./routes/queue.routes');
 const staffQueueRoutes = require('./routes/staff-queue.routes');
 const dashboardRoutes = require('./routes/dashboard.routes');
+const doctorDashboardRoutes = require('./routes/doctor-dashboard.routes');
 const ambulanceRoutes = require('./routes/ambulance.routes');
 const ambulanceRequestRoutes = require('./routes/ambulance-request.routes');
 const cors = require('cors');
@@ -22,6 +23,7 @@ app.use('/api', hospitalRoutes);
 app.use('/api/queue', queueRoutes);
 app.use('/api/staff/queues', staffQueueRoutes);
 app.use('/api/staff/dashboard', dashboardRoutes);
+app.use('/api/doctor/dashboard', doctorDashboardRoutes);
 app.use('/api/ambulances', ambulanceRoutes);
 app.use('/api/ambulance-requests', ambulanceRequestRoutes);
 

@@ -92,6 +92,11 @@
       "key": "ambulanceRequestId",
       "value": "",
       "type": "string"
+    },
+    {
+      "key": "doctorAccessToken",
+      "value": "",
+      "type": "string"
     }
   ],
   "item": [
@@ -1305,6 +1310,31 @@
                 }
               }
             }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Doctor dashboard",
+      "description": "Set doctorAccessToken from a doctor-role login linked by an admin to a doctor profile. Local baseUrl: http://localhost:8080. Hosted use requires deployment. See DOCTOR-DASHBOARD-API.md.",
+      "item": [
+        {
+          "name": "My doctor dashboard",
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{doctorAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [],
+            "url": "{{baseUrl}}/api/doctor/dashboard"
           },
           "response": []
         }
