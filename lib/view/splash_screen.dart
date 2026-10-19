@@ -43,10 +43,14 @@ class _SplashScreenState extends State<SplashScreen> {
 
     if (!mounted) return;
 
-    Navigator.of(context).pushNamedAndRemoveUntil(
-      destination,
-      (route) => false,
-    );
+    try {
+      await Navigator.of(context).pushNamedAndRemoveUntil(
+        destination,
+        (route) => false,
+      );
+    } catch (error) {
+      debugPrint('Navigation failed: $error');
+    }
   }
 
   @override
@@ -67,7 +71,6 @@ class _SplashScreenState extends State<SplashScreen> {
               ),
             ),
           ),
-
           Positioned(
             top: -80,
             left: -70,
@@ -89,7 +92,6 @@ class _SplashScreenState extends State<SplashScreen> {
               ),
             ),
           ),
-
           Positioned(
             bottom: -100,
             left: -50,
@@ -112,12 +114,10 @@ class _SplashScreenState extends State<SplashScreen> {
               ),
             ),
           ),
-
           SafeArea(
             child: Column(
               children: [
                 const Spacer(flex: 4),
-
                 SizedBox(
                   width: 150,
                   height: 140,
@@ -129,7 +129,6 @@ class _SplashScreenState extends State<SplashScreen> {
                         size: 145,
                         color: Color(0xFFB5F0F3),
                       ),
-
                       ShaderMask(
                         shaderCallback: (bounds) =>
                             const LinearGradient(
@@ -146,7 +145,6 @@ class _SplashScreenState extends State<SplashScreen> {
                           color: Colors.white,
                         ),
                       ),
-
                       const Icon(
                         Icons.add,
                         size: 78,
@@ -155,9 +153,7 @@ class _SplashScreenState extends State<SplashScreen> {
                     ],
                   ),
                 ),
-
                 const SizedBox(height: 32),
-
                 RichText(
                   textAlign: TextAlign.center,
                   text: const TextSpan(
@@ -182,9 +178,7 @@ class _SplashScreenState extends State<SplashScreen> {
                     ],
                   ),
                 ),
-
                 const SizedBox(height: 5),
-
                 const Text(
                   'Queue Management System',
                   textAlign: TextAlign.center,
@@ -194,9 +188,7 @@ class _SplashScreenState extends State<SplashScreen> {
                     fontWeight: FontWeight.w400,
                   ),
                 ),
-
                 const SizedBox(height: 55),
-
                 const Text(
                   'Less waiting. More care.',
                   style: TextStyle(
@@ -204,9 +196,7 @@ class _SplashScreenState extends State<SplashScreen> {
                     color: Color(0xFF69889B),
                   ),
                 ),
-
                 const SizedBox(height: 30),
-
                 Container(
                   width: 48,
                   height: 3,
@@ -215,18 +205,14 @@ class _SplashScreenState extends State<SplashScreen> {
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
-
                 const Spacer(flex: 5),
-
                 const CircularProgressIndicator(
                   valueColor: AlwaysStoppedAnimation<Color>(
                     Color(0xFF32C9D7),
                   ),
                   strokeWidth: 4,
                 ),
-
                 const SizedBox(height: 20),
-
                 const Text(
                   'Starting...',
                   style: TextStyle(
@@ -234,7 +220,6 @@ class _SplashScreenState extends State<SplashScreen> {
                     color: Colors.white,
                   ),
                 ),
-
                 const SizedBox(height: 45),
               ],
             ),
@@ -268,9 +253,7 @@ class TopWaveClipper extends CustomClipper<Path> {
   }
 
   @override
-  bool shouldReclip(covariant TopWaveClipper oldClipper) {
-    return false;
-  }
+  bool shouldReclip(covariant TopWaveClipper oldClipper) => false;
 }
 
 class BottomWaveClipper extends CustomClipper<Path> {
@@ -297,7 +280,5 @@ class BottomWaveClipper extends CustomClipper<Path> {
   }
 
   @override
-  bool shouldReclip(covariant BottomWaveClipper oldClipper) {
-    return false;
-  }
+  bool shouldReclip(covariant BottomWaveClipper oldClipper) => false;
 }

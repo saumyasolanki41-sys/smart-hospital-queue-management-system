@@ -21,16 +21,18 @@ class HospitalQueueApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(
+        ChangeNotifierProvider<AuthViewModel>(
           create: (_) => AuthViewModel(),
         ),
-        ChangeNotifierProvider(
+        ChangeNotifierProvider<QueueViewModel>(
           create: (_) => QueueViewModel(),
         ),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
         title: 'Smart Hospital Queue',
+        initialRoute: '/',
+        themeMode: ThemeMode.system,
         theme: ThemeData(
           useMaterial3: true,
           colorScheme: ColorScheme.fromSeed(
@@ -54,8 +56,6 @@ class HospitalQueueApp extends StatelessWidget {
             brightness: Brightness.dark,
           ),
         ),
-        themeMode: ThemeMode.system,
-        initialRoute: '/',
         routes: {
           '/': (context) => const SplashScreen(),
           '/login': (context) => const LoginScreen(),

@@ -4,17 +4,13 @@ import 'package:flutter/foundation.dart';
 import '../models/user_model.dart';
 import '../services/api_service.dart';
 import '../services/auth_service.dart';
-import '../services/session_service.dart';
 
 class AuthViewModel extends ChangeNotifier {
   final AuthService _authService;
-  final SessionService _sessionService;
 
   AuthViewModel({
     AuthService? authService,
-    SessionService? sessionService,
-  })  : _authService = authService ?? AuthService(),
-        _sessionService = sessionService ?? SessionService();
+  }) : _authService = authService ?? AuthService();
 
   UserModel? _user;
   String? _challengeId;
@@ -107,11 +103,8 @@ class AuthViewModel extends ChangeNotifier {
     _pendingEmail = null;
     _user = null;
     _isAuthenticated = false;
-    _authService.logout();
 
     try {
-      await _sessionService.clearToken();
-
       final challenge = await _authService.login(
         email: email,
         password: password,
@@ -135,7 +128,8 @@ class AuthViewModel extends ChangeNotifier {
     final challenge = _challengeId;
 
     if (challenge == null || challenge.isEmpty) {
-      _errorMessage = 'Please log in again to request a new OTP.';
+      _errorMessage =
+          'Please log in again to request a new OTP.';
       notifyListeners();
       return false;
     }
@@ -149,16 +143,6 @@ class AuthViewModel extends ChangeNotifier {
         otp: otp,
       );
 
-      final token = _authService.accessToken;
-
-      if (token == null || token.isEmpty) {
-        throw ApiException(
-          'The server did not return an access token.',
-        );
-      }
-
-      await _sessionService.saveToken(token);
-
       _user = user;
       _isAuthenticated = true;
       _challengeId = null;
@@ -170,10 +154,9 @@ class AuthViewModel extends ChangeNotifier {
 
       _user = null;
       _isAuthenticated = false;
-      _authService.logout();
 
       try {
-        await _sessionService.clearToken();
+        await _authService.logout();
       } catch (_) {
         // Preserve the original authentication error.
       }
@@ -192,24 +175,11 @@ class AuthViewModel extends ChangeNotifier {
 
     _user = null;
     _isAuthenticated = false;
-    _authService.logout();
 
     try {
-      await _sessionService.clearToken();
-
       final user = await _authService.loginWithGoogle(
         idToken: idToken,
       );
-
-      final token = _authService.accessToken;
-
-      if (token == null || token.isEmpty) {
-        throw ApiException(
-          'The server did not return an access token.',
-        );
-      }
-
-      await _sessionService.saveToken(token);
 
       _user = user;
       _isAuthenticated = true;
@@ -222,10 +192,9 @@ class AuthViewModel extends ChangeNotifier {
 
       _user = null;
       _isAuthenticated = false;
-      _authService.logout();
 
       try {
-        await _sessionService.clearToken();
+        await _authService.logout();
       } catch (_) {
         // Preserve the original authentication error.
       }
@@ -241,18 +210,7 @@ class AuthViewModel extends ChangeNotifier {
     _clearError();
 
     try {
-      final token = await _sessionService.getToken();
-
-      if (token == null || token.isEmpty) {
-        _user = null;
-        _isAuthenticated = false;
-        _authService.logout();
-        return false;
-      }
-
-      final user = await _authService.getCurrentUser(
-        token: token,
-      );
+      final user = await _authService.restoreSession();
 
       _user = user;
       _isAuthenticated = true;
@@ -261,12 +219,11 @@ class AuthViewModel extends ChangeNotifier {
     } catch (_) {
       _user = null;
       _isAuthenticated = false;
-      _authService.logout();
 
       try {
-        await _sessionService.clearToken();
+        await _authService.logout();
       } catch (_) {
-        // The session could not be cleared from storage.
+        // Session cleanup failed.
       }
 
       return false;
@@ -309,8 +266,6 @@ class AuthViewModel extends ChangeNotifier {
         newPassword: newPassword,
       );
 
-      await _sessionService.clearToken();
-
       _user = null;
       _isAuthenticated = false;
       _challengeId = null;
@@ -330,11 +285,10 @@ class AuthViewModel extends ChangeNotifier {
     _clearError();
 
     try {
-      await _sessionService.clearToken();
+      await _authService.logout();
     } catch (error) {
       _setError(error);
     } finally {
-      _authService.logout();
       _user = null;
       _challengeId = null;
       _pendingEmail = null;
