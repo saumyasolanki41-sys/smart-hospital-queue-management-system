@@ -3,7 +3,7 @@ import { Clock, Bell, Check, X, SkipForward } from "lucide-react";
 
 const STATUS_CONFIG = {
   waiting: { label: "Waiting", icon: Clock, style: "bg-yellow-100 text-yellow-800" },
-  called: { label: "Called", icon: Bell, style: "bg-blue-100 text-blue-800" },
+  called: { label: "Called", icon: Bell, style: "bg-primary/10 text-primary/80" },
   completed: { label: "Completed", icon: Check, style: "bg-green-100 text-green-800" },
   cancelled: { label: "Cancelled", icon: X, style: "bg-gray-100 text-gray-700" },
   skipped: { label: "Skipped", icon: SkipForward, style: "bg-orange-100 text-orange-800" },

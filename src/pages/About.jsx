@@ -62,12 +62,12 @@ const DEPARTMENTS = [
 
 export default function About() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-sky-50 via-cyan-50 to-white">
+    <div className="min-h-screen bg-gradient-to-br from-secondary/5 via-accent/5 to-white">
 
       <main>
         {/* Intro */}
         <section id="about" className="mx-auto max-w-6xl px-6 pb-14 pt-10 md:pt-16">
-          <p className="mb-3 text-base font-medium text-teal-700">About Smart Hospital</p>
+          <p className="mb-3 text-base font-medium text-primary/70">About Smart Hospital</p>
           <h1 className="max-w-3xl text-4xl font-bold leading-tight text-slate-900 sm:text-5xl">
             Hospital visits should be about care, not crowded waiting rooms.
           </h1>
@@ -86,14 +86,14 @@ export default function About() {
           <div className="grid gap-6 md:grid-cols-3">
             {AUDIENCES.map(({ icon: Icon, title, points }) => (
               <div key={title} className="rounded-3xl bg-white/90 p-6 shadow-lg">
-                <span className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-teal-50 text-teal-700">
+                <span className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-primary/5 text-primary/70">
                   <Icon className="h-6 w-6" />
                 </span>
                 <h3 className="text-lg font-semibold text-slate-800">{title}</h3>
                 <ul className="mt-4 space-y-3">
                   {points.map((point) => (
                     <li key={point} className="flex items-start gap-2 text-sm text-slate-600">
-                      <Check className="mt-0.5 h-4 w-4 shrink-0 text-teal-600" />
+                      <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary/60" />
                       {point}
                     </li>
                   ))}
@@ -109,7 +109,7 @@ export default function About() {
           <ol className="grid gap-6 md:grid-cols-3">
             {STEPS.map((step, i) => (
               <li key={step.title} className="flex gap-4">
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-teal-700 text-sm font-semibold text-white">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/70 text-sm font-semibold text-white">
                   {i + 1}
                 </span>
                 <div>
@@ -132,7 +132,7 @@ export default function About() {
                 key={name}
                 className="flex items-center gap-4 rounded-2xl bg-white/90 p-5 shadow-md"
               >
-                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-sky-100 text-teal-700">
+                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-secondary/10 text-primary/70">
                   <Icon className="h-6 w-6" />
                 </span>
                 <div>
@@ -146,16 +146,16 @@ export default function About() {
 
         {/* Call to action */}
         <section className="mx-auto max-w-6xl px-6 pb-20">
-          <div className="flex flex-col items-start justify-between gap-6 rounded-3xl bg-teal-700 p-8 text-white md:flex-row md:items-center md:p-10">
+          <div className="flex flex-col items-start justify-between gap-6 rounded-3xl bg-primary/70 p-8 text-white md:flex-row md:items-center md:p-10">
             <div>
               <h2 className="text-2xl font-semibold">Ready to skip the wait?</h2>
-              <p className="mt-1 text-teal-50">
+              <p className="mt-1 text-primary/5">
                 Book a token and follow your turn in real time.
               </p>
             </div>
             <Link
               to="/login"
-              className="rounded-xl bg-white px-7 py-3 font-medium text-teal-800 transition-colors hover:bg-teal-50"
+              className="rounded-xl bg-white px-7 py-3 font-medium text-primary/80 transition-colors hover:bg-primary/5"
             >
               Get Started
             </Link>

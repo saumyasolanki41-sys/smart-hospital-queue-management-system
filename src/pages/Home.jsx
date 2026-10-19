@@ -20,9 +20,9 @@ function greeting() {
 
 function MiniStat({ icon: Icon, label, value }) {
   return (
-    <div className="rounded-2xl bg-sky-50 p-4">
+    <div className="rounded-2xl bg-secondary/5 p-4">
       <div className="flex items-center gap-2 text-sm text-slate-600">
-        <Icon className="h-4 w-4 text-teal-700" />
+        <Icon className="h-4 w-4 text-primary/70" />
         {label}
       </div>
       <p className="mt-1 text-xl font-bold text-slate-900">{value}</p>
@@ -38,7 +38,7 @@ function ActiveTokenCard({ token, detail }) {
     <article className="rounded-3xl bg-white/95 p-6 shadow-xl">
       <div className="flex items-start justify-between gap-4">
         <div className="flex min-w-0 items-center gap-4">
-          <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-teal-50 text-2xl font-bold text-teal-800">
+          <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-primary/5 text-2xl font-bold text-primary/80">
             #{token.tokenNumber}
           </span>
           <div className="min-w-0">
@@ -52,7 +52,7 @@ function ActiveTokenCard({ token, detail }) {
       </div>
 
       {token.status === "called" ? (
-        <p className="mt-5 rounded-2xl bg-blue-50 p-4 text-blue-900">
+        <p className="mt-5 rounded-2xl bg-primary/5 p-4 text-primary/90">
           You've been called. Please go to the doctor now.
         </p>
       ) : (
@@ -71,7 +71,7 @@ function ActiveTokenCard({ token, detail }) {
 
       <Link
         to={`/queue/${token._id}`}
-        className="mt-5 inline-flex items-center gap-2 text-sm font-medium text-teal-700 hover:underline"
+        className="mt-5 inline-flex items-center gap-2 text-sm font-medium text-primary/70 hover:underline"
       >
         View details
         <ArrowRight className="h-4 w-4" />
@@ -86,7 +86,7 @@ function ActionTile({ to, icon: Icon, title, text }) {
       to={to}
       className="flex items-center gap-4 rounded-2xl bg-white/90 p-4 shadow-md transition hover:shadow-lg"
     >
-      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-teal-50 text-teal-700">
+      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/5 text-primary/70">
         <Icon className="h-5 w-5" />
       </span>
       <span className="min-w-0">
@@ -153,12 +153,12 @@ export default function Home() {
   }, [hasActive, load]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-sky-50 via-cyan-50 to-white">
+    <div className="min-h-screen bg-gradient-to-br from-secondary/5 via-accent/5 to-white">
       <Navbar />
 
       <main className="mx-auto max-w-6xl px-6 pb-20 pt-6">
         <header className="mb-8">
-          <p className="mb-1 text-base font-medium text-teal-700">{greeting()}</p>
+          <p className="mb-1 text-base font-medium text-primary/70">{greeting()}</p>
           <h1 className="text-3xl font-bold text-slate-900 sm:text-4xl">
             Hi, {user.name.split(" ")[0]}
           </h1>
@@ -186,7 +186,7 @@ export default function Home() {
               </div>
             ) : active.length === 0 ? (
               <div className="rounded-3xl bg-white/95 p-8 text-center shadow-xl">
-                <span className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-teal-50 text-teal-700">
+                <span className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/5 text-primary/70">
                   <Ticket className="h-7 w-7" />
                 </span>
                 <h2 className="text-xl font-semibold text-slate-900">You're not in a queue right now</h2>
@@ -196,7 +196,7 @@ export default function Home() {
                 </p>
                 <Link
                   to="/departments"
-                  className="mt-6 inline-block rounded-xl bg-teal-700 px-7 py-3 font-medium text-white shadow-md transition-colors hover:bg-teal-800"
+                  className="mt-6 inline-block rounded-xl bg-primary/70 px-7 py-3 font-medium text-white shadow-md transition-colors hover:bg-primary/80"
                 >
                   Find a doctor
                 </Link>
@@ -252,7 +252,7 @@ export default function Home() {
           <section aria-label="Departments" className="mt-12">
             <div className="mb-4 flex items-baseline justify-between gap-4">
               <h2 className="text-xl font-semibold text-slate-900">Browse by department</h2>
-              <Link to="/departments" className="text-sm font-medium text-teal-700 hover:underline">
+              <Link to="/departments" className="text-sm font-medium text-primary/70 hover:underline">
                 All doctors →
               </Link>
             </div>

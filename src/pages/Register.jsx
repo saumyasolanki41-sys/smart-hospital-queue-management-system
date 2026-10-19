@@ -105,7 +105,7 @@ export default function Register() {
               setServerError("");
               setErrors({});
             }}
-            className="font-medium text-teal-700 hover:underline"
+            className="font-medium text-primary/70 hover:underline"
           >
             Use a different email
           </button>
@@ -130,7 +130,7 @@ export default function Register() {
             type="button"
             onClick={sendCode}
             disabled={cooldown > 0 || loading}
-            className="w-full text-sm font-medium text-teal-700 hover:underline disabled:cursor-not-allowed disabled:text-slate-400 disabled:no-underline"
+            className="w-full text-sm font-medium text-primary/70 hover:underline disabled:cursor-not-allowed disabled:text-slate-400 disabled:no-underline"
           >
             {cooldown > 0 ? `Resend code in ${cooldown}s` : "Resend code"}
           </button>
@@ -146,7 +146,7 @@ export default function Register() {
       footer={
         <>
           Already have an account?{" "}
-          <Link to="/login" className="font-medium text-teal-700 hover:underline">
+          <Link to="/login" className="font-medium text-primary/70 hover:underline">
             Log in
           </Link>
         </>
@@ -164,7 +164,7 @@ export default function Register() {
             </Banner>
             <Link
               to="/login"
-              className="block w-full rounded-xl bg-teal-700 px-6 py-3 text-center font-medium text-white shadow-md transition-colors hover:bg-teal-800"
+              className="block w-full rounded-xl bg-primary/70 px-6 py-3 text-center font-medium text-white shadow-md transition-colors hover:bg-primary/80"
             >
               Go to login
             </Link>

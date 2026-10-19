@@ -112,7 +112,7 @@ export default function Login() {
               setServerError("");
               setErrors({});
             }}
-            className="font-medium text-teal-700 hover:underline"
+            className="font-medium text-primary/70 hover:underline"
           >
             Back to login
           </button>
@@ -137,7 +137,7 @@ export default function Login() {
             type="button"
             onClick={requestCode}
             disabled={cooldown > 0 || loading}
-            className="w-full text-sm font-medium text-teal-700 hover:underline disabled:cursor-not-allowed disabled:text-slate-400 disabled:no-underline"
+            className="w-full text-sm font-medium text-primary/70 hover:underline disabled:cursor-not-allowed disabled:text-slate-400 disabled:no-underline"
           >
             {cooldown > 0 ? `Resend code in ${cooldown}s` : "Resend code"}
           </button>
@@ -153,7 +153,7 @@ export default function Login() {
       footer={
         <>
           New here?{" "}
-          <Link to="/register" className="font-medium text-teal-700 hover:underline">
+          <Link to="/register" className="font-medium text-primary/70 hover:underline">
             Create an account
           </Link>
         </>

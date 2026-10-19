@@ -18,20 +18,20 @@ export default function DepartmentCard({ name, description, selected, onClick, a
       aria-pressed={selected}
       className={`flex flex-col items-start rounded-2xl p-5 text-left transition ${
         selected
-          ? "bg-teal-700 text-white shadow-lg"
+          ? "bg-primary/70 text-white shadow-lg"
           : "bg-white/90 text-slate-800 shadow-md hover:shadow-lg"
       }`}
     >
       <span
         className={`mb-3 flex h-10 w-10 items-center justify-center rounded-xl ${
-          selected ? "bg-white/20" : "bg-teal-50 text-teal-700"
+          selected ? "bg-white/20" : "bg-primary/5 text-primary/70"
         }`}
       >
         <Icon className="h-5 w-5" />
       </span>
       <span className="font-semibold">{name}</span>
       {description && (
-        <span className={`mt-1 line-clamp-2 text-sm ${selected ? "text-teal-50" : "text-slate-500"}`}>
+        <span className={`mt-1 line-clamp-2 text-sm ${selected ? "text-primary/5" : "text-slate-500"}`}>
           {description}
         </span>
       )}

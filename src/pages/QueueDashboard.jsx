@@ -192,7 +192,7 @@ export default function QueueDashboard({ mode }) {
 
             {current ? (
               <>
-                <p className="mt-2 text-6xl font-bold text-teal-700">#{current.tokenNumber}</p>
+                <p className="mt-2 text-6xl font-bold text-primary/70">#{current.tokenNumber}</p>
                 <p className="mt-3 text-lg font-semibold text-slate-900">
                   {current.patient?.name ?? "Unknown patient"}
                 </p>
@@ -203,7 +203,7 @@ export default function QueueDashboard({ mode }) {
                     type="button"
                     disabled={acting}
                     onClick={() => run(() => completeToken(accessToken, doctorId, current._id))}
-                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-teal-700 px-5 py-3 font-medium text-white shadow-md transition-colors hover:bg-teal-800 disabled:opacity-60"
+                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary/70 px-5 py-3 font-medium text-white shadow-md transition-colors hover:bg-primary/80 disabled:opacity-60"
                   >
                     <Check className="h-5 w-5" />
                     Complete consultation
@@ -250,7 +250,7 @@ export default function QueueDashboard({ mode }) {
                   type="button"
                   disabled={acting || waiting.length === 0}
                   onClick={() => run(() => callNext(accessToken, doctorId))}
-                  className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-teal-700 px-5 py-3 font-medium text-white shadow-md transition-colors hover:bg-teal-800 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-primary/70 px-5 py-3 font-medium text-white shadow-md transition-colors hover:bg-primary/80 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <PhoneCall className="h-5 w-5" />
                   {waiting.length === 0 ? "No patients waiting" : "Call next patient"}
@@ -269,7 +269,7 @@ export default function QueueDashboard({ mode }) {
             </div>
 
             {waiting.length === 0 ? (
-              <p className="mt-6 rounded-2xl bg-sky-50 p-6 text-center text-slate-600">
+              <p className="mt-6 rounded-2xl bg-secondary/5 p-6 text-center text-slate-600">
                 No patients are waiting.
               </p>
             ) : (
@@ -277,16 +277,16 @@ export default function QueueDashboard({ mode }) {
                 {waiting.map((t, i) => (
                   <li
                     key={t._id}
-                    className={`flex items-center gap-4 rounded-2xl p-3 ${i === 0 ? "bg-teal-50" : "bg-slate-50"}`}
+                    className={`flex items-center gap-4 rounded-2xl p-3 ${i === 0 ? "bg-primary/5" : "bg-slate-50"}`}
                   >
-                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white text-lg font-bold text-teal-800 shadow-sm">
+                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white text-lg font-bold text-primary/80 shadow-sm">
                       #{t.tokenNumber}
                     </span>
                     <span className="min-w-0 flex-1 truncate font-medium text-slate-800">
                       {t.patient?.name ?? "Unknown patient"}
                     </span>
                     {i === 0 && (
-                      <span className="rounded-full bg-teal-700 px-2.5 py-0.5 text-xs font-medium text-white">
+                      <span className="rounded-full bg-primary/70 px-2.5 py-0.5 text-xs font-medium text-white">
                         Next
                       </span>
                     )}
@@ -306,13 +306,13 @@ export default function QueueDashboard({ mode }) {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-sky-50 via-cyan-50 to-white">
+    <div className="min-h-screen bg-gradient-to-br from-secondary/5 via-accent/5 to-white">
       <Navbar />
 
       <main className="mx-auto max-w-6xl px-6 pb-20 pt-6">
         <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
           <div>
-            <p className="mb-1 text-base font-medium text-teal-700">
+            <p className="mb-1 text-base font-medium text-primary/70">
               {queue?.date ? `Today · ${queue.date}` : "Today"}
             </p>
             <h1 className="text-3xl font-bold text-slate-900">
@@ -335,7 +335,7 @@ export default function QueueDashboard({ mode }) {
                   id="doctor"
                   value={doctorId ?? ""}
                   onChange={(e) => changeDoctor(e.target.value)}
-                  className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-500/40"
+                  className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-primary/60 focus:ring-2 focus:ring-primary/50/40"
                 >
                   {doctors.map((d) => (
                     <option key={d._id} value={d._id}>
@@ -349,7 +349,7 @@ export default function QueueDashboard({ mode }) {
               <button
                 type="button"
                 onClick={load}
-                className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-teal-700"
+                className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-primary/70"
               >
                 <RefreshCw className="h-4 w-4" />
                 {updatedAt ? `Updated ${updatedAt.toLocaleTimeString()}` : "Refresh"}

@@ -11,7 +11,7 @@ import { getDoctor } from "../api/hospital";
 const REFRESH_MS = 15000;
 
 const END_MESSAGES = {
-  called: { style: "bg-blue-50 text-blue-900", text: "You've been called. Please go to the doctor now." },
+  called: { style: "bg-primary/5 text-primary/90", text: "You've been called. Please go to the doctor now." },
   completed: { style: "bg-green-50 text-green-900", text: "Your consultation is complete. Thank you for visiting." },
   cancelled: { style: "bg-slate-100 text-slate-700", text: "You cancelled this token." },
   skipped: {
@@ -22,9 +22,9 @@ const END_MESSAGES = {
 
 function Stat({ icon: Icon, label, value, hint }) {
   return (
-    <div className="rounded-2xl bg-sky-50 p-4">
+    <div className="rounded-2xl bg-secondary/5 p-4">
       <div className="flex items-center gap-2 text-sm text-slate-600">
-        <Icon className="h-4 w-4 text-teal-700" />
+        <Icon className="h-4 w-4 text-primary/70" />
         {label}
       </div>
       <p className="mt-1 text-2xl font-bold text-slate-900">{value}</p>
@@ -119,11 +119,11 @@ export default function QueueStatus() {
     : "";
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-sky-50 via-cyan-50 to-white">
+    <div className="min-h-screen bg-gradient-to-br from-secondary/5 via-accent/5 to-white">
       <Navbar />
 
       <main className="mx-auto max-w-2xl px-6 pb-20 pt-6">
-        <Link to="/queue" className="text-sm font-medium text-teal-700 hover:underline">
+        <Link to="/queue" className="text-sm font-medium text-primary/70 hover:underline">
           ← My Queue
         </Link>
 
@@ -240,7 +240,7 @@ export default function QueueStatus() {
               {!live && (
                 <Link
                   to="/departments"
-                  className="rounded-lg bg-teal-700 px-4 py-2 text-sm font-medium text-white hover:bg-teal-800"
+                  className="rounded-lg bg-primary/70 px-4 py-2 text-sm font-medium text-white hover:bg-primary/80"
                 >
                   Join another queue
                 </Link>
@@ -249,7 +249,7 @@ export default function QueueStatus() {
               <button
                 type="button"
                 onClick={load}
-                className="ml-auto inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-teal-700"
+                className="ml-auto inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-primary/70"
               >
                 <RefreshCw className="h-4 w-4" />
                 {updatedAt ? `Updated ${updatedAt.toLocaleTimeString()}` : "Refresh"}

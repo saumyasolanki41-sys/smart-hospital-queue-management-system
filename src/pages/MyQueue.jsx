@@ -33,13 +33,13 @@ export default function MyQueue() {
   }, [load]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-sky-50 via-cyan-50 to-white">
+    <div className="min-h-screen bg-gradient-to-br from-secondary/5 via-accent/5 to-white">
       <Navbar />
 
       <main className="mx-auto max-w-2xl px-6 pb-20 pt-6">
         <div className="mb-6 flex items-end justify-between gap-4">
           <div>
-            <p className="mb-1 text-base font-medium text-teal-700">Today</p>
+            <p className="mb-1 text-base font-medium text-primary/70">Today</p>
             <h1 className="text-3xl font-bold text-slate-900">My Queue</h1>
           </div>
           <button
@@ -48,7 +48,7 @@ export default function MyQueue() {
               setLoading(true);
               load();
             }}
-            className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-teal-700"
+            className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-primary/70"
           >
             <RefreshCw className="h-4 w-4" />
             Refresh
@@ -70,7 +70,7 @@ export default function MyQueue() {
             <p className="text-slate-600">You haven't joined any queue today.</p>
             <Link
               to="/departments"
-              className="mt-4 inline-block rounded-xl bg-teal-700 px-6 py-2.5 text-sm font-medium text-white hover:bg-teal-800"
+              className="mt-4 inline-block rounded-xl bg-primary/70 px-6 py-2.5 text-sm font-medium text-white hover:bg-primary/80"
             >
               Find a doctor
             </Link>
@@ -83,7 +83,7 @@ export default function MyQueue() {
                   to={`/queue/${t._id}`}
                   className="flex items-center gap-4 rounded-2xl bg-white/90 p-5 shadow-md transition hover:shadow-lg"
                 >
-                  <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-teal-50 text-xl font-bold text-teal-800">
+                  <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-primary/5 text-xl font-bold text-primary/80">
                     #{t.tokenNumber}
                   </span>
                   <div className="min-w-0 flex-1">

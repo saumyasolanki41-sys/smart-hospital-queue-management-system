@@ -19,8 +19,8 @@ const ROLE_LINK = {
 };
 
 const baseLink = "border-b-2 pb-1 text-sm font-medium transition-colors";
-const activeLink = "border-teal-600 text-teal-700";
-const idleLink = "border-transparent text-slate-600 hover:text-teal-700";
+const activeLink = "border-primary/60 text-primary/70";
+const idleLink = "border-transparent text-slate-600 hover:text-primary/70";
 
 function NavItem({ link, onClick, mobile = false }) {
   if (link.href) {
@@ -30,7 +30,7 @@ function NavItem({ link, onClick, mobile = false }) {
         onClick={onClick}
         className={
           mobile
-            ? "block rounded-lg px-3 py-2 text-slate-700 hover:bg-teal-50"
+            ? "block rounded-lg px-3 py-2 text-slate-700 hover:bg-primary/5"
             : `${baseLink} ${idleLink}`
         }
       >
@@ -47,7 +47,7 @@ function NavItem({ link, onClick, mobile = false }) {
       className={({ isActive }) =>
         mobile
           ? `block rounded-lg px-3 py-2 ${
-              isActive ? "bg-teal-50 text-teal-700" : "text-slate-700 hover:bg-teal-50"
+              isActive ? "bg-primary/5 text-primary/70" : "text-slate-700 hover:bg-primary/5"
             }`
           : `${baseLink} ${isActive ? activeLink : idleLink}`
       }
@@ -77,7 +77,7 @@ function AuthActions({ onNavigate, mobile = false }) {
           to={ROLE_HOME[user.role] ?? "/"}
           onClick={onNavigate}
           title={`${user.name} (${user.role})`}
-          className={`${fill} inline-flex items-center justify-center gap-2 rounded-lg bg-teal-50 px-4 py-2 text-sm font-medium text-teal-800 transition-colors hover:bg-teal-100`}
+          className={`${fill} inline-flex items-center justify-center gap-2 rounded-lg bg-primary/5 px-4 py-2 text-sm font-medium text-primary/80 transition-colors hover:bg-primary/10`}
         >
           <User className="h-4 w-4" />
           <span className="max-w-[9rem] truncate">{user.name.split(" ")[0]}</span>
@@ -85,7 +85,7 @@ function AuthActions({ onNavigate, mobile = false }) {
         <button
           type="button"
           onClick={handleLogout}
-          className={`${fill} inline-flex items-center justify-center gap-2 rounded-lg border border-teal-600 px-4 py-2 text-sm font-medium text-teal-700 transition-colors hover:bg-teal-50`}
+          className={`${fill} inline-flex items-center justify-center gap-2 rounded-lg border border-primary/60 px-4 py-2 text-sm font-medium text-primary/70 transition-colors hover:bg-primary/5`}
         >
           <LogOut className="h-4 w-4" />
           Log out
@@ -99,14 +99,14 @@ function AuthActions({ onNavigate, mobile = false }) {
       <Link
         to="/login"
         onClick={onNavigate}
-        className={`${fill} rounded-lg border border-teal-600 px-5 py-2 text-center text-sm font-medium text-teal-700 transition-colors hover:bg-teal-50`}
+        className={`${fill} rounded-lg border border-primary/60 px-5 py-2 text-center text-sm font-medium text-primary/70 transition-colors hover:bg-primary/5`}
       >
         Login
       </Link>
       <Link
         to="/login"
         onClick={onNavigate}
-        className={`${fill} rounded-lg bg-teal-700 px-5 py-2 text-center text-sm font-medium text-white shadow-sm transition-colors hover:bg-teal-800`}
+        className={`${fill} rounded-lg bg-primary/70 px-5 py-2 text-center text-sm font-medium text-white shadow-sm transition-colors hover:bg-primary/80`}
       >
         Get Started
       </Link>
@@ -125,7 +125,7 @@ export default function Navbar() {
       <nav className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2">
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-teal-600 text-white">
+          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/60 text-white">
             <HeartPulse className="h-5 w-5" />
           </span>
           <span className="text-lg font-semibold text-slate-800">Smart Hospital</span>

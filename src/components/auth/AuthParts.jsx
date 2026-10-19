@@ -5,17 +5,17 @@ import { HeartPulse, Eye, EyeOff, Loader, Info, User, Stethoscope, ClipboardList
 import { ROLE_OPTIONS } from "../../api/auth";
 
 const inputClass = (error) =>
-  `w-full rounded-xl border bg-white px-4 py-2.5 text-slate-900 outline-none transition focus:ring-2 focus:ring-teal-500/40 ${
-    error ? "border-red-400" : "border-slate-200 focus:border-teal-600"
+  `w-full rounded-xl border bg-white px-4 py-2.5 text-slate-900 outline-none transition focus:ring-2 focus:ring-primary/50/40 ${
+    error ? "border-red-400" : "border-slate-200 focus:border-primary/60"
   }`;
 
 const labelClass = "mb-1.5 block text-sm font-medium text-slate-700";
 
 export function AuthShell({ title, subtitle, children, footer }) {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-sky-50 via-cyan-50 to-white px-6 py-10">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-secondary/5 via-accent/5 to-white px-6 py-10">
       <Link to="/" className="mb-6 flex items-center gap-2">
-        <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-teal-600 text-white">
+        <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/60 text-white">
           <HeartPulse className="h-5 w-5" />
         </span>
         <span className="text-lg font-semibold text-slate-800">Smart Hospital</span>
@@ -79,7 +79,7 @@ export function Banner({ type = "error", children }) {
       ? "bg-red-50 text-red-700"
       : type === "success"
       ? "bg-green-50 text-green-800"
-      : "bg-sky-50 text-sky-800";
+      : "bg-secondary/5 text-secondary/80";
   return (
     <div role={type === "error" ? "alert" : "status"} className={`flex items-start gap-2 rounded-xl p-3 text-sm ${style}`}>
       <Info className="mt-0.5 h-4 w-4 shrink-0" />
@@ -94,7 +94,7 @@ export function SubmitButton({ loading, children, ...props }) {
       type="submit"
       disabled={loading}
       {...props}
-      className="flex w-full items-center justify-center gap-2 rounded-xl bg-teal-700 px-6 py-3 font-medium text-white shadow-md transition-colors hover:bg-teal-800 disabled:cursor-not-allowed disabled:opacity-60"
+      className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary/70 px-6 py-3 font-medium text-white shadow-md transition-colors hover:bg-primary/80 disabled:cursor-not-allowed disabled:opacity-60"
     >
       {loading && <Loader className="h-4 w-4 animate-spin" />}
       {children}
@@ -124,7 +124,7 @@ export function RoleSelector({ value, onChange }) {
               aria-checked={active}
               onClick={() => onChange(optionValue)}
               className={`flex items-center justify-center gap-1.5 rounded-xl px-2 py-2 text-sm font-medium transition ${
-                active ? "bg-white text-teal-700 shadow" : "text-slate-600 hover:text-slate-800"
+                active ? "bg-white text-primary/70 shadow" : "text-slate-600 hover:text-slate-800"
               }`}
             >
               <Icon className="h-4 w-4" />

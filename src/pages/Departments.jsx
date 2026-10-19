@@ -191,12 +191,12 @@ export default function Departments() {
   else if (availableOnly) emptyMessage = "No doctors are available right now. Try turning off the filter.";
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-sky-50 via-cyan-50 to-white">
+    <div className="min-h-screen bg-gradient-to-br from-secondary/5 via-accent/5 to-white">
       <Navbar />
 
       <main className="mx-auto max-w-6xl px-6 pb-20 pt-6">
         <header className="mb-8">
-          <p className="mb-2 text-base font-medium text-teal-700">Find the right care</p>
+          <p className="mb-2 text-base font-medium text-primary/70">Find the right care</p>
           <h1 className="text-3xl font-bold text-slate-900 sm:text-4xl">Departments &amp; Doctors</h1>
           <p className="mt-3 max-w-2xl text-slate-600">
             Pick a department, choose a doctor, and join their queue without waiting at the hospital.
@@ -207,7 +207,7 @@ export default function Departments() {
           <div
             role={notice.tone === "error" ? "alert" : "status"}
             className={`mb-6 flex items-start gap-2 rounded-xl p-3 text-sm ${
-              notice.tone === "error" ? "bg-red-50 text-red-700" : "bg-sky-50 text-sky-800"
+              notice.tone === "error" ? "bg-red-50 text-red-700" : "bg-secondary/5 text-secondary/80"
             }`}
           >
             <Info className="mt-0.5 h-4 w-4 shrink-0" />
@@ -269,7 +269,7 @@ export default function Departments() {
                   type="checkbox"
                   checked={availableOnly}
                   onChange={toggleAvailable}
-                  className="h-4 w-4 accent-teal-700"
+                  className="h-4 w-4 accent-primary/70"
                 />
                 Available only
               </label>
@@ -281,7 +281,7 @@ export default function Departments() {
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Search by name or specialty"
                   aria-label="Search doctors"
-                  className="w-64 max-w-full rounded-xl border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-500/40"
+                  className="w-64 max-w-full rounded-xl border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm outline-none focus:border-primary/60 focus:ring-2 focus:ring-primary/50/40"
                 />
               </div>
             </div>
@@ -318,7 +318,7 @@ export default function Departments() {
                     type="button"
                     onClick={loadMore}
                     disabled={moreLoading}
-                    className="rounded-xl border border-teal-600 px-6 py-2.5 text-sm font-medium text-teal-700 hover:bg-teal-50 disabled:opacity-60"
+                    className="rounded-xl border border-primary/60 px-6 py-2.5 text-sm font-medium text-primary/70 hover:bg-primary/5 disabled:opacity-60"
                   >
                     {moreLoading ? "Loading…" : "Load more doctors"}
                   </button>
