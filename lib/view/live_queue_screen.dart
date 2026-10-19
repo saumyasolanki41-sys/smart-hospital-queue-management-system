@@ -1,14 +1,12 @@
-// lib/view/live_queue_screen.dart
 import 'package:flutter/material.dart';
-
 import '../models/queue_status.dart';
 import '../services/queue_service.dart';
 import '../viewmodels/live_queue_viewmodel.dart';
 
 class LiveQueueScreen extends StatefulWidget {
-  /// Id returned by the book-token API. Null/empty = no active token.
+ 
   final String? tokenId;
-  /// Optional. If omitted, the screen creates its own QueueService.
+ 
   final QueueService? queueService;
 
   const LiveQueueScreen({

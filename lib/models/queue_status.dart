@@ -1,8 +1,3 @@
-// lib/models/queue_status.dart
-//
-// ASSUMPTION: the JSON keys below are guesses. Ask Saumya for the real
-// /queue-status response and change ONLY the keys inside fromJson.
-
 class UpcomingToken {
   final String token;
   final String status;

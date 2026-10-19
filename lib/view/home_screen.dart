@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -16,16 +15,19 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  static const Color primaryColor = Color(0xFF176B87);
+  // Design tokens taken from the UI reference
+  static const Color primary = Color(0xFF1B8FB0);
+  static const Color primaryDark = Color(0xFF0E5D80);
+  static const Color tint = Color(0xFFE4F5FA);
+  static const Color ink = Color(0xFF0B2A3F);
+  static const Color muted = Color(0xFF7391A1);
+  static const Color line = Color(0xFFD8ECF3);
 
   @override
   void initState() {
     super.initState();
-
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        context.read<QueueViewModel>().checkBackendStatus();
-      }
+      if (mounted) context.read<QueueViewModel>().checkBackendStatus();
     });
   }
 
@@ -49,9 +51,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
 
     if (shouldLogout != true || !mounted) return;
-
     await context.read<AuthViewModel>().logout();
-
     if (!mounted) return;
 
     Navigator.pushAndRemoveUntil(
@@ -61,32 +61,27 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void _openBookToken() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => const BookTokenScreen(),
-      ),
-    );
-  }
+  void _openBookToken() => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const BookTokenScreen()),
+      );
 
-  void _openLiveQueue() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => const LiveQueueScreen(),
-      ),
-    );
-  }
+  void _openLiveQueue() => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const LiveQueueScreen()),
+      );
 
   void _showComingSoon(String feature) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          '$feature will be available after API integration.',
-        ),
-      ),
+      SnackBar(content: Text('$feature will be available after API integration.')),
     );
+  }
+
+  String _greeting() {
+    final h = DateTime.now().hour;
+    if (h < 12) return 'Good morning,';
+    if (h < 17) return 'Good afternoon,';
+    return 'Good evening,';
   }
 
   @override
@@ -94,158 +89,183 @@ class _HomeScreenState extends State<HomeScreen> {
     final auth = context.watch<AuthViewModel>();
     final queue = context.watch<QueueViewModel>();
     final userName = auth.user?.name ?? 'Patient';
+    final initials = userName.trim().isEmpty
+        ? 'P'
+        : userName.trim().split(' ').map((w) => w[0]).take(2).join().toUpperCase();
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF4F7FA),
-      appBar: AppBar(
-        backgroundColor: primaryColor,
-        foregroundColor: Colors.white,
-        title: const Text(
-          'Hospital Queue',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        actions: [
-          IconButton(
-            onPressed: _logout,
-            tooltip: 'Logout',
-            icon: const Icon(Icons.logout),
+      extendBody: true,
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0xFFD9F2F9), Color(0xFFF1FBFD)],
           ),
-        ],
+        ),
+        child: SafeArea(
+          child: RefreshIndicator(
+            onRefresh: queue.checkBackendStatus,
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+              children: [
+                const Text(
+                  'Home',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: ink),
+                ),
+                const SizedBox(height: 14),
+
+                // Greeting + avatar (tap avatar to logout)
+                Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(_greeting(),
+                              style: const TextStyle(fontSize: 13, color: muted)),
+                          Text(userName,
+                              style: const TextStyle(
+                                  fontSize: 19, fontWeight: FontWeight.w800, color: ink)),
+                        ],
+                      ),
+                    ),
+                    _ServerDot(queue: queue),
+                    const SizedBox(width: 10),
+                    Tooltip(
+                      message: 'Logout',
+                      child: GestureDetector(
+                        onTap: _logout,
+                        child: Container(
+                          width: 46,
+                          height: 46,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white, width: 2),
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFFBFE8F2), Color(0xFF2AA7C7)],
+                            ),
+                            boxShadow: _shadow,
+                          ),
+                          child: Text(initials,
+                              style: const TextStyle(
+                                  color: Colors.white, fontWeight: FontWeight.w700)),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 18),
+
+                // Next appointment
+                // TODO: replace placeholder values with data from your view model.
+                _NextAppointmentCard(
+                  doctor: 'Dr. Priya Sharma',
+                  department: 'General Medicine',
+                  dateTime: '12 Apr 2025 · 10:30 AM',
+                  onDetails: () => _showComingSoon('Appointment details'),
+                ),
+                const SizedBox(height: 16),
+
+                
+                Row(
+                  children: [
+                    Expanded(
+                      child: _GradientButton(
+                        label: 'Book Token',
+                        icon: Icons.confirmation_num_outlined,
+                        onTap: _openBookToken,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _GradientButton(
+                        label: 'Track Queue',
+                        icon: Icons.people_alt_outlined,
+                        onTap: _openLiveQueue,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 22),
+
+                // Departments
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('Departments',
+                        style: TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.w800, color: ink)),
+                    GestureDetector(
+                      onTap: () => _showComingSoon('Departments'),
+                      child: const Text('View All',
+                          style: TextStyle(
+                              fontSize: 13, color: primary, fontWeight: FontWeight.w600)),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _DeptTile(
+                        label: 'General\nMedicine',
+                        icon: Icons.add_box_outlined,
+                        onTap: () => _showComingSoon('General Medicine'),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _DeptTile(
+                        label: 'Cardiology',
+                        icon: Icons.favorite,
+                        onTap: () => _showComingSoon('Cardiology'),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _DeptTile(
+                        label: 'Orthopedics',
+                        icon: Icons.accessibility_new,
+                        onTap: () => _showComingSoon('Orthopedics'),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
-      body: SafeArea(
-        child: RefreshIndicator(
-          onRefresh: queue.checkBackendStatus,
-          child: ListView(
-            padding: const EdgeInsets.all(20),
-            children: [
-              Text(
-                'Hello, $userName!',
-                style: const TextStyle(
-                  fontSize: 26,
-                  fontWeight: FontWeight.bold,
-                ),
+      bottomNavigationBar: Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          border: Border(top: BorderSide(color: line)),
+        ),
+        child: SafeArea(
+          top: false,
+          child: NavigationBar(
+            height: 64,
+            backgroundColor: Colors.white,
+            indicatorColor: tint,
+            selectedIndex: 0,
+            onDestinationSelected: (i) {
+              if (i == 1) _showComingSoon('History');
+              if (i == 2) _showComingSoon('Notifications');
+              if (i == 3) _showComingSoon('Profile');
+            },
+            destinations: const [
+              NavigationDestination(
+                icon: Icon(Icons.home_outlined),
+                selectedIcon: Icon(Icons.home, color: primary),
+                label: 'Home',
               ),
-              const SizedBox(height: 6),
-              Text(
-                'Manage your hospital visit with ease.',
-                style: TextStyle(
-                  fontSize: 15,
-                  color: Colors.grey.shade700,
-                ),
-              ),
-              const SizedBox(height: 22),
-
-              _BackendStatusCard(
-                isChecking: queue.isChecking,
-                isOnline: queue.isBackendOnline,
-                errorMessage: queue.errorMessage,
-                onRetry: queue.checkBackendStatus,
-              ),
-
-              const SizedBox(height: 24),
-
-              const Text(
-                'Quick Actions',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 14),
-
-              GridView.count(
-                crossAxisCount: 2,
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                crossAxisSpacing: 14,
-                mainAxisSpacing: 14,
-                childAspectRatio: 1.05,
-                children: [
-                  _ActionCard(
-                    title: 'Book Token',
-                    subtitle: 'Request a queue token',
-                    icon: Icons.confirmation_num_outlined,
-                    color: primaryColor,
-                    onTap: _openBookToken,
-                  ),
-                  _ActionCard(
-                    title: 'Live Queue',
-                    subtitle: 'View patients waiting',
-                    icon: Icons.people_alt_outlined,
-                    color: Colors.orange.shade800,
-                    onTap: _openLiveQueue,
-                  ),
-                  _ActionCard(
-                    title: 'Departments',
-                    subtitle: 'Explore departments',
-                    icon: Icons.local_hospital_outlined,
-                    color: Colors.green.shade700,
-                    onTap: () => _showComingSoon('Departments'),
-                  ),
-                  _ActionCard(
-                    title: 'Ambulance ETA',
-                    subtitle: 'Estimate arrival time',
-                    icon: Icons.emergency_outlined,
-                    color: Colors.red.shade700,
-                    onTap: () => _showComingSoon('Ambulance ETA'),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 24),
-
-              const Text(
-                'Queue Overview',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 12),
-
-              Card(
-                elevation: 0,
-                color: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: const Padding(
-                  padding: EdgeInsets.all(20),
-                  child: Row(
-                    children: [
-                      CircleAvatar(
-                        radius: 26,
-                        backgroundColor: Color(0xFFE5F2F6),
-                        child: Icon(
-                          Icons.schedule,
-                          color: primaryColor,
-                          size: 28,
-                        ),
-                      ),
-                      SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'No active token',
-                              style: TextStyle(
-                                fontSize: 17,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            SizedBox(height: 5),
-                            Text(
-                              'Book a token to view your queue status.',
-                              style: TextStyle(color: Colors.black54),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+              NavigationDestination(icon: Icon(Icons.history), label: 'History'),
+              NavigationDestination(
+                  icon: Icon(Icons.notifications_none), label: 'Notifications'),
+              NavigationDestination(
+                  icon: Icon(Icons.person_outline), label: 'Profile'),
             ],
           ),
         ),
@@ -254,142 +274,230 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-class _BackendStatusCard extends StatelessWidget {
-  final bool isChecking;
-  final bool? isOnline;
-  final String? errorMessage;
-  final VoidCallback onRetry;
+const List<BoxShadow> _shadow = [
+  BoxShadow(color: Color(0x241B8FB0), blurRadius: 18, offset: Offset(0, 6)),
+];
 
-  const _BackendStatusCard({
-    required this.isChecking,
-    required this.isOnline,
-    required this.errorMessage,
-    required this.onRetry,
-  });
+class _ServerDot extends StatelessWidget {
+  final QueueViewModel queue;
+  const _ServerDot({required this.queue});
 
   @override
   Widget build(BuildContext context) {
-    final online = isOnline == true;
-    final color = online ? Colors.green : Colors.red;
-
-    String status;
-    if (isChecking) {
-      status = 'Checking server connection...';
-    } else if (online) {
-      status = 'Server connected';
-    } else if (isOnline == false) {
-      status = errorMessage ?? 'Server unavailable';
+    final Color color;
+    final String tip;
+    if (queue.isChecking) {
+      color = Colors.blueGrey;
+      tip = 'Checking server connection...';
+    } else if (queue.isBackendOnline == true) {
+      color = Colors.green;
+      tip = 'Server connected';
     } else {
-      status = 'Connection not checked';
+      color = Colors.red;
+      tip = queue.errorMessage ?? 'Server unavailable. Tap to retry.';
     }
 
-    return Card(
-      elevation: 0,
-      color: Colors.white,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            Icon(
-              isChecking
-                  ? Icons.sync
-                  : online
-                      ? Icons.cloud_done_outlined
-                      : Icons.cloud_off_outlined,
-              color: isChecking ? Colors.blueGrey : color,
-              size: 28,
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Backend Status',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 5),
-                  Text(
-                    status,
-                    style: TextStyle(
-                      color: Colors.grey.shade700,
-                      fontSize: 13,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            IconButton(
-              tooltip: 'Retry connection',
-              onPressed: isChecking ? null : onRetry,
-              icon: const Icon(Icons.refresh),
-            ),
-          ],
+    return Tooltip(
+      message: tip,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(20),
+        onTap: queue.isChecking ? null : queue.checkBackendStatus,
+        child: Padding(
+          padding: const EdgeInsets.all(10),
+          child: Container(
+            width: 10,
+            height: 10,
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+          ),
         ),
       ),
     );
   }
 }
 
-class _ActionCard extends StatelessWidget {
-  final String title;
-  final String subtitle;
+class _NextAppointmentCard extends StatelessWidget {
+  final String doctor;
+  final String department;
+  final String dateTime;
+  final VoidCallback onDetails;
+
+  const _NextAppointmentCard({
+    required this.doctor,
+    required this.department,
+    required this.dateTime,
+    required this.onDetails,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _HomeScreenState.line),
+        boxShadow: _shadow,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('Next Appointment',
+              style: TextStyle(fontSize: 11, color: _HomeScreenState.muted)),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: _HomeScreenState.tint,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(Icons.medical_services_outlined,
+                    color: _HomeScreenState.primary),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(doctor,
+                        style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                            color: _HomeScreenState.ink)),
+                    Text(department,
+                        style: const TextStyle(
+                            fontSize: 12, color: _HomeScreenState.muted)),
+                  ],
+                ),
+              ),
+              const Icon(Icons.chevron_right, color: _HomeScreenState.muted),
+            ],
+          ),
+          const SizedBox(height: 12),
+          const Divider(height: 1, color: _HomeScreenState.line),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              const Icon(Icons.schedule, size: 16, color: _HomeScreenState.muted),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(dateTime,
+                    style: const TextStyle(
+                        fontSize: 12, color: _HomeScreenState.muted)),
+              ),
+              GestureDetector(
+                onTap: onDetails,
+                child: const Text('View Details',
+                    style: TextStyle(
+                        fontSize: 12,
+                        color: _HomeScreenState.primary,
+                        fontWeight: FontWeight.w600)),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _GradientButton extends StatelessWidget {
+  final String label;
   final IconData icon;
-  final Color color;
   final VoidCallback onTap;
 
-  const _ActionCard({
-    required this.title,
-    required this.subtitle,
+  const _GradientButton({
+    required this.label,
     required this.icon,
-    required this.color,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 0,
-      color: Colors.white,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
+    return Material(
+      color: Colors.transparent,
+      child: Ink(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(14),
+          gradient: const LinearGradient(
+            colors: [Color(0xFF2AA7C7), _HomeScreenState.primaryDark],
+          ),
+          boxShadow: const [
+            BoxShadow(
+                color: Color(0x4D1B8FB0), blurRadius: 16, offset: Offset(0, 8)),
+          ],
+        ),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(14),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(icon, color: Colors.white, size: 18),
+                const SizedBox(width: 8),
+                Text(label,
+                    style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 14)),
+              ],
+            ),
+          ),
+        ),
       ),
-      clipBehavior: Clip.antiAlias,
+    );
+  }
+}
+
+class _DeptTile extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final VoidCallback onTap;
+
+  const _DeptTile({
+    required this.label,
+    required this.icon,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(16),
       child: InkWell(
+        borderRadius: BorderRadius.circular(16),
         onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
+        child: Container(
+          height: 104,
+          padding: const EdgeInsets.symmetric(horizontal: 6),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: _HomeScreenState.line),
+            boxShadow: _shadow,
+          ),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(icon, color: color, size: 28),
+                width: 42,
+                height: 42,
+                decoration: const BoxDecoration(
+                    color: _HomeScreenState.tint, shape: BoxShape.circle),
+                child: Icon(icon, color: _HomeScreenState.primary, size: 22),
               ),
-              const SizedBox(height: 14),
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 5),
-              Text(
-                subtitle,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey.shade600,
-                ),
-              ),
+              const SizedBox(height: 8),
+              Text(label,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      height: 1.2,
+                      color: _HomeScreenState.ink)),
             ],
           ),
         ),

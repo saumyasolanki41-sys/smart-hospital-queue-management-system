@@ -1,8 +1,5 @@
-
 import 'dart:async';
-
 import 'package:flutter/foundation.dart';
-
 import '../models/queue_status.dart';
 import '../services/queue_service.dart';
 
