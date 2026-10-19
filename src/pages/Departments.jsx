@@ -1,6 +1,6 @@
 // src/pages/Departments.jsx — departments and doctors on a single public page.
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Search, Info } from "lucide-react";
 import Navbar from "../components/layout/Navbar";
 import DepartmentCard from "../components/hospital/DepartmentCard";
@@ -33,6 +33,7 @@ function ErrorBox({ message, onRetry }) {
 export default function Departments() {
   const { user, token: accessToken, signOut } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   // Departments
   const [departments, setDepartments] = useState([]);
@@ -41,7 +42,7 @@ export default function Departments() {
   const [deptKey, setDeptKey] = useState(0); // bump to retry
 
   // Doctors + filters
-  const [selected, setSelected] = useState(null); // department _id, or null for "all"
+  const [selected, setSelected] = useState(searchParams.get("department")); // department _id, or null for "all"
   const [availableOnly, setAvailableOnly] = useState(false);
   const [search, setSearch] = useState("");
   const [doctors, setDoctors] = useState([]);
@@ -53,8 +54,8 @@ export default function Departments() {
   const [moreLoading, setMoreLoading] = useState(false);
   const [moreError, setMoreError] = useState("");
 
-  const [notice, setNotice] = useState(null); // { tone: "error" | "info", text, linkTo? }
-  const [joiningId, setJoiningId] = useState(null); // doctor being joined right now
+  const [notice, setNotice] = useState(null); 
+  const [joiningId, setJoiningId] = useState(null); 
 
   useEffect(() => {
     let ignore = false;
@@ -145,7 +146,6 @@ export default function Departments() {
         return;
       }
       if (err.code === "ALREADY_IN_QUEUE") {
-        // Take them to the token they already have with this doctor.
         try {
           const mine = await getMyTokens(accessToken);
           const existing = mine.find(
@@ -156,11 +156,11 @@ export default function Departments() {
             return;
           }
         } catch {
-          // fall through to the message below
+          
         }
         setNotice({ tone: "info", text: `You're already in ${doctor.name}'s queue today.`, linkTo: "/queue" });
       } else if (err.code === "QUEUE_CONFLICT") {
-        // Per the API docs: check your tokens before trying again.
+        
         setNotice({
           tone: "error",
           text: "We couldn't confirm your booking. Please check your queue before trying again.",

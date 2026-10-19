@@ -26,13 +26,9 @@ export default function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/departments" element={<Departments />} />
 
-          {/* Any signed-in user */}
-          <Route element={<ProtectedRoute />}>
-            <Route path="/home" element={<Home />} />
-          </Route>
-
           {/* Patients only */}
           <Route element={<ProtectedRoute roles={["patient"]} />}>
+            <Route path="/home" element={<Home />} />
             <Route path="/queue" element={<MyQueue />} />
             <Route path="/queue/:tokenId" element={<QueueStatus />} />
           </Route>
