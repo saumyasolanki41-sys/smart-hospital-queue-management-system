@@ -6,6 +6,7 @@ import { useAuth, ROLE_HOME } from "../context/AuthContext";
 const NAV_LINKS = [
   { label: "Home", to: "/" },
   { label: "About", to: "/about" },
+  { label: "Departments", to: "/departments" },
   { label: "Features", href: "/#features" },
   { label: "How It Works", href: "/about#how-it-works" },
 ];

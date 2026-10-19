@@ -6,6 +6,7 @@ import LandingPage from "./pages/LandingPage";
 import About from "./pages/About";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import Departments from "./pages/Departments";
 import Home from "./pages/Home";
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID ?? "";
@@ -20,12 +21,13 @@ export default function App() {
           <Route path="/about" element={<About />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/departments" element={<Departments />} />
 
           {/* Any signed-in user */}
           <Route element={<ProtectedRoute />}>
             <Route path="/home" element={<Home />} />
           </Route>
-          {/* Role-specific routes */}
+
         </Routes>
       </AuthProvider>
     </GoogleOAuthProvider>
