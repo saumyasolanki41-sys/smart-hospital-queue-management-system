@@ -1,8 +1,10 @@
+// src/components/layout/Navbar.jsx
 import { useState } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { HeartPulse, Menu, X, User, LogOut } from "lucide-react";
 import { useAuth, ROLE_HOME } from "../context/AuthContext";
 
+// Page links use "to" (real routes). Section links use "href" (anchors).
 const NAV_LINKS = [
   { label: "Home", to: "/" },
   { label: "About", to: "/about" },
@@ -109,6 +111,9 @@ function AuthActions({ onNavigate, mobile = false }) {
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
+  const { user } = useAuth();
+  const links =
+    user?.role === "patient" ? [...NAV_LINKS, { label: "My Queue", to: "/queue" }] : NAV_LINKS;
 
   return (
     <header className="relative z-20">
@@ -123,7 +128,7 @@ export default function Navbar() {
 
         {/* Desktop links */}
         <ul className="hidden items-center gap-8 md:flex">
-          {NAV_LINKS.map((link) => (
+          {links.map((link) => (
             <li key={link.label}>
               <NavItem link={link} />
             </li>
@@ -151,7 +156,7 @@ export default function Navbar() {
       {open && (
         <div className="mx-6 rounded-2xl bg-white p-4 shadow-lg md:hidden">
           <ul className="flex flex-col gap-1">
-            {NAV_LINKS.map((link) => (
+            {links.map((link) => (
               <li key={link.label}>
                 <NavItem link={link} mobile onClick={() => setOpen(false)} />
               </li>

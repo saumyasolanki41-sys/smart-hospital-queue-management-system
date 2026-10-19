@@ -8,7 +8,10 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Departments from "./pages/Departments";
 import Home from "./pages/Home";
+import MyQueue from "./pages/MyQueue";
+import QueueStatus from "./pages/QueueStatus";
 
+// Public Google web client ID (set in .env as VITE_GOOGLE_CLIENT_ID). Never put a client secret here.
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID ?? "";
 
 export default function App() {
@@ -26,6 +29,12 @@ export default function App() {
           {/* Any signed-in user */}
           <Route element={<ProtectedRoute />}>
             <Route path="/home" element={<Home />} />
+          </Route>
+
+          {/* Patients only */}
+          <Route element={<ProtectedRoute roles={["patient"]} />}>
+            <Route path="/queue" element={<MyQueue />} />
+            <Route path="/queue/:tokenId" element={<QueueStatus />} />
           </Route>
 
         </Routes>

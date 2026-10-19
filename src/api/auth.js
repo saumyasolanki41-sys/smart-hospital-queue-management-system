@@ -1,4 +1,3 @@
-// src/api/auth.js — every auth call lives here so components never touch fetch directly.
 
 const BASE_URL = (
   import.meta.env.VITE_API_BASE_URL ||
@@ -35,7 +34,7 @@ async function request(path, { method = "GET", body, token } = {}) {
   try {
     json = await res.json();
   } catch {
-    // non-JSON response
+    
   }
 
   if (!res.ok || !json?.success) {
@@ -106,8 +105,7 @@ export function validateNewPassword(value) {
 export const isValidOtp = (value) => /^\d{6}$/.test(value);
 
 // ---- Role options on the login/register pages ------------------------------
-// The real role always comes from the backend. The selector only picks which
-// portal you are signing in to; a mismatch is rejected after login.
+
 
 export const ROLE_OPTIONS = [
   { value: "patient", label: "Patient", roles: ["patient"] },

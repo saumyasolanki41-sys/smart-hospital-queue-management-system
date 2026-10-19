@@ -12,3 +12,8 @@ export async function getDoctors({ departmentId, availableOnly = false, page = 1
   const data = await request(`/api/doctors?${params}`);
   return data.doctors;
 }
+
+export async function getDoctor(id) {
+  const data = await request(`/api/doctors/${id}`);
+  return data.doctor;
+}

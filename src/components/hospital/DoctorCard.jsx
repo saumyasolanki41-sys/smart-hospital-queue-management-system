@@ -1,3 +1,4 @@
+// src/components/hospital/DoctorCard.jsx
 import { Briefcase, Clock, Wallet } from "lucide-react";
 
 const inr = new Intl.NumberFormat("en-IN", {
@@ -6,12 +7,13 @@ const inr = new Intl.NumberFormat("en-IN", {
   maximumFractionDigits: 0,
 });
 
+// The API has no photo field, so show initials instead ("Dr Asha Rao" -> "AR").
 function initials(name) {
   const parts = name.replace(/^dr\.?\s+/i, "").trim().split(/\s+/);
   return ((parts[0]?.[0] ?? "") + (parts[1]?.[0] ?? "")).toUpperCase() || "D";
 }
 
-export default function DoctorCard({ doctor, showJoin = true, onJoin }) {
+export default function DoctorCard({ doctor, showJoin = true, onJoin, joining = false, busy = false }) {
   const {
     name,
     specialization,
@@ -19,7 +21,7 @@ export default function DoctorCard({ doctor, showJoin = true, onJoin }) {
     experienceYears,
     consultationFee,
     isAvailable,
-    averageConsultationMinutes, 
+    averageConsultationMinutes, // may be missing on older records
   } = doctor;
 
   return (
@@ -62,11 +64,11 @@ export default function DoctorCard({ doctor, showJoin = true, onJoin }) {
       {showJoin && (
         <button
           type="button"
-          disabled={!isAvailable}
+          disabled={!isAvailable || busy}
           onClick={() => onJoin?.(doctor)}
           className="mt-5 w-full rounded-xl bg-teal-700 px-5 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-teal-800 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500 disabled:shadow-none"
         >
-          {isAvailable ? "Join Queue" : "Not taking patients"}
+          {joining ? "Joining…" : isAvailable ? "Join Queue" : "Not taking patients"}
         </button>
       )}
     </article>
