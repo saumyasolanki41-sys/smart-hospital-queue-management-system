@@ -1,12 +1,17 @@
 
 import '../models/user_model.dart';
 import 'api_service.dart';
+import 'storage_service.dart';
 
 class AuthService {
   final ApiService _apiService;
+  final StorageService _storageService;
 
-  AuthService({ApiService? apiService})
-      : _apiService = apiService ?? ApiService();
+  AuthService({
+    ApiService? apiService,
+    StorageService? storageService,
+  })  : _apiService = apiService ?? ApiService(),
+        _storageService = storageService ?? StorageService();
 
   String? _accessToken;
 
@@ -42,17 +47,16 @@ class AuthService {
       );
     }
 
-    final userJson = data['user'] as Map<String, dynamic>;
-
-    return UserModel.fromJson(userJson);
+    return UserModel.fromJson(
+      data['user'] as Map<String, dynamic>,
+    );
   }
 
   Future<String> login({
     required String email,
     required String password,
   }) async {
-    // A new login attempt must not reuse an old session.
-    _accessToken = null;
+    await logout();
 
     final response = await _apiService.login(
       email: email.trim(),
@@ -82,8 +86,6 @@ class AuthService {
     required String challengeId,
     required String otp,
   }) async {
-    _accessToken = null;
-
     final response = await _apiService.verifyLogin(
       challengeId: challengeId,
       otp: otp.trim(),
@@ -105,16 +107,17 @@ class AuthService {
       );
     }
 
-    if (data['user'] is! Map<String, dynamic>) {
+    final userData = data['user'];
+
+    if (userData is! Map<String, dynamic>) {
       throw ApiException(
         'User information is missing from the response.',
       );
     }
 
-    final userJson = data['user'] as Map<String, dynamic>;
-    final user = UserModel.fromJson(userJson);
+    final user = UserModel.fromJson(userData);
 
-    _accessToken = token;
+    await _saveSession(token);
 
     return user;
   }
@@ -122,7 +125,7 @@ class AuthService {
   Future<UserModel> loginWithGoogle({
     required String idToken,
   }) async {
-    _accessToken = null;
+    await logout();
 
     final response = await _apiService.loginWithGoogle(
       idToken: idToken,
@@ -144,18 +147,35 @@ class AuthService {
       );
     }
 
-    if (data['user'] is! Map<String, dynamic>) {
+    final userData = data['user'];
+
+    if (userData is! Map<String, dynamic>) {
       throw ApiException(
         'User information is missing from the response.',
       );
     }
 
-    final userJson = data['user'] as Map<String, dynamic>;
-    final user = UserModel.fromJson(userJson);
+    final user = UserModel.fromJson(userData);
 
-    _accessToken = token;
+    await _saveSession(token);
 
     return user;
+  }
+
+  Future<void> _saveSession(String token) async {
+    await _storageService.saveAccessToken(token);
+    _accessToken = token;
+  }
+
+  Future<UserModel> restoreSession() async {
+    final savedToken = await _storageService.getAccessToken();
+
+    if (savedToken == null || savedToken.isEmpty) {
+      _accessToken = null;
+      throw ApiException('No saved session was found.');
+    }
+
+    return getCurrentUser(token: savedToken);
   }
 
   Future<UserModel> getCurrentUser({
@@ -183,15 +203,19 @@ class AuthService {
         );
       }
 
-      final userJson = data['user'] as Map<String, dynamic>;
-      final user = UserModel.fromJson(userJson);
+      final user = UserModel.fromJson(
+        data['user'] as Map<String, dynamic>,
+      );
 
       _accessToken = currentToken;
 
       return user;
-    } catch (_) {
-      // Do not retain a token rejected by the server.
-      _accessToken = null;
+    } on ApiException catch (error) {
+      // Clear the session when the server rejects the token.
+      if (error.statusCode == 401) {
+        await logout();
+      }
+
       rethrow;
     }
   }
@@ -215,10 +239,16 @@ class AuthService {
       newPassword: newPassword,
     );
 
-    _accessToken = null;
+    await logout();
   }
 
-  void logout() {
+  Future<void> logout() async {
     _accessToken = null;
+    await _storageService.clearAccessToken();
+  }
+
+  Future<void> dispose() async {
+    await logout();
+    _apiService.dispose();
   }
 }
