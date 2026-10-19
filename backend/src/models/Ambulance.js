@@ -12,6 +12,7 @@ const ambulanceSchema = new mongoose.Schema({
   driverPhone: { type: String, required: true, match: /^\+?[1-9]\d{9,14}$/ },
   status: { type: String, enum: ['available', 'busy', 'maintenance'], default: 'available', index: true },
   location: { type: locationSchema },
+  activeRequest: { type: mongoose.Schema.Types.ObjectId, ref: 'AmbulanceRequest', select: false },
 }, { timestamps: true });
 
 module.exports = mongoose.model('Ambulance', ambulanceSchema);

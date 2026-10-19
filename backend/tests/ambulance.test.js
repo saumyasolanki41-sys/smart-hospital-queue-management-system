@@ -42,7 +42,8 @@ function setup(t) {
     if (state.writeError) throw state.writeError;
     return state.ambulance;
   });
-  const update = t.mock.method(Ambulance, 'findByIdAndUpdate', () => {
+  t.mock.method(Ambulance, 'exists', async () => state.ambulance);
+  const update = t.mock.method(Ambulance, 'findOneAndUpdate', () => {
     if (state.writeError) throw state.writeError;
     return query(() => state.ambulance);
   });
@@ -108,7 +109,7 @@ test('receptionist can update location and server assigns the location timestamp
   }, issueAccessToken(userId));
   assert.equal(response.status, 200);
   const [id, changes, options] = update.mock.calls[0].arguments;
-  assert.equal(id, ambulanceId);
+  assert.deepEqual(id, { _id: ambulanceId, activeRequest: null });
   assert.equal(changes.$set.status, 'busy');
   assert.deepEqual(Object.keys(changes.$set.location).sort(), ['latitude', 'longitude', 'updatedAt']);
   assert.ok(changes.$set.location.updatedAt instanceof Date);

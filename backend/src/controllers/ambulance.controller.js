@@ -1,7 +1,7 @@
 const service = require('../services/ambulance.service');
 
 function handleError(error, res, next) {
-  if (!['VALIDATION_ERROR', 'VEHICLE_EXISTS', 'AMBULANCE_NOT_FOUND'].includes(error.code)) return next(error);
+  if (!['VALIDATION_ERROR', 'VEHICLE_EXISTS', 'AMBULANCE_NOT_FOUND', 'AMBULANCE_ASSIGNED'].includes(error.code)) return next(error);
   return res.status(error.status).json({ success: false, error: { code: error.code, message: error.message } });
 }
 

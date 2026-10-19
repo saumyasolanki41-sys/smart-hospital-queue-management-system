@@ -87,6 +87,11 @@
       "key": "ambulanceId",
       "value": "",
       "type": "string"
+    },
+    {
+      "key": "ambulanceRequestId",
+      "value": "",
+      "type": "string"
     }
   ],
   "item": [
@@ -1053,6 +1058,247 @@
             "body": {
               "mode": "raw",
               "raw": "{\n  \"status\": \"busy\",\n  \"location\": {\n    \"latitude\": 28.6692,\n    \"longitude\": 77.4538\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Ambulance transport requests",
+      "description": "Backend-only workflow. Set baseUrl to http://localhost:8080 for local changes, accessToken to a patient token and staffAccessToken to admin/receptionist. First make ambulanceId available in inventory. Create captures ambulanceRequestId. Choose complete OR cancel; do not run this folder unattended. See AMBULANCE-REQUEST-API.md.",
+      "item": [
+        {
+          "name": "Create transport request (patient)",
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/ambulance-requests",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pickupAddress\": \"Gate 2, Test Road, Ghaziabad\",\n  \"latitude\": 28.6692,\n  \"longitude\": 77.4538,\n  \"contactPhone\": \"+919876543210\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  pm.collectionVariables.set(\"ambulanceRequestId\", pm.response.json().data.request._id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "My transport requests (patient)",
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [],
+            "url": "{{baseUrl}}/api/ambulance-requests"
+          },
+          "response": []
+        },
+        {
+          "name": "Pending transport requests (staff)",
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [],
+            "url": "{{baseUrl}}/api/ambulance-requests?status=pending&page=1&limit=20"
+          },
+          "response": []
+        },
+        {
+          "name": "Transport request detail (patient)",
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [],
+            "url": "{{baseUrl}}/api/ambulance-requests/{{ambulanceRequestId}}"
+          },
+          "response": []
+        },
+        {
+          "name": "Assign ambulance (staff)",
+          "request": {
+            "method": "PATCH",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/ambulance-requests/{{ambulanceRequestId}}/assign",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ambulanceId\": \"{{ambulanceId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Complete transport (staff)",
+          "request": {
+            "method": "PATCH",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/ambulance-requests/{{ambulanceRequestId}}/complete",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Cancel pending request (patient)",
+          "request": {
+            "method": "PATCH",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/ambulance-requests/{{ambulanceRequestId}}/cancel",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Cancel transport (staff)",
+          "request": {
+            "method": "PATCH",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/ambulance-requests/{{ambulanceRequestId}}/cancel",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
               "options": {
                 "raw": {
                   "language": "json"

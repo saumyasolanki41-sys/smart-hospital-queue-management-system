@@ -106,14 +106,21 @@ async function updateAmbulance(id, body) {
   await Ambulance.init();
   let ambulance;
   try {
-    ambulance = await Ambulance.findByIdAndUpdate(id, { $set: data }, {
+    const filter = { _id: id };
+    if (data.status !== undefined) filter.activeRequest = null;
+    ambulance = await Ambulance.findOneAndUpdate(filter, { $set: data }, {
       returnDocument: 'after', runValidators: true,
     }).select(selection).lean();
   } catch (error) {
     if (error.code === 11000) throw ambulanceError(409, 'VEHICLE_EXISTS', 'An ambulance with this vehicle number already exists.');
     throw error;
   }
-  if (!ambulance) throw ambulanceError(404, 'AMBULANCE_NOT_FOUND', 'Ambulance not found.');
+  if (!ambulance) {
+    if (data.status !== undefined && await Ambulance.exists({ _id: id })) {
+      throw ambulanceError(409, 'AMBULANCE_ASSIGNED', 'Complete or cancel the active request before changing vehicle status.');
+    }
+    throw ambulanceError(404, 'AMBULANCE_NOT_FOUND', 'Ambulance not found.');
+  }
   return { ambulance };
 }
 

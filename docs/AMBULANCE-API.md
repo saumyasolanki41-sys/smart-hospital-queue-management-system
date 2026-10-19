@@ -101,8 +101,11 @@ last accepted write for the supplied fields; there is no event history or versio
 
 Success returns the updated `data.ambulance`. Vehicle number conflicts return
 409 on create or update. There is no delete endpoint; maintenance can mark a
-vehicle unavailable for operational use. Dispatch/trip reservations, driver login,
-patient transport requests, routing, maps and ETA predictions remain separate work.
+vehicle unavailable for operational use. An assigned vehicle rejects status changes
+with 409 AMBULANCE_ASSIGNED; finish or cancel its active request first. Location
+and driver detail updates remain allowed. Patient transport requests and staff
+reservations are documented in [Ambulance requests](AMBULANCE-REQUEST-API.md).
+Driver login, routing, maps and ETA predictions remain separate work.
 ML integration will be added after its input/output contract is agreed.
 
 ## Errors and verification
