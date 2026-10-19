@@ -18,6 +18,9 @@ const ROLE_LINK = {
   admin: { label: "Dashboard", to: "/staff" },
 };
 
+const STAFF_ROLES = ["receptionist", "admin"];
+const AMBULANCE_LINK = { label: "Ambulance Tracking", to: "/ambulance" };
+
 const baseLink = "border-b-2 pb-1 text-sm font-medium transition-colors";
 const activeLink = "border-primary/60 text-primary/70";
 const idleLink = "border-transparent text-slate-600 hover:text-primary/70";
@@ -42,7 +45,7 @@ function NavItem({ link, onClick, mobile = false }) {
   return (
     <NavLink
       to={link.to}
-      end={link.to === "/"}
+      end={link.label === "Home" || link.to === "/"}
       onClick={onClick}
       className={({ isActive }) =>
         mobile
@@ -117,14 +120,22 @@ function AuthActions({ onNavigate, mobile = false }) {
 export default function Navbar() {
   const [open, setOpen] = useState(false);
   const { user } = useAuth();
+  const homePath = user ? ROLE_HOME[user.role] ?? "/" : "/";
+  const isStaff = STAFF_ROLES.includes(user?.role);
   const extra = user && ROLE_LINK[user.role];
-  const links = extra ? [...NAV_LINKS, extra] : NAV_LINKS;
+  const links = NAV_LINKS.filter(
+    (link) => !isStaff || !["Home", "About", "Features", "How It Works"].includes(link.label)
+  ).map((link) =>
+    link.label === "Home" ? { ...link, to: homePath } : link
+  );
+  if (isStaff) links.push(AMBULANCE_LINK);
+  if (extra) links.push(extra);
 
   return (
     <header className="relative z-20">
       <nav className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-2">
+        <Link to={homePath} className="flex items-center gap-2">
           <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/60 text-white">
             <HeartPulse className="h-5 w-5" />
           </span>
