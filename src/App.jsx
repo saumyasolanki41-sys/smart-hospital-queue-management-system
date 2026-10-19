@@ -10,8 +10,8 @@ import Departments from "./pages/Departments";
 import Home from "./pages/Home";
 import MyQueue from "./pages/MyQueue";
 import QueueStatus from "./pages/QueueStatus";
+import QueueDashboard from "./pages/QueueDashboard";
 
-// Public Google web client ID (set in .env as VITE_GOOGLE_CLIENT_ID). Never put a client secret here.
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID ?? "";
 
 export default function App() {
@@ -37,6 +37,15 @@ export default function App() {
             <Route path="/queue/:tokenId" element={<QueueStatus />} />
           </Route>
 
+          {/* Staff (admin, receptionist) manage any doctor's queue */}
+          <Route element={<ProtectedRoute roles={["receptionist", "admin"]} />}>
+            <Route path="/staff" element={<QueueDashboard mode="staff" />} />
+          </Route>
+
+          {/* Doctors manage only their own queue */}
+          <Route element={<ProtectedRoute roles={["doctor"]} />}>
+            <Route path="/doctor" element={<QueueDashboard mode="doctor" />} />
+          </Route>
         </Routes>
       </AuthProvider>
     </GoogleOAuthProvider>

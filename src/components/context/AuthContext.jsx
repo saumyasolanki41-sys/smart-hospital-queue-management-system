@@ -5,9 +5,9 @@ const AuthContext = createContext(null);
 
 export const ROLE_HOME = {
   patient: "/home",
-  doctor: "/home",
-  receptionist: "/home",
-  admin: "/home",
+  doctor: "/doctor",
+  receptionist: "/staff",
+  admin: "/staff",
 };
 
 export function AuthProvider({ children }) {

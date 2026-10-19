@@ -1,10 +1,8 @@
-// src/components/layout/Navbar.jsx
 import { useState } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { HeartPulse, Menu, X, User, LogOut } from "lucide-react";
 import { useAuth, ROLE_HOME } from "../context/AuthContext";
 
-// Page links use "to" (real routes). Section links use "href" (anchors).
 const NAV_LINKS = [
   { label: "Home", to: "/" },
   { label: "About", to: "/about" },
@@ -12,6 +10,13 @@ const NAV_LINKS = [
   { label: "Features", href: "/#features" },
   { label: "How It Works", href: "/about#how-it-works" },
 ];
+
+const ROLE_LINK = {
+  patient: { label: "My Queue", to: "/queue" },
+  doctor: { label: "Dashboard", to: "/doctor" },
+  receptionist: { label: "Dashboard", to: "/staff" },
+  admin: { label: "Dashboard", to: "/staff" },
+};
 
 const baseLink = "border-b-2 pb-1 text-sm font-medium transition-colors";
 const activeLink = "border-teal-600 text-teal-700";
@@ -112,8 +117,8 @@ function AuthActions({ onNavigate, mobile = false }) {
 export default function Navbar() {
   const [open, setOpen] = useState(false);
   const { user } = useAuth();
-  const links =
-    user?.role === "patient" ? [...NAV_LINKS, { label: "My Queue", to: "/queue" }] : NAV_LINKS;
+  const extra = user && ROLE_LINK[user.role];
+  const links = extra ? [...NAV_LINKS, extra] : NAV_LINKS;
 
   return (
     <header className="relative z-20">
