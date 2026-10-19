@@ -98,7 +98,7 @@ test('request routes require login and enforce patient/staff roles before mutati
   const token = issueAccessToken(patient.id);
   for (const [path, method, body] of [['', 'POST', input], ['', 'GET'], ['/' + requestId, 'GET'],
     ['/' + requestId + '/assign', 'PATCH', { ambulanceId }], ['/' + requestId + '/complete', 'PATCH', {}],
-    ['/' + requestId + '/cancel', 'PATCH', {}]]) {
+    ['/' + requestId + '/cancel', 'PATCH', {}], ['/' + requestId + '/eta', 'GET']]) {
     assert.equal((await send(path, method, body)).status, 401);
     state.role = 'doctor';
     assert.equal((await send(path, method, body, token)).status, 403);
@@ -110,6 +110,13 @@ test('request routes require login and enforce patient/staff roles before mutati
   assert.equal((await send('', 'POST', input, token)).status, 403);
   assert.equal(create.mock.callCount(), 0);
   assert.equal(updateRequest.mock.callCount(), 0);
+});
+
+test('ETA endpoint returns explicit unavailable for an owned pending request without external calls', async (t) => {
+  setup(t);
+  const response = await send('/' + requestId + '/eta', 'GET', undefined, issueAccessToken(patient.id));
+  assert.equal(response.status, 200);
+  assert.deepEqual((await response.json()).data, { etaMinutes: null, source: 'unavailable', reason: 'request_not_assigned' });
 });
 
 test('patient creates a pending request and duplicate active requests return 409', async (t) => {

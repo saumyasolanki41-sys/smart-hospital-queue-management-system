@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const Doctor = require('../models/Doctor');
 const QueueDay = require('../models/QueueDay');
 const QueueToken = require('../models/QueueToken');
+const ml = require('./ml.service');
 
 function queueError(status, code, message) {
   const error = new Error(message);
@@ -107,12 +108,14 @@ async function tokenStatus(patientId, id) {
   let estimatedWaitMinutes = null;
   let averageConsultationMinutes = null;
   let consultationOverdue = null;
+  let prediction = null;
   if (token.status === 'waiting' && token.queueDate === today()) {
     peopleAhead = await QueueToken.countDocuments({
       doctor: token.doctor, queueDate: token.queueDate,
       status: 'waiting', tokenNumber: { $lt: token.tokenNumber },
     });
-    const doctor = await Doctor.findById(token.doctor).select('averageConsultationMinutes').lean();
+    const doctor = await Doctor.findById(token.doctor).select('department averageConsultationMinutes')
+      .populate('department', 'name').lean();
     if (doctor) {
       averageConsultationMinutes = doctor.averageConsultationMinutes;
       if (!Number.isInteger(averageConsultationMinutes) ||
@@ -133,9 +136,42 @@ async function tokenStatus(patientId, id) {
         remainingMinutes = Math.max(1, Math.ceil(averageConsultationMinutes - elapsedMinutes));
       }
       estimatedWaitMinutes = peopleAhead * averageConsultationMinutes + remainingMinutes;
+      prediction = { source: 'fallback', reason: 'ml_not_configured' };
+      if (process.env.ML_SERVICE_URL?.trim()) {
+        const specialties = ['Cardiology', 'Dermatology', 'Gastroenterology', 'General Medicine',
+          'Internal Medicine', 'Neurology', 'Obstetrics & Gynecology', 'Orthopedics', 'Pediatrics', 'Psychiatry'];
+        const specialty = doctor.department?.name;
+        if (!current && peopleAhead === 0) {
+          prediction = { source: 'baseline', reason: 'empty_queue' };
+        } else if (!specialties.includes(specialty)) {
+          prediction = { source: 'fallback', reason: 'unsupported_specialty' };
+        } else {
+          const time = ml.clinicTime();
+          const completed = await QueueToken.countDocuments({ doctor: token.doctor, status: 'completed' });
+          const startedAt = current?.calledAt ? new Date(current.calledAt).getTime() : NaN;
+          const elapsed = Number.isFinite(startedAt) ? Math.max(0, (Date.now() - startedAt) / 60000) : 0;
+          const reference = { Cardiology: 12.3, Dermatology: 13.9, Gastroenterology: 13,
+            'General Medicine': 12.1, 'Internal Medicine': 13.2, Neurology: 13.4,
+            'Obstetrics & Gynecology': 17.5, Orthopedics: 9.8, Pediatrics: 10.2, Psychiatry: 17.4 };
+          const result = await ml.predict('/predict/queue-time', {
+            Specialty: specialty, Hour: time.hour, Day_Of_Week: time.day,
+            Doctor_Avg_Consult_Min: averageConsultationMinutes, Doctor_Consults_Logged: completed,
+            Ref_Median_Consult_Min: reference[specialty], Issue_Complexity: 'Standard',
+            Visit_Type: 'Follow-up', Is_Urgent: 0, Patients_Waiting: peopleAhead,
+            Waiting_Short: 0, Waiting_Standard: peopleAhead, Waiting_Long: 0,
+            Waiting_New: 0, Waiting_Urgent: 0, Doctor_Busy: current ? 1 : 0,
+            Current_Issue_Complexity: current ? 'Standard' : 'None',
+            Current_Consult_Elapsed_Min: elapsed,
+            Queue_Expected_Work_Min: averageConsultationMinutes * 1.01 * peopleAhead,
+          }, 'wait_time_minutes', estimatedWaitMinutes);
+          estimatedWaitMinutes = current ? Math.max(1, result.minutes) : result.minutes;
+          prediction = { source: result.source, reason: result.reason,
+            assumptions: ['standard_complexity', 'follow_up_visit', 'no_urgency_data', 'configured_consultation_average'] };
+        }
+      }
     }
   }
-  return { token, peopleAhead, estimatedWaitMinutes, averageConsultationMinutes, consultationOverdue };
+  return { token, peopleAhead, estimatedWaitMinutes, averageConsultationMinutes, consultationOverdue, prediction };
 }
 
 async function cancelToken(patientId, id, body) {

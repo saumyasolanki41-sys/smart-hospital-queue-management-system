@@ -2,8 +2,9 @@
 
 Local base URL: `http://localhost:8080`. Restart the server after pulling changes.
 Hosted endpoints require deployment first. These APIs store requests and staff
-assignments only. No driver, emergency service, GPS provider or ML service is
-contacted. Use test data for manual checks.
+assignments. Booking/assignment do not contact drivers or emergency services.
+The separate ETA endpoint can call routing, weather and ML when configured;
+see [ML-INTEGRATION.md](ML-INTEGRATION.md). Use test data for manual checks.
 
 All endpoints require Authorization: Bearer ACCESS_TOKEN. Patient accounts create
 requests and read only their own records. Admins/receptionists read all requests
@@ -14,6 +15,7 @@ and assign, complete or cancel them. Doctor accounts receive 403.
 | POST | `/api/ambulance-requests` | Patient | 201 |
 | GET | `/api/ambulance-requests` | Patient (own), staff (all) | 200 |
 | GET | `/api/ambulance-requests/:id` | Owner or staff | 200 |
+| GET | `/api/ambulance-requests/:id/eta` | Owner or staff | 200 |
 | PATCH | `/api/ambulance-requests/:id/assign` | Staff | 200 |
 | PATCH | `/api/ambulance-requests/:id/complete` | Staff | 200 |
 | PATCH | `/api/ambulance-requests/:id/cancel` | Owner or staff | 200 |
@@ -76,7 +78,8 @@ transport separately before recording a cancellation/completion.
 Vehicle status cannot be changed through inventory PATCH while assigned (409
 AMBULANCE_ASSIGNED). Staff can still update its location and driver details.
 Returned vehicle details reflect current inventory, not an assignment snapshot.
-There is no reassignment, pickup stage, driver login or ETA prediction yet.
+There is no reassignment, pickup stage or driver login. Arrival estimates use
+the separate ETA endpoint; unavailable estimates return null with a reason.
 
 ## Consistency and errors
 

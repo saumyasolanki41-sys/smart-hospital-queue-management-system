@@ -178,3 +178,9 @@ duplicate booking, ownership and cancellation checks are still needed.
 Staff call-next/complete endpoints are documented in [STAFF-QUEUE-API.md](STAFF-QUEUE-API.md).
 There is no automatic overnight status change. Old waiting tokens stay in history
 and have no live peopleAhead value. Patients cannot cancel a called token.
+# ML estimates
+
+Token status now supports ML prediction with the existing calculation as fallback.
+See [ML-INTEGRATION.md](ML-INTEGRATION.md) for setup, prediction.source/reason,
+assumptions and the 60 status checks/minute per-user limit. ML configuration is
+optional; no configuration keeps the original baseline estimate.

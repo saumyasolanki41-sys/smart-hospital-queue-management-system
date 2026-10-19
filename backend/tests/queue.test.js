@@ -1,4 +1,4 @@
-const { test, before, after } = require('node:test');
+  const { test, before, after } = require('node:test');
 const assert = require('node:assert/strict');
 const { once } = require('node:events');
 const mongoose = require('mongoose');
@@ -8,6 +8,7 @@ const User = require('../src/models/User');
 const QueueDay = require('../src/models/QueueDay');
 const QueueToken = require('../src/models/QueueToken');
 const service = require('../src/services/queue.service');
+const ml = require('../src/services/ml.service');
 const { issueAccessToken } = require('../src/services/token.service');
 
 const patientId = '507f1f77bcf86cd799439011';
@@ -25,6 +26,12 @@ before(async () => {
 after(() => new Promise((resolve) => server.close(resolve)));
 
 function setup(t) {
+  const oldMlUrl = process.env.ML_SERVICE_URL;
+  delete process.env.ML_SERVICE_URL;
+  t.after(() => {
+    if (oldMlUrl === undefined) delete process.env.ML_SERVICE_URL;
+    else process.env.ML_SERVICE_URL = oldMlUrl;
+  });
   const now = Date.parse('2026-10-18T19:00:00Z');
   t.mock.method(Date, 'now', () => now);
   const state = {
@@ -317,4 +324,52 @@ test('legacy duration defaults to ten minutes and missing doctor gives no estima
   const result = await service.tokenStatus(patientId, tokenId);
   assert.equal(result.peopleAhead, 2);
   assert.equal(result.estimatedWaitMinutes, null);
+});
+
+test('queue ML sends only patients ahead and real consultation state, without patient identifiers', async (t) => {
+  const { state, count } = setup(t);
+  process.env.ML_SERVICE_URL = 'https://ml.example';
+  state.doctor.department = { name: 'Cardiology' };
+  state.doctor.averageConsultationMinutes = 12;
+  state.ahead = 3;
+  state.current = { calledAt: new Date(Date.now() - 5 * 60000) };
+  const predict = t.mock.method(ml, 'predict', async () => ({ minutes: 35.5, source: 'ml', reason: null }));
+  const result = await service.tokenStatus(patientId, tokenId);
+  const [path, input, field, fallback] = predict.mock.calls[0].arguments;
+  assert.equal(path, '/predict/queue-time');
+  assert.equal(field, 'wait_time_minutes');
+  assert.equal(input.Patients_Waiting, 3);
+  assert.equal(input.Waiting_Standard, 3);
+  assert.equal(input.Doctor_Busy, 1);
+  assert.equal(input.Current_Consult_Elapsed_Min, 5);
+  assert.equal(input.Day_Of_Week, 0);
+  assert.equal(input.Hour, 0);
+  assert.equal(input.patient, undefined);
+  assert.equal(input.doctorId, undefined);
+  assert.equal(fallback, 43);
+  assert.deepEqual(count.mock.calls[1].arguments[0], { doctor: doctorId, status: 'completed' });
+  assert.equal(result.estimatedWaitMinutes, 35.5);
+  assert.equal(result.prediction.source, 'ml');
+  assert.ok(result.prediction.assumptions.includes('standard_complexity'));
+});
+
+test('ML queue failure preserves the existing calculation including ongoing consultation', async (t) => {
+  const { state } = setup(t);
+  process.env.ML_SERVICE_URL = 'https://ml.example';
+  state.doctor.department = { name: 'Cardiology' };
+  state.current = { calledAt: new Date(Date.now() - 3 * 60000) };
+  t.mock.method(ml, 'predict', async (path, input, field, fallback) => ({ minutes: fallback, source: 'fallback', reason: 'ml_unavailable' }));
+  const result = await service.tokenStatus(patientId, tokenId);
+  assert.equal(result.estimatedWaitMinutes, 27);
+  assert.equal(result.prediction.reason, 'ml_unavailable');
+});
+
+test('empty queue and unsupported specialty avoid ML requests', async (t) => {
+  const { state } = setup(t);
+  process.env.ML_SERVICE_URL = 'https://ml.example';
+  const predict = t.mock.method(ml, 'predict', async () => { throw new Error('Unexpected ML call'); });
+  assert.equal((await service.tokenStatus(patientId, tokenId)).prediction.reason, 'unsupported_specialty');
+  state.ahead = 0;
+  assert.equal((await service.tokenStatus(patientId, tokenId)).prediction.reason, 'empty_queue');
+  assert.equal(predict.mock.callCount(), 0);
 });

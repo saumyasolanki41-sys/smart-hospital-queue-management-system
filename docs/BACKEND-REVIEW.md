@@ -1,5 +1,9 @@
 # Backend review - 2026-10-19
 
+Subsequent update: backend ML queue and ambulance ETA integration is implemented.
+See [ML-INTEGRATION.md](ML-INTEGRATION.md) for current configuration and verification.
+The scope and deferred-work statements below describe the earlier review snapshot.
+
 Scope: current backend source, tests, API guides and Postman collection. The
 repository has a short README rather than a complete acceptance specification;
 this review checks the implemented scope and previously discussed workflows.

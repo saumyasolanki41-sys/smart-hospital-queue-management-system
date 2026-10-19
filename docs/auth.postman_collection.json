@@ -1312,6 +1312,26 @@
             }
           },
           "response": []
+        },
+        {
+          "name": "Assigned ambulance arrival ETA",
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [],
+            "url": "{{baseUrl}}/api/ambulance-requests/{{ambulanceRequestId}}/eta",
+            "description": "Owner patient token or staff token. Needs assigned request, fresh vehicle location, routing key and ML config. Inspect source/reason; null is unavailable. See ML-INTEGRATION.md."
+          },
+          "response": []
         }
       ]
     },

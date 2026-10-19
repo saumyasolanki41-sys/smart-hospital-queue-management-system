@@ -12,11 +12,16 @@ const bookingLimiter = rateLimit({
   legacyHeaders: false,
   message: { success: false, error: { code: 'RATE_LIMITED', message: 'Too many queue changes. Try again later.' } },
 });
+const statusLimiter = rateLimit({
+  windowMs: 60000, limit: 60, keyGenerator: (req) => req.user.id,
+  standardHeaders: 'draft-8', legacyHeaders: false,
+  message: { success: false, error: { code: 'RATE_LIMITED', message: 'Too many token status checks. Try again later.' } },
+});
 
 router.use(authenticate, allowRoles('patient'));
 router.post('/tokens', bookingLimiter, controller.joinQueue);
 router.get('/tokens/mine', controller.myTokens);
-router.get('/tokens/:id', controller.tokenStatus);
+router.get('/tokens/:id', statusLimiter, controller.tokenStatus);
 router.patch('/tokens/:id/cancel', bookingLimiter, controller.cancelToken);
 
 module.exports = router;
