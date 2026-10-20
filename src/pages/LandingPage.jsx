@@ -3,27 +3,14 @@ import {
   HeartPulse,
   Clock,
   Play,
-  Ticket,
-  Users,
-  Bell,
-  Stethoscope,
-  ClipboardList,
-  ShieldCheck,
 } from "lucide-react";
 import Navbar from "../components/layout/Navbar";
+import Footer from "../components/layout/Footer";
 import About from "./About";
+import Features from "./Features";
 
 // Put your hero photo in the /public folder as hero.jpg
 const HERO_IMAGE = "/hero.jpg";
-
-const FEATURES = [
-  { icon: Ticket, title: "Digital Token Booking", text: "Skip the long queues." },
-  { icon: Users, title: "Live Queue Tracking", text: "Know your wait time." },
-  { icon: Bell, title: "Instant Notifications", text: "Get timely updates." },
-  { icon: Stethoscope, title: "Doctor & Department", text: "Choose with ease." },
-  { icon: ClipboardList, title: "Efficient Management", text: "For better operations." },
-  { icon: ShieldCheck, title: "Secure & Reliable", text: "Your data is safe." },
-];
 
 function TokenCard() {
   return (
@@ -107,36 +94,16 @@ function Hero() {
   );
 }
 
-function FeatureStrip() {
-  return (
-    <section id="features" className="mx-auto max-w-6xl px-6 pb-16">
-      <div className="grid grid-cols-2 gap-6 rounded-3xl bg-white/80 p-6 shadow-lg backdrop-blur sm:grid-cols-3 lg:grid-cols-6">
-        {FEATURES.map(({ icon: Icon, title, text }) => (
-          <div
-            key={title}
-            className="flex flex-col items-center text-center lg:items-start lg:text-left"
-          >
-            <span className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-primary/5 text-primary/70">
-              <Icon className="h-5 w-5" />
-            </span>
-            <h3 className="text-sm font-semibold text-slate-800">{title}</h3>
-            <p className="mt-1 text-xs text-slate-500">{text}</p>
-          </div>
-        ))}
-      </div>
-    </section>
-  );
-}
-
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-secondary/5 via-accent/5 to-white">
       <Navbar />
       <main>
         <Hero />
-        <FeatureStrip />
         <About />
+        <Features />
       </main>
+      <Footer />
     </div>
   );
 }
