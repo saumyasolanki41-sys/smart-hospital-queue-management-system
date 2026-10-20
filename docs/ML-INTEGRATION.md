@@ -2,7 +2,7 @@
 
 Backend integration for the team's FastAPI service is implemented. No Axios/Zod
 dependencies were added: the backend uses native fetch, checked database inputs
-and validated numeric responses. Models are demo estimates, not clinical triage
+and validated numeric responses. Models are project estimates, not clinical triage
 or a guarantee of ambulance arrival. The frontend calls this backend, not ML directly.
 
 ## Setup
