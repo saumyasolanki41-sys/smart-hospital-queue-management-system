@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../viewmodels/auth_viewmodel.dart';
-import 'forgot_password_screen.dart';
 import 'otp_verification_screen.dart';
 import 'signup_screen.dart';
 
@@ -18,7 +17,11 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordController = TextEditingController();
 
   bool _obscurePassword = true;
-  bool _isSubmitting = false;
+
+  // static const Color _navy = Color(0xFF0B477A);
+  static const Color _blue = Color(0xFF246F96);
+  static const Color _cyan = Color(0xFF31CFDF);
+  static const Color _pale = Color(0xFFBDEBF6);
 
   @override
   void dispose() {
@@ -28,62 +31,94 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _login() async {
-    if (_isSubmitting) return;
+    FocusScope.of(context).unfocus();
+
     if (!_formKey.currentState!.validate()) return;
 
-    setState(() => _isSubmitting = true);
-
     final auth = context.read<AuthViewModel>();
-    final email = _emailController.text.trim();
 
-    try {
-      final success = await auth.login(
-        email: email,
-        password: _passwordController.text,
+    final success = await auth.login(
+      email: _emailController.text.trim(),
+      password: _passwordController.text,
+    );
+
+    if (!mounted) return;
+
+    if (success) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => OtpVerificationScreen(
+            email: _emailController.text.trim(),
+            isRegistration: false,
+          ),
+        ),
       );
-
-      if (!mounted) return;
-
-      if (success) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => OtpVerificationScreen(
-              type: OtpVerificationType.login,
-              email: email,
-            ),
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            auth.error ?? 'Login failed. Please try again.',
           ),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              auth.errorMessage ?? 'Login failed. Please try again.',
-            ),
-          ),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isSubmitting = false);
-      }
+          backgroundColor: Colors.red.shade700,
+        ),
+      );
     }
   }
 
-  void _openForgotPassword() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => const ForgotPasswordScreen(),
+  void _showNotConnectedMessage(String feature) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('$feature is not connected yet.'),
       ),
     );
   }
 
-  void _openSignup() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => const SignupScreen(),
+  InputDecoration _inputDecoration({
+    required String hint,
+    Widget? suffixIcon,
+  }) {
+    return InputDecoration(
+      hintText: hint,
+      hintStyle: const TextStyle(
+        color: Color(0xFF7E8C96),
+        fontSize: 17,
+        fontWeight: FontWeight.w400,
+      ),
+      filled: true,
+      fillColor: const Color(0xFFF0F8FF),
+      contentPadding: const EdgeInsets.symmetric(
+        horizontal: 22,
+        vertical: 20,
+      ),
+      suffixIcon: suffixIcon,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(15),
+        borderSide: BorderSide.none,
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(15),
+        borderSide: BorderSide.none,
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(15),
+        borderSide: const BorderSide(
+          color: _cyan,
+          width: 2,
+        ),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(15),
+        borderSide: const BorderSide(
+          color: Colors.redAccent,
+        ),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(15),
+        borderSide: const BorderSide(
+          color: Colors.redAccent,
+          width: 1.5,
+        ),
       ),
     );
   }
@@ -91,176 +126,614 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthViewModel>();
-    final colors = Theme.of(context).colorScheme;
-    final isBusy = _isSubmitting || auth.isLoading;
 
     return Scaffold(
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const SizedBox(height: 16),
-
-                  Icon(
-                    Icons.local_hospital_rounded,
-                    size: 78,
-                    color: colors.primary,
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  Text(
-                    'Welcome Back!',
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context)
-                        .textTheme
-                        .headlineMedium
-                        ?.copyWith(fontWeight: FontWeight.bold),
-                  ),
-
-                  const SizedBox(height: 8),
-
-                  Text(
-                    'Sign in to manage your hospital visits.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: colors.onSurfaceVariant),
-                  ),
-
-                  const SizedBox(height: 36),
-
-                  TextFormField(
-                    controller: _emailController,
-                    keyboardType: TextInputType.emailAddress,
-                    textInputAction: TextInputAction.next,
-                    autocorrect: false,
-                    autofillHints: const [AutofillHints.email],
-                    decoration: const InputDecoration(
-                      labelText: 'Email address',
-                      hintText: 'Enter your email',
-                      prefixIcon: Icon(Icons.email_outlined),
-                      border: OutlineInputBorder(),
+      backgroundColor: _pale,
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          return Stack(
+            children: [
+              const Positioned.fill(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: RadialGradient(
+                      center: Alignment(0, -0.7),
+                      radius: 1.35,
+                      colors: [
+                        Color(0xFFE6FAFF),
+                        Color(0xFFBDEBF6),
+                      ],
                     ),
-                    validator: (value) {
-                      final email = value?.trim() ?? '';
-
-                      if (email.isEmpty) {
-                        return 'Please enter your email.';
-                      }
-
-                      if (!RegExp(
-                        r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
-                      ).hasMatch(email)) {
-                        return 'Enter a valid email address.';
-                      }
-
-                      return null;
-                    },
                   ),
+                ),
+              ),
 
-                  const SizedBox(height: 20),
+              Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                height: constraints.maxHeight * 0.35,
+                child: const CustomPaint(
+                  painter: LoginTopWavePainter(),
+                ),
+              ),
 
-                  TextFormField(
-                    controller: _passwordController,
-                    obscureText: _obscurePassword,
-                    textInputAction: TextInputAction.done,
-                    autofillHints: const [AutofillHints.password],
-                    onFieldSubmitted: (_) {
-                      if (!isBusy) _login();
-                    },
-                    decoration: InputDecoration(
-                      labelText: 'Password',
-                      hintText: 'Enter your password',
-                      prefixIcon: const Icon(Icons.lock_outline),
-                      suffixIcon: IconButton(
-                        onPressed: () {
-                          setState(() {
-                            _obscurePassword = !_obscurePassword;
-                          });
-                        },
-                        icon: Icon(
-                          _obscurePassword
-                              ? Icons.visibility_outlined
-                              : Icons.visibility_off_outlined,
+              Positioned(
+                top: constraints.maxHeight * 0.31,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                child: const ColoredBox(color: _blue),
+              ),
+
+              Positioned(
+                top: constraints.maxHeight * 0.275,
+                left: 0,
+                right: 0,
+                height: constraints.maxHeight * 0.10,
+                child: const CustomPaint(
+                  painter: LoginMiddleWavePainter(),
+                ),
+              ),
+
+              SafeArea(
+                child: Center(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(28, 12, 28, 20),
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 500),
+                      child: Form(
+                        key: _formKey,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            const SizedBox(height: 2),
+
+                            const Center(
+                              child: LoginMedicalLogo(),
+                            ),
+
+                            const SizedBox(height: 8),
+
+                            const Text(
+                              'Login',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: Color(0xFF35C4D0),
+                                fontSize: 39,
+                                fontWeight: FontWeight.w500,
+                                letterSpacing: -0.4,
+                              ),
+                            ),
+
+                            SizedBox(
+                              height: constraints.maxHeight * 0.075,
+                            ),
+
+                            const Text(
+                              'Welcome back!',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 35,
+                                fontWeight: FontWeight.w400,
+                              ),
+                            ),
+
+                            const SizedBox(height: 6),
+
+                            const Text(
+                              'Login to your account',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 23,
+                                fontWeight: FontWeight.w400,
+                              ),
+                            ),
+
+                            const SizedBox(height: 25),
+
+                            TextFormField(
+                              controller: _emailController,
+                              keyboardType: TextInputType.emailAddress,
+                              textInputAction: TextInputAction.next,
+                              autocorrect: false,
+                              decoration: _inputDecoration(
+                                hint: 'Email',
+                              ),
+                              validator: (value) {
+                                final email = value?.trim() ?? '';
+
+                                if (email.isEmpty) {
+                                  return 'Please enter your email.';
+                                }
+
+                                if (!RegExp(
+                                  r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
+                                ).hasMatch(email)) {
+                                  return 'Please enter a valid email.';
+                                }
+
+                                return null;
+                              },
+                            ),
+
+                            const SizedBox(height: 24),
+
+                            TextFormField(
+                              controller: _passwordController,
+                              obscureText: _obscurePassword,
+                              textInputAction: TextInputAction.done,
+                              onFieldSubmitted: (_) => _login(),
+                              decoration: _inputDecoration(
+                                hint: 'Password',
+                                suffixIcon: IconButton(
+                                  onPressed: () {
+                                    setState(() {
+                                      _obscurePassword = !_obscurePassword;
+                                    });
+                                  },
+                                  icon: Icon(
+                                    _obscurePassword
+                                        ? Icons.visibility_outlined
+                                        : Icons.visibility_off_outlined,
+                                    color: const Color(0xFF75838B),
+                                    size: 25,
+                                  ),
+                                ),
+                              ),
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Please enter your password.';
+                                }
+
+                                return null;
+                              },
+                            ),
+
+                            const SizedBox(height: 9),
+
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: TextButton(
+                                onPressed: auth.isLoading
+                                    ? null
+                                    : () => _showNotConnectedMessage(
+                                          'Password recovery',
+                                        ),
+                                style: TextButton.styleFrom(
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 4,
+                                    vertical: 5,
+                                  ),
+                                ),
+                                child: const Text(
+                                  'Forget password',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w400,
+                                  ),
+                                ),
+                              ),
+                            ),
+
+                            const SizedBox(height: 56),
+
+                            SizedBox(
+                              height: 64,
+                              child: ElevatedButton(
+                                onPressed: auth.isLoading ? null : _login,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: _cyan,
+                                  disabledBackgroundColor:
+                                      _cyan.withValues(alpha: 0.7),
+                                  foregroundColor: Colors.white,
+                                  elevation: 4,
+                                  shadowColor: Colors.black.withValues(
+                                    alpha: 0.22,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(15),
+                                  ),
+                                ),
+                                child: auth.isLoading
+                                    ? const SizedBox(
+                                        height: 24,
+                                        width: 24,
+                                        child: CircularProgressIndicator(
+                                          color: Colors.white,
+                                          strokeWidth: 2.5,
+                                        ),
+                                      )
+                                    : const Text(
+                                        'Login',
+                                        style: TextStyle(
+                                          fontSize: 25,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                              ),
+                            ),
+
+                            const SizedBox(height: 58),
+
+                            const Row(
+                              children: [
+                                Expanded(
+                                  child: Divider(
+                                    color: Color(0xFFD0EAF1),
+                                    thickness: 1.3,
+                                  ),
+                                ),
+                                Padding(
+                                  padding: EdgeInsets.symmetric(horizontal: 8),
+                                  child: Text(
+                                    'Or continue with',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 17,
+                                    ),
+                                  ),
+                                ),
+                                Expanded(
+                                  child: Divider(
+                                    color: Color(0xFFD0EAF1),
+                                    thickness: 1.3,
+                                  ),
+                                ),
+                              ],
+                            ),
+
+                            const SizedBox(height: 40),
+
+                            SizedBox(
+                              height: 64,
+                              child: OutlinedButton(
+                                onPressed: auth.isLoading
+                                    ? null
+                                    : () => _showNotConnectedMessage(
+                                          'Google sign-in',
+                                        ),
+                                style: OutlinedButton.styleFrom(
+                                  backgroundColor: const Color(0xFFF0F8FF),
+                                  foregroundColor: const Color(0xFF81D8DC),
+                                  side: const BorderSide(
+                                    color: _cyan,
+                                    width: 1.5,
+                                  ),
+                                  elevation: 3,
+                                  shadowColor: Colors.black.withValues(
+                                    alpha: 0.18,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(15),
+                                  ),
+                                ),
+                                child: const Text(
+                                  'Login with Google',
+                                  style: TextStyle(
+                                    fontSize: 21,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                            ),
+
+                            const SizedBox(height: 65),
+
+                            Wrap(
+                              alignment: WrapAlignment.center,
+                              crossAxisAlignment: WrapCrossAlignment.center,
+                              children: [
+                                const Text(
+                                  'Don’t have an account? ',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                                TextButton(
+                                  onPressed: auth.isLoading
+                                      ? null
+                                      : () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (_) =>
+                                                  const SignupScreen(),
+                                            ),
+                                          );
+                                        },
+                                  style: TextButton.styleFrom(
+                                    foregroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 4,
+                                    ),
+                                  ),
+                                  child: const Text(
+                                    'Register',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 17,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
                         ),
                       ),
-                      border: const OutlineInputBorder(),
-                    ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter your password.';
-                      }
-
-                      return null;
-                    },
-                  ),
-
-                  const SizedBox(height: 8),
-
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: TextButton(
-                      onPressed: isBusy ? null : _openForgotPassword,
-                      child: const Text('Forgot Password?'),
                     ),
                   ),
-
-                  const SizedBox(height: 16),
-
-                  ElevatedButton(
-                    onPressed: isBusy ? null : _login,
-                    style: ElevatedButton.styleFrom(
-                      minimumSize: const Size(double.infinity, 52),
-                    ),
-                    child: isBusy
-                        ? const SizedBox(
-                            height: 22,
-                            width: 22,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                            ),
-                          )
-                        : const Text(
-                            'Login',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Flexible(
-                        child: Text("Don't have an account?"),
-                      ),
-                      TextButton(
-                        onPressed: isBusy ? null : _openSignup,
-                        child: const Text('Sign Up'),
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  Text(
-                    'Secure access to your hospital queue.',
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                ],
+                ),
               ),
-            ),
-          ),
-        ),
+            ],
+          );
+        },
       ),
     );
   }
+}
+
+class LoginMedicalLogo extends StatelessWidget {
+  const LoginMedicalLogo({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 155,
+      height: 145,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          ShaderMask(
+            shaderCallback: (bounds) {
+              return const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Color(0xFF31CBD3),
+                  Color(0xFF078BB0),
+                  Color(0xFF07558C),
+                  Color(0xFF062E67),
+                ],
+              ).createShader(bounds);
+            },
+            child: const Icon(
+              Icons.favorite_rounded,
+              size: 145,
+              color: Colors.white,
+            ),
+          ),
+          const Positioned(
+            top: 38,
+            child: Icon(
+              Icons.add_rounded,
+              size: 70,
+              color: Colors.white,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class LoginTopWavePainter extends CustomPainter {
+  const LoginTopWavePainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final lightWave = Path()
+      ..moveTo(0, size.height * 0.75)
+      ..cubicTo(
+        size.width * 0.25,
+        size.height * 0.45,
+        size.width * 0.38,
+        size.height * 0.88,
+        size.width * 0.60,
+        size.height * 0.75,
+      )
+      ..cubicTo(
+        size.width * 0.77,
+        size.height * 0.63,
+        size.width * 0.87,
+        size.height * 0.40,
+        size.width,
+        size.height * 0.37,
+      )
+      ..lineTo(size.width, size.height * 0.65)
+      ..cubicTo(
+        size.width * 0.77,
+        size.height * 0.90,
+        size.width * 0.60,
+        size.height,
+        size.width * 0.43,
+        size.height * 0.81,
+      )
+      ..cubicTo(
+        size.width * 0.22,
+        size.height * 0.59,
+        size.width * 0.11,
+        size.height * 0.61,
+        0,
+        size.height * 0.83,
+      )
+      ..close();
+
+    canvas.drawPath(
+      lightWave,
+      Paint()..color = const Color(0xFF70C8D3),
+    );
+
+    final darkWave = Path()
+      ..moveTo(0, size.height * 0.75)
+      ..cubicTo(
+        size.width * 0.23,
+        size.height * 0.45,
+        size.width * 0.38,
+        size.height * 0.78,
+        size.width * 0.58,
+        size.height * 0.82,
+      )
+      ..cubicTo(
+        size.width * 0.76,
+        size.height * 0.91,
+        size.width * 0.90,
+        size.height * 0.61,
+        size.width,
+        size.height * 0.55,
+      )
+      ..lineTo(size.width, size.height)
+      ..lineTo(0, size.height)
+      ..close();
+
+    canvas.drawPath(
+      darkWave,
+      Paint()
+        ..shader = const LinearGradient(
+          colors: [
+            Color(0xFF246F96),
+            Color(0xFF0B477A),
+          ],
+          begin: Alignment.topRight,
+          end: Alignment.bottomLeft,
+        ).createShader(Offset.zero & size),
+    );
+
+    final line = Path()
+      ..moveTo(0, size.height * 0.77)
+      ..cubicTo(
+        size.width * 0.23,
+        size.height * 0.82,
+        size.width * 0.28,
+        size.height * 0.69,
+        size.width * 0.48,
+        size.height * 0.84,
+      )
+      ..cubicTo(
+        size.width * 0.71,
+        size.height,
+        size.width * 0.86,
+        size.height * 0.75,
+        size.width,
+        size.height * 0.57,
+      );
+
+    canvas.drawPath(
+      line,
+      Paint()
+        ..color = const Color(0xFF9BF1F2)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.5,
+    );
+
+    canvas.drawCircle(
+      Offset(size.width * 0.49, size.height * 0.84),
+      5.5,
+      Paint()..color = const Color(0xFF9BF1F2),
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant LoginTopWavePainter oldDelegate) => false;
+}
+
+class LoginMiddleWavePainter extends CustomPainter {
+  const LoginMiddleWavePainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final wave = Path()
+      ..moveTo(0, size.height * 0.15)
+      ..cubicTo(
+        size.width * 0.22,
+        -size.height * 0.30,
+        size.width * 0.39,
+        size.height * 0.42,
+        size.width * 0.62,
+        size.height * 0.50,
+      )
+      ..cubicTo(
+        size.width * 0.80,
+        size.height * 0.58,
+        size.width * 0.90,
+        size.height * 0.25,
+        size.width,
+        0,
+      )
+      ..lineTo(size.width, size.height)
+      ..lineTo(0, size.height)
+      ..close();
+
+    canvas.drawPath(
+      wave,
+      Paint()..color = const Color(0xFF246F96),
+    );
+
+    final rightWave = Path()
+      ..moveTo(size.width * 0.59, size.height * 0.50)
+      ..cubicTo(
+        size.width * 0.76,
+        size.height * 0.12,
+        size.width * 0.91,
+        size.height * 0.03,
+        size.width,
+        0,
+      )
+      ..lineTo(size.width, size.height * 0.45)
+      ..cubicTo(
+        size.width * 0.83,
+        size.height * 0.76,
+        size.width * 0.70,
+        size.height * 0.67,
+        size.width * 0.59,
+        size.height * 0.50,
+      )
+      ..close();
+
+    canvas.drawPath(
+      rightWave,
+      Paint()..color = const Color(0xFF70C8D3),
+    );
+
+    final line = Path()
+      ..moveTo(0, size.height * 0.15)
+      ..cubicTo(
+        size.width * 0.20,
+        size.height * 0.26,
+        size.width * 0.35,
+        -size.height * 0.04,
+        size.width * 0.51,
+        size.height * 0.44,
+      )
+      ..cubicTo(
+        size.width * 0.74,
+        size.height * 0.85,
+        size.width * 0.90,
+        size.height * 0.37,
+        size.width,
+        0,
+      );
+
+    canvas.drawPath(
+      line,
+      Paint()
+        ..color = const Color(0xFF9BF1F2)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.5,
+    );
+
+    canvas.drawCircle(
+      Offset(size.width * 0.50, size.height * 0.44),
+      5.5,
+      Paint()..color = const Color(0xFF9BF1F2),
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant LoginMiddleWavePainter oldDelegate) => false;
 }

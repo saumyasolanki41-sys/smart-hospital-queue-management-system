@@ -1,146 +1,115 @@
-import 'dart:async';
-import 'dart:convert';
-import 'dart:io';
-import 'package:http/http.dart' as http;
-import '../models/queue_status.dart';
+import '../models/token_model.dart';
+import 'api_service.dart';
 
 class QueueService {
-  static const String baseUrl =
-      'https://smart-hospital-queue-management-system-production.up.railway.app';
+  final ApiService _apiService;
 
-  final http.Client _client;
-  final Future<String?> Function()? tokenProvider;
+  QueueService({ApiService? apiService})
+      : _apiService = apiService ?? ApiService();
 
-  QueueService({
-    http.Client? client,
-    this.tokenProvider,
-  }) : _client = client ?? http.Client();
+  Future<TokenModel> bookToken({
+    required String doctorId,
+  }) async {
+    if (doctorId.trim().isEmpty) {
+      throw const ApiException('Please select a doctor.');
+    }
 
-  Future<Map<String, dynamic>> checkHealth() {
-    return _get('/api/health', auth: false);
-  }
-
-  Future<Map<String, dynamic>> getDepartments() {
-    return _get('/api/departments?page=1&limit=20', auth: false);
-  }
-
-  Future<Map<String, dynamic>> getMyQueueTokens() {
-    return _get('/api/queue/tokens/mine');
-  }
-
-  Future<QueueStatus> fetchStatus(String tokenId) async {
-    final decoded = await _get(
-      '/api/queue/tokens/${Uri.encodeComponent(tokenId)}',
+    final response = await _apiService.post(
+      '/api/queue/tokens',
+      body: {
+        'doctorId': doctorId.trim(),
+      },
+      authenticated: true,
     );
 
-    dynamic data = decoded['data'];
+    final data = response['data'];
 
-    if (data is Map<String, dynamic> && data['token'] is Map) {
-      data = data['token'];
-    }
-
-    if (data is! Map<String, dynamic>) {
-      throw QueueException('Unexpected queue status response.');
-    }
-
-    return QueueStatus.fromJson(data);
-  }
-
-  Future<Map<String, dynamic>> _get(
-    String path, {
-    bool auth = true,
-  }) async {
-    try {
-      final headers = <String, String>{
-        'Accept': 'application/json',
-      };
-
-      if (auth) {
-        final token = tokenProvider == null
-            ? null
-            : await tokenProvider!();
-
-        if (token == null || token.isEmpty) {
-          throw QueueException(
-            'Session expired. Please log in again.',
-            unauthorized: true,
-          );
-        }
-
-        headers['Authorization'] = 'Bearer $token';
-      }
-
-      final response = await _client
-          .get(
-            Uri.parse('$baseUrl$path'),
-            headers: headers,
-          )
-          .timeout(const Duration(seconds: 20));
-
-      final dynamic decoded;
-
-      try {
-        decoded = jsonDecode(response.body);
-      } on FormatException {
-        throw QueueException('The server returned invalid JSON.');
-      }
-
-      if (decoded is! Map<String, dynamic>) {
-        throw QueueException('Unexpected server response.');
-      }
-
-      if (response.statusCode == 401) {
-        throw QueueException(
-          'Session expired. Please log in again.',
-          unauthorized: true,
-        );
-      }
-
-      if (response.statusCode < 200 ||
-          response.statusCode >= 300 ||
-          decoded['success'] == false) {
-        final error = decoded['error'];
-        final message = error is Map
-            ? error['message']?.toString()
-            : null;
-
-        throw QueueException(
-          message ?? 'Request failed (${response.statusCode}).',
-        );
-      }
-
-      return decoded;
-    } on QueueException {
-      rethrow;
-    } on TimeoutException {
-      throw QueueException(
-        'The server is taking too long to respond.',
-      );
-    } on SocketException {
-      throw QueueException('No internet connection.');
-    } on http.ClientException {
-      throw QueueException('Unable to connect to the server.');
-    } catch (_) {
-      throw QueueException(
-        'Unable to connect. Check your internet connection.',
+    if (data is! Map || data['token'] is! Map) {
+      throw const ApiException(
+        'Unexpected token booking response from the server.',
       );
     }
+
+    return TokenModel.fromJson(
+      Map<String, dynamic>.from(data['token'] as Map),
+    );
   }
 
-  void dispose() {
-    _client.close();
+  Future<List<TokenModel>> getMyTokens() async {
+    final response = await _apiService.get(
+      '/api/queue/tokens/mine',
+      authenticated: true,
+    );
+
+    final data = response['data'];
+
+    dynamic tokens;
+
+    if (data is List) {
+      tokens = data;
+    } else if (data is Map) {
+      tokens = data['tokens'] ??
+          data['items'] ??
+          data['results'];
+    }
+
+    tokens ??= response['tokens'];
+
+    if (tokens is! List) {
+      throw const ApiException(
+        'Unexpected queue tokens response from the server.',
+      );
+    }
+
+    return tokens
+        .whereType<Map>()
+        .map(
+          (token) => TokenModel.fromJson(
+            Map<String, dynamic>.from(token),
+          ),
+        )
+        .toList();
   }
-}
 
-class QueueException implements Exception {
-  final String message;
-  final bool unauthorized;
+  Future<TokenModel> getTokenStatus(String tokenId) async {
+    if (tokenId.trim().isEmpty) {
+      throw const ApiException('Token ID is required.');
+    }
 
-  QueueException(
-    this.message, {
-    this.unauthorized = false,
-  });
+    final response = await _apiService.get(
+      '/api/queue/tokens/${Uri.encodeComponent(tokenId.trim())}',
+      authenticated: true,
+    );
 
-  @override
-  String toString() => message;
+    final data = response['data'];
+
+    dynamic token;
+
+    if (data is Map) {
+      token = data['token'] ?? data;
+    }
+
+    token ??= response['token'];
+
+    if (token is! Map) {
+      throw const ApiException(
+        'Unexpected token status response from the server.',
+      );
+    }
+
+    return TokenModel.fromJson(
+      Map<String, dynamic>.from(token),
+    );
+  }
+
+  Future<void> cancelToken(String tokenId) async {
+    if (tokenId.trim().isEmpty) {
+      throw const ApiException('Token ID is required.');
+    }
+
+    await _apiService.post(
+      '/api/queue/tokens/${Uri.encodeComponent(tokenId.trim())}/cancel',
+      authenticated: true,
+    );
+  }
 }

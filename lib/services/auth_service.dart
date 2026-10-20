@@ -1,3 +1,4 @@
+
 import '../models/user_model.dart';
 import 'api_service.dart';
 import 'storage_service.dart';
@@ -12,9 +13,9 @@ class AuthService {
   })  : _apiService = apiService ?? ApiService(),
         _storageService = storageService ?? StorageService();
 
-  String? _accessToken;
+  String? _challengeId;
 
-  String? get accessToken => _accessToken;
+  String? get challengeId => _challengeId;
 
   Future<void> register({
     required String name,
@@ -22,8 +23,8 @@ class AuthService {
     required String password,
   }) async {
     await _apiService.register(
-      name: name.trim(),
-      email: email.trim(),
+      name: name,
+      email: email,
       password: password,
     );
   }
@@ -33,90 +34,96 @@ class AuthService {
     required String otp,
   }) async {
     final response = await _apiService.verifyRegistration(
-      email: email.trim(),
-      otp: otp.trim(),
+      email: email,
+      otp: otp,
     );
 
     final data = response['data'];
 
-    if (data is! Map<String, dynamic> ||
-        data['user'] is! Map<String, dynamic>) {
-      throw ApiException(
-        'Invalid registration response from server.',
+    if (data is! Map ||
+        data['user'] is! Map) {
+      throw const ApiException(
+        'Registration response did not contain user details.',
+      );
+    }
+
+    final accessToken =
+        data['accessToken'] ??
+        data['access_token'] ??
+        data['token'];
+
+    if (accessToken is String &&
+        accessToken.trim().isNotEmpty) {
+      await _storageService.saveAccessToken(
+        accessToken.trim(),
       );
     }
 
     return UserModel.fromJson(
-      data['user'] as Map<String, dynamic>,
+      Map<String, dynamic>.from(data['user'] as Map),
     );
   }
 
-  Future<String> login({
+  Future<void> login({
     required String email,
     required String password,
   }) async {
-    await logout();
-
     final response = await _apiService.login(
-      email: email.trim(),
+      email: email,
       password: password,
     );
 
     final data = response['data'];
 
-    if (data is! Map<String, dynamic>) {
-      throw ApiException(
-        'Invalid login response from server.',
+    if (data is! Map) {
+      throw const ApiException(
+        'Login response did not contain challenge details.',
       );
     }
 
-    final challengeId = data['challengeId']?.toString();
+    final challenge = data['challengeId'];
 
-    if (challengeId == null || challengeId.isEmpty) {
-      throw ApiException(
-        'The server did not return a login challenge.',
+    if (challenge is! String ||
+        challenge.isEmpty) {
+      throw const ApiException(
+        'Login response did not contain a valid challenge ID.',
       );
     }
 
-    return challengeId;
+    _challengeId = challenge;
   }
 
   Future<UserModel> verifyLogin({
-    required String challengeId,
     required String otp,
   }) async {
+    final challenge = _challengeId;
+
+    if (challenge == null || challenge.isEmpty) {
+      throw const ApiException(
+        'Please enter your email and password again.',
+      );
+    }
+
+    // ApiService.verifyLogin saves the access token.
     final response = await _apiService.verifyLogin(
-      challengeId: challengeId,
-      otp: otp.trim(),
+      challengeId: challenge,
+      otp: otp,
     );
 
     final data = response['data'];
 
-    if (data is! Map<String, dynamic>) {
-      throw ApiException(
-        'Invalid login verification response.',
+    if (data is! Map ||
+        data['user'] is! Map) {
+      throw const ApiException(
+        'Login response did not contain user details.',
       );
     }
 
-    final token = data['accessToken']?.toString();
+    final user = UserModel.fromJson(
+      Map<String, dynamic>.from(data['user'] as Map),
+    );
 
-    if (token == null || token.isEmpty) {
-      throw ApiException(
-        'The server did not return an access token.',
-      );
-    }
-
-    final userData = data['user'];
-
-    if (userData is! Map<String, dynamic>) {
-      throw ApiException(
-        'User information is missing from the response.',
-      );
-    }
-
-    final user = UserModel.fromJson(userData);
-
-    await _saveSession(token);
+    _challengeId = null;
 
     return user;
   }
@@ -124,130 +131,58 @@ class AuthService {
   Future<UserModel> loginWithGoogle({
     required String idToken,
   }) async {
-    await logout();
-
+    // ApiService.loginWithGoogle saves the access token.
     final response = await _apiService.loginWithGoogle(
       idToken: idToken,
     );
 
     final data = response['data'];
 
-    if (data is! Map<String, dynamic>) {
-      throw ApiException(
-        'Invalid Google login response.',
+    if (data is! Map ||
+        data['user'] is! Map) {
+      throw const ApiException(
+        'Google login response did not contain user details.',
       );
     }
 
-    final token = data['accessToken']?.toString();
-
-    if (token == null || token.isEmpty) {
-      throw ApiException(
-        'The server did not return an access token.',
-      );
-    }
-
-    final userData = data['user'];
-
-    if (userData is! Map<String, dynamic>) {
-      throw ApiException(
-        'User information is missing from the response.',
-      );
-    }
-
-    final user = UserModel.fromJson(userData);
-
-    await _saveSession(token);
-
-    return user;
+    return UserModel.fromJson(
+      Map<String, dynamic>.from(data['user'] as Map),
+    );
   }
 
-  Future<void> _saveSession(String token) async {
-    await _storageService.saveAccessToken(token);
-    _accessToken = token;
-  }
+  Future<UserModel?> getCurrentUser() async {
+    final hasToken = await _storageService.hasAccessToken();
 
-  Future<UserModel> restoreSession() async {
-    final savedToken = await _storageService.getAccessToken();
-
-    if (savedToken == null || savedToken.isEmpty) {
-      _accessToken = null;
-      throw ApiException('No saved session was found.');
-    }
-
-    return getCurrentUser(token: savedToken);
-  }
-
-  Future<UserModel> getCurrentUser({
-    String? token,
-  }) async {
-    final currentToken = token ?? _accessToken;
-
-    if (currentToken == null || currentToken.isEmpty) {
-      throw ApiException(
-        'Please sign in to continue.',
-      );
+    if (!hasToken) {
+      return null;
     }
 
     try {
-      final response = await _apiService.getCurrentUser(
-        accessToken: currentToken,
-      );
-
+      final response = await _apiService.getCurrentUser();
       final data = response['data'];
 
-      if (data is! Map<String, dynamic> ||
-          data['user'] is! Map<String, dynamic>) {
-        throw ApiException(
-          'Invalid current-user response.',
+      if (data is! Map ||
+          data['user'] is! Map) {
+        throw const ApiException(
+          'Current-user response did not contain user details.',
         );
       }
 
-      final user = UserModel.fromJson(
-        data['user'] as Map<String, dynamic>,
+      return UserModel.fromJson(
+        Map<String, dynamic>.from(data['user'] as Map),
       );
-
-      _accessToken = currentToken;
-
-      return user;
     } on ApiException catch (error) {
-      // Clear the session when the server rejects the token.
       if (error.statusCode == 401) {
         await logout();
+        return null;
       }
 
       rethrow;
     }
   }
 
-  Future<void> forgotPassword({
-    required String email,
-  }) async {
-    await _apiService.forgotPassword(
-      email: email.trim(),
-    );
-  }
-
-  Future<void> resetPassword({
-    required String email,
-    required String otp,
-    required String newPassword,
-  }) async {
-    await _apiService.resetPassword(
-      email: email.trim(),
-      otp: otp.trim(),
-      newPassword: newPassword,
-    );
-
-    await logout();
-  }
-
   Future<void> logout() async {
-    _accessToken = null;
-    await _storageService.clearAccessToken();
-  }
-
-  Future<void> dispose() async {
-    await logout();
-    _apiService.dispose();
+    _challengeId = null;
+    await _apiService.logout();
   }
 }

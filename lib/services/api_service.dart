@@ -1,389 +1,376 @@
+
 import 'dart:async';
 import 'dart:convert';
+
 import 'package:http/http.dart' as http;
+
+import 'storage_service.dart';
 
 class ApiService {
   static const String baseUrl =
       'https://smart-hospital-queue-management-system-production.up.railway.app';
 
   final http.Client _client;
+  final StorageService _storageService;
 
-  ApiService({http.Client? client})
-      : _client = client ?? http.Client();
+  ApiService({
+    http.Client? client,
+    StorageService? storageService,
+  })  : _client = client ?? http.Client(),
+        _storageService = storageService ?? StorageService();
 
-  Uri _uri(String path) => Uri.parse('$baseUrl$path');
-
-  Map<String, dynamic> _decodeResponse(http.Response response) {
-    dynamic decoded;
-
-    try {
-      decoded = jsonDecode(response.body);
-    } on FormatException {
-      throw ApiException(
-        'The server returned an invalid response.',
-        response.statusCode,
-      );
-    }
-
-    if (decoded is! Map<String, dynamic>) {
-      throw ApiException(
-        'Unexpected server response.',
-        response.statusCode,
-      );
-    }
-
-    final isSuccessfulStatus =
-        response.statusCode >= 200 && response.statusCode < 300;
-
-    if (!isSuccessfulStatus || decoded['success'] == false) {
-      final error = decoded['error'];
-
-      final message =
-          error is Map ? error['message']?.toString() : null;
-
-      final code = error is Map ? error['code']?.toString() : null;
-
-      throw ApiException(
-        message ?? 'Request failed. Please try again.',
-        response.statusCode,
-        code,
-      );
-    }
-
-    return decoded;
-  }
-
-  Future<Map<String, dynamic>> _post(
-    String path,
-    Map<String, dynamic> body, {
-    String? token,
-  }) async {
-    try {
-      final headers = <String, String>{
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      };
-
-      if (token != null && token.isNotEmpty) {
-        headers['Authorization'] = 'Bearer $token';
-      }
-
-      final response = await _client
-          .post(
-            _uri(path),
-            headers: headers,
-            body: jsonEncode(body),
-          )
-          .timeout(const Duration(seconds: 20));
-
-      return _decodeResponse(response);
-    } on ApiException {
-      rethrow;
-    } on TimeoutException {
-      throw ApiException(
-        'The request timed out. Please try again.',
-      );
-    } catch (_) {
-      throw ApiException(
-        'Unable to connect to the server. Check your internet connection.',
-      );
-    }
-  }
-
-  Future<Map<String, dynamic>> _get(
+  Future<Map<String, dynamic>> _request(
+    String method,
     String path, {
-    String? token,
+    Map<String, dynamic>? body,
+    bool authenticated = true,
   }) async {
-    try {
-      final headers = <String, String>{
-        'Accept': 'application/json',
-      };
+    final headers = <String, String>{
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    };
 
-      if (token != null && token.isNotEmpty) {
-        headers['Authorization'] = 'Bearer $token';
+    if (authenticated) {
+      final token = await _storageService.getAccessToken();
+
+      if (token != null && token.trim().isNotEmpty) {
+        headers['Authorization'] = 'Bearer ${token.trim()}';
+      }
+    }
+
+    final uri = Uri.parse('$baseUrl$path');
+
+    try {
+      late http.Response response;
+
+      switch (method.toUpperCase()) {
+        case 'GET':
+          response = await _client
+              .get(uri, headers: headers)
+              .timeout(const Duration(seconds: 30));
+          break;
+
+        case 'POST':
+          response = await _client
+              .post(
+                uri,
+                headers: headers,
+                body: jsonEncode(body ?? <String, dynamic>{}),
+              )
+              .timeout(const Duration(seconds: 30));
+          break;
+
+        case 'PATCH':
+          response = await _client
+              .patch(
+                uri,
+                headers: headers,
+                body: jsonEncode(body ?? <String, dynamic>{}),
+              )
+              .timeout(const Duration(seconds: 30));
+          break;
+
+        default:
+          throw ApiException(
+            'Unsupported HTTP method: $method',
+          );
       }
 
-      final response = await _client
-          .get(
-            _uri(path),
-            headers: headers,
-          )
-          .timeout(const Duration(seconds: 20));
+      Map<String, dynamic> result = {};
 
-      return _decodeResponse(response);
+      if (response.body.trim().isNotEmpty) {
+        final decoded = jsonDecode(response.body);
+
+        if (decoded is Map) {
+          result = Map<String, dynamic>.from(decoded);
+        } else {
+          throw const ApiException(
+            'The server returned an unexpected response format.',
+          );
+        }
+      }
+
+      if (response.statusCode < 200 ||
+          response.statusCode >= 300 ||
+          result['success'] == false) {
+        final errorData = result['error'];
+
+        String message = 'Request failed. Please try again.';
+
+        if (errorData is Map &&
+            errorData['message'] is String) {
+          message = errorData['message'] as String;
+        } else if (result['message'] is String) {
+          message = result['message'] as String;
+        }
+
+        throw ApiException(
+          message,
+          statusCode: response.statusCode,
+        );
+      }
+
+      return result;
     } on ApiException {
       rethrow;
     } on TimeoutException {
-      throw ApiException(
-        'The request timed out. Please try again.',
+      throw const ApiException(
+        'The server took too long to respond. Please try again.',
       );
-    } catch (_) {
-      throw ApiException(
-        'Unable to connect to the server. Check your internet connection.',
+    } on http.ClientException {
+      throw const ApiException(
+        'Unable to connect to the hospital server. '
+        'Check your internet connection.',
+      );
+    } on FormatException {
+      throw const ApiException(
+        'The server returned invalid JSON.',
       );
     }
   }
 
- 
+  // Authentication
 
-  Future<Map<String, dynamic>> checkHealth() {
-    return _get('/api/health');
-  }
-
-  
   Future<Map<String, dynamic>> register({
     required String name,
     required String email,
     required String password,
   }) {
-    return _post('/api/auth/register', {
-      'name': name.trim(),
-      'email': email.trim().toLowerCase(),
-      'password': password,
-    });
+    return _request(
+      'POST',
+      '/api/auth/register',
+      authenticated: false,
+      body: {
+        'name': name,
+        'email': email,
+        'password': password,
+      },
+    );
   }
 
   Future<Map<String, dynamic>> verifyRegistration({
     required String email,
     required String otp,
-  }) {
-    return _post('/api/auth/register/verify', {
-      'email': email.trim().toLowerCase(),
-      'otp': otp.trim(),
-    });
+  }) async {
+    final response = await _request(
+      'POST',
+      '/api/auth/register/verify',
+      authenticated: false,
+      body: {
+        'email': email,
+        'otp': otp,
+      },
+    );
+
+    // Save a token if registration verification returns one.
+    final token = _findAccessToken(response);
+
+    if (token != null) {
+      await _storageService.saveAccessToken(token);
+    }
+
+    return response;
   }
 
   Future<Map<String, dynamic>> login({
     required String email,
     required String password,
   }) {
-    return _post('/api/auth/login', {
-      'email': email.trim().toLowerCase(),
-      'password': password,
-    });
+    return _request(
+      'POST',
+      '/api/auth/login',
+      authenticated: false,
+      body: {
+        'email': email,
+        'password': password,
+      },
+    );
   }
 
   Future<Map<String, dynamic>> verifyLogin({
     required String challengeId,
     required String otp,
-  }) {
-    return _post('/api/auth/login/verify', {
-      'challengeId': challengeId,
-      'otp': otp.trim(),
-    });
+  }) async {
+    final response = await _request(
+      'POST',
+      '/api/auth/login/verify',
+      authenticated: false,
+      body: {
+        'challengeId': challengeId,
+        'otp': otp,
+      },
+    );
+
+    final token = _findAccessToken(response);
+
+    if (token == null) {
+      throw const ApiException(
+        'Login verification succeeded, but the server response '
+        'did not contain an access token. Check the backend response.',
+      );
+    }
+
+    await _storageService.saveAccessToken(token);
+
+    return response;
   }
 
   Future<Map<String, dynamic>> loginWithGoogle({
     required String idToken,
-  }) {
-    return _post('/api/auth/google', {
-      'idToken': idToken,
-    });
+  }) async {
+    final response = await _request(
+      'POST',
+      '/api/auth/google',
+      authenticated: false,
+      body: {
+        'idToken': idToken,
+      },
+    );
+
+    final token = _findAccessToken(response);
+
+    if (token == null) {
+      throw const ApiException(
+        'Google login response did not contain an access token.',
+      );
+    }
+
+    await _storageService.saveAccessToken(token);
+
+    return response;
   }
 
-  Future<Map<String, dynamic>> getCurrentUser({
-    required String accessToken,
+  Future<Map<String, dynamic>> linkGoogle({
+    required String idToken,
   }) {
-    return _get(
+    return _request(
+      'POST',
+      '/api/auth/google/link',
+      body: {
+        'idToken': idToken,
+      },
+    );
+  }
+
+  Future<Map<String, dynamic>> getCurrentUser() {
+    return _request(
+      'GET',
       '/api/auth/me',
-      token: accessToken,
     );
   }
 
   Future<Map<String, dynamic>> forgotPassword({
     required String email,
   }) {
-    return _post('/api/auth/forgot-password', {
-      'email': email.trim().toLowerCase(),
-    });
+    return _request(
+      'POST',
+      '/api/auth/forgot-password',
+      authenticated: false,
+      body: {
+        'email': email,
+      },
+    );
   }
 
   Future<Map<String, dynamic>> resetPassword({
     required String email,
     required String otp,
     required String newPassword,
-  }) {
-    return _post('/api/auth/reset-password', {
-      'email': email.trim().toLowerCase(),
-      'otp': otp.trim(),
-      'newPassword': newPassword,
-    });
-  }
-
-  Future<Map<String, dynamic>> getDepartments({
-    int page = 1,
-    int limit = 20,
-  }) {
-    return _get(
-      '/api/departments?page=$page&limit=$limit',
-    );
-  }
-
-
-  Future<Map<String, dynamic>> getDoctors({
-    String? departmentId,
-    bool? isAvailable,
-    int page = 1,
-    int limit = 20,
-  }) {
-    final queryParameters = <String, String>{
-      'page': page.toString(),
-      'limit': limit.toString(),
-      if (departmentId != null && departmentId.isNotEmpty)
-        'departmentId': departmentId,
-      if (isAvailable != null)
-        'isAvailable': isAvailable.toString(),
-    };
-
-    final uri = _uri('/api/doctors').replace(
-      queryParameters: queryParameters,
-    );
-
-    return _getUri(uri);
-  }
-
-  Future<Map<String, dynamic>> _getUri(
-    Uri uri, {
-    String? token,
   }) async {
-    try {
-      final headers = <String, String>{
-        'Accept': 'application/json',
-      };
-
-      if (token != null && token.isNotEmpty) {
-        headers['Authorization'] = 'Bearer $token';
-      }
-
-      final response = await _client
-          .get(uri, headers: headers)
-          .timeout(const Duration(seconds: 20));
-
-      return _decodeResponse(response);
-    } on ApiException {
-      rethrow;
-    } on TimeoutException {
-      throw ApiException(
-        'The request timed out. Please try again.',
-      );
-    } catch (_) {
-      throw ApiException(
-        'Unable to connect to the server. Check your internet connection.',
-      );
-    }
-  }
-
-  Future<Map<String, dynamic>> bookQueueToken({
-    required String doctorId,
-    required String accessToken,
-  }) {
-    if (accessToken.trim().isEmpty) {
-      throw ApiException(
-        'Please log in before booking a token.',
-      );
-    }
-
-    if (doctorId.trim().isEmpty) {
-      throw ApiException(
-        'Please select a doctor.',
-      );
-    }
-
-    return _post(
-      '/api/queue/tokens',
-      {
-        'doctorId': doctorId.trim(),
+    final response = await _request(
+      'POST',
+      '/api/auth/reset-password',
+      authenticated: false,
+      body: {
+        'email': email,
+        'otp': otp,
+        'newPassword': newPassword,
       },
-      token: accessToken,
+    );
+
+    await _storageService.deleteAccessToken();
+
+    return response;
+  }
+
+  Future<Map<String, dynamic>> checkHealth() {
+    return _request(
+      'GET',
+      '/api/health',
+      authenticated: false,
     );
   }
 
-  Future<Map<String, dynamic>> getMyQueueTokens({
-    required String accessToken,
-  }) {
-    if (accessToken.trim().isEmpty) {
-      throw ApiException('Please log in first.');
-    }
+  // Generic API methods
 
-    return _get(
-      '/api/queue/tokens/mine',
-      token: accessToken,
-    );
-  }
-
-  Future<Map<String, dynamic>> getQueueTokenStatus({
-    required String tokenId,
-    required String accessToken,
-  }) {
-    if (accessToken.trim().isEmpty) {
-      throw ApiException('Please log in first.');
-    }
-
-    if (tokenId.trim().isEmpty) {
-      throw ApiException('Token ID is missing.');
-    }
-
-    final encodedTokenId = Uri.encodeComponent(tokenId.trim());
-
-    return _get(
-      '/api/queue/tokens/$encodedTokenId',
-      token: accessToken,
-    );
-  }
-
-  Future<Map<String, dynamic>> cancelQueueToken({
-    required String tokenId,
-    required String accessToken,
-  }) {
-    if (accessToken.trim().isEmpty) {
-      throw ApiException('Please log in first.');
-    }
-
-    if (tokenId.trim().isEmpty) {
-      throw ApiException('Token ID is missing.');
-    }
-
-    final encodedTokenId = Uri.encodeComponent(tokenId.trim());
-
-    return _patch(
-      '/api/queue/tokens/$encodedTokenId/cancel',
-      token: accessToken,
-    );
-  }
-
-  Future<Map<String, dynamic>> _patch(
+  Future<Map<String, dynamic>> get(
     String path, {
-    String? token,
+    bool authenticated = true,
+  }) {
+    return _request(
+      'GET',
+      path,
+      authenticated: authenticated,
+    );
+  }
+
+  Future<Map<String, dynamic>> post(
+    String path, {
     Map<String, dynamic>? body,
-  }) async {
-    try {
-      final headers = <String, String>{
-        'Accept': 'application/json',
-        if (body != null) 'Content-Type': 'application/json',
-        if (token != null && token.isNotEmpty)
-          'Authorization': 'Bearer $token',
-      };
+    bool authenticated = true,
+  }) {
+    return _request(
+      'POST',
+      path,
+      body: body,
+      authenticated: authenticated,
+    );
+  }
 
-      final response = await _client
-          .patch(
-            _uri(path),
-            headers: headers,
-            body: body == null ? null : jsonEncode(body),
-          )
-          .timeout(const Duration(seconds: 20));
+  Future<Map<String, dynamic>> patch(
+    String path, {
+    Map<String, dynamic>? body,
+    bool authenticated = true,
+  }) {
+    return _request(
+      'PATCH',
+      path,
+      body: body,
+      authenticated: authenticated,
+    );
+  }
 
-      return _decodeResponse(response);
-    } on ApiException {
-      rethrow;
-    } on TimeoutException {
-      throw ApiException(
-        'The request timed out. Please try again.',
-      );
-    } catch (_) {
-      throw ApiException(
-        'Unable to connect to the server. Check your internet connection.',
-      );
+  // Find access tokens in common nested response formats.
+
+  String? _findAccessToken(dynamic value) {
+    if (value is! Map) return null;
+
+    for (final key in [
+      'accessToken',
+      'access_token',
+      'token',
+    ]) {
+      final candidate = value[key];
+
+      if (candidate is String &&
+          candidate.trim().isNotEmpty) {
+        return candidate.trim();
+      }
     }
+
+    for (final entry in value.entries) {
+      if (entry.value is Map) {
+        final token = _findAccessToken(entry.value);
+
+        if (token != null) return token;
+      }
+    }
+
+    return null;
+  }
+
+  Future<void> logout() async {
+    await _storageService.deleteAccessToken();
   }
 
   void dispose() {
@@ -394,13 +381,11 @@ class ApiService {
 class ApiException implements Exception {
   final String message;
   final int? statusCode;
-  final String? code;
 
-  ApiException(
-    this.message, [
+  const ApiException(
+    this.message, {
     this.statusCode,
-    this.code,
-  ]);
+  });
 
   @override
   String toString() => message;

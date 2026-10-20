@@ -1,22 +1,29 @@
+
 class UserModel {
   final String id;
   final String name;
   final String email;
-  final String role;
+  final String? phone;
+  final String? role;
 
   const UserModel({
     required this.id,
     required this.name,
     required this.email,
-    required this.role,
+    this.phone,
+    this.role,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
     return UserModel(
-      id: json['id']?.toString() ?? '',
-      name: json['name']?.toString() ?? '',
-      email: json['email']?.toString() ?? '',
-      role: json['role']?.toString() ?? 'patient',
+      id: (json['_id'] ?? json['id'] ?? json['userId'] ?? '')
+          .toString(),
+      name: (json['name'] ?? json['fullName'] ?? '')
+          .toString(),
+      email: (json['email'] ?? '').toString(),
+      phone: (json['phone'] ?? json['phoneNumber'])
+          ?.toString(),
+      role: json['role']?.toString(),
     );
   }
 
@@ -25,6 +32,7 @@ class UserModel {
       'id': id,
       'name': name,
       'email': email,
+      'phone': phone,
       'role': role,
     };
   }
@@ -33,12 +41,14 @@ class UserModel {
     String? id,
     String? name,
     String? email,
+    String? phone,
     String? role,
   }) {
     return UserModel(
       id: id ?? this.id,
       name: name ?? this.name,
       email: email ?? this.email,
+      phone: phone ?? this.phone,
       role: role ?? this.role,
     );
   }

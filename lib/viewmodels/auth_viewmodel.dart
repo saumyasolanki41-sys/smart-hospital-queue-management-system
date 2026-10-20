@@ -6,38 +6,46 @@ import '../services/auth_service.dart';
 class AuthViewModel extends ChangeNotifier {
   final AuthService _authService;
 
-  AuthViewModel({
-    AuthService? authService,
-  }) : _authService = authService ?? AuthService();
+  AuthViewModel({AuthService? authService})
+      : _authService = authService ?? AuthService();
 
   UserModel? _user;
-  String? _challengeId;
-  String? _pendingEmail;
-  String? _errorMessage;
-
   bool _isLoading = false;
-  bool _isAuthenticated = false;
+  bool _isInitialized = false;
+  String? _error;
+  bool _isOtpPending = false;
 
   UserModel? get user => _user;
-  String? get challengeId => _challengeId;
-  String? get pendingEmail => _pendingEmail;
-  String? get errorMessage => _errorMessage;
   bool get isLoading => _isLoading;
-  bool get isAuthenticated => _isAuthenticated;
+  bool get isInitialized => _isInitialized;
+  bool get isLoggedIn => _user != null;
+  String? get error => _error;
+  bool get isOtpPending => _isOtpPending;
 
   void _setLoading(bool value) {
     _isLoading = value;
     notifyListeners();
   }
 
-  void _clearError() {
-    _errorMessage = null;
+  void _setError(String? message) {
+    _error = message;
+    notifyListeners();
   }
 
-  void _setError(Object error) {
-    _errorMessage = error is ApiException
-        ? error.message
-        : 'Something went wrong. Please try again.';
+  Future<void> initialize() async {
+    if (_isInitialized) return;
+
+    _setLoading(true);
+
+    try {
+      _user = await _authService.getCurrentUser();
+    } catch (error) {
+      _error = error.toString();
+    } finally {
+      _isInitialized = true;
+      _isLoading = false;
+      notifyListeners();
+    }
   }
 
   Future<bool> register({
@@ -46,7 +54,7 @@ class AuthViewModel extends ChangeNotifier {
     required String password,
   }) async {
     _setLoading(true);
-    _clearError();
+    _error = null;
 
     try {
       await _authService.register(
@@ -55,12 +63,10 @@ class AuthViewModel extends ChangeNotifier {
         password: password,
       );
 
-      _pendingEmail = email.trim().toLowerCase();
-      _challengeId = null;
-
+      _isOtpPending = true;
       return true;
     } catch (error) {
-      _setError(error);
+      _setError(_messageFrom(error));
       return false;
     } finally {
       _setLoading(false);
@@ -72,7 +78,7 @@ class AuthViewModel extends ChangeNotifier {
     required String otp,
   }) async {
     _setLoading(true);
-    _clearError();
+    _error = null;
 
     try {
       await _authService.verifyRegistration(
@@ -80,10 +86,10 @@ class AuthViewModel extends ChangeNotifier {
         otp: otp,
       );
 
-      _pendingEmail = null;
+      _isOtpPending = false;
       return true;
     } catch (error) {
-      _setError(error);
+      _setError(_messageFrom(error));
       return false;
     } finally {
       _setLoading(false);
@@ -95,70 +101,37 @@ class AuthViewModel extends ChangeNotifier {
     required String password,
   }) async {
     _setLoading(true);
-    _clearError();
-
-    _challengeId = null;
-    _pendingEmail = null;
-    _user = null;
-    _isAuthenticated = false;
+    _error = null;
 
     try {
-      final challenge = await _authService.login(
+      await _authService.login(
         email: email,
         password: password,
       );
 
-      _challengeId = challenge;
-      _pendingEmail = email.trim().toLowerCase();
-
+      _isOtpPending = true;
       return true;
     } catch (error) {
-      _setError(error);
+      _setError(_messageFrom(error));
       return false;
     } finally {
       _setLoading(false);
     }
   }
 
+  
   Future<bool> verifyLogin({
     required String otp,
   }) async {
-    final challenge = _challengeId;
-
-    if (challenge == null || challenge.isEmpty) {
-      _errorMessage =
-          'Please log in again to request a new OTP.';
-      notifyListeners();
-      return false;
-    }
-
     _setLoading(true);
-    _clearError();
+    _error = null;
 
     try {
-      final user = await _authService.verifyLogin(
-        challengeId: challenge,
-        otp: otp,
-      );
-
-      _user = user;
-      _isAuthenticated = true;
-      _challengeId = null;
-      _pendingEmail = null;
-
+      _user = await _authService.verifyLogin(otp: otp);
+      _isOtpPending = false;
       return true;
     } catch (error) {
-      _setError(error);
-
-      _user = null;
-      _isAuthenticated = false;
-
-      try {
-        await _authService.logout();
-      } catch (_) {
-        // Preserve the original authentication error.
-      }
-
+      _setError(_messageFrom(error));
       return false;
     } finally {
       _setLoading(false);
@@ -169,109 +142,16 @@ class AuthViewModel extends ChangeNotifier {
     required String idToken,
   }) async {
     _setLoading(true);
-    _clearError();
-
-    _user = null;
-    _isAuthenticated = false;
+    _error = null;
 
     try {
-      final user = await _authService.loginWithGoogle(
+      _user = await _authService.loginWithGoogle(
         idToken: idToken,
       );
 
-      _user = user;
-      _isAuthenticated = true;
-      _challengeId = null;
-      _pendingEmail = null;
-
       return true;
     } catch (error) {
-      _setError(error);
-
-      _user = null;
-      _isAuthenticated = false;
-
-      try {
-        await _authService.logout();
-      } catch (_) {
-        // Preserve the original authentication error.
-      }
-
-      return false;
-    } finally {
-      _setLoading(false);
-    }
-  }
-
-  Future<bool> restoreSession() async {
-    _setLoading(true);
-    _clearError();
-
-    try {
-      final user = await _authService.restoreSession();
-
-      _user = user;
-      _isAuthenticated = true;
-
-      return true;
-    } catch (_) {
-      _user = null;
-      _isAuthenticated = false;
-
-      try {
-        await _authService.logout();
-      } catch (_) {
-        // Session cleanup failed.
-      }
-
-      return false;
-    } finally {
-      _setLoading(false);
-    }
-  }
-
-  Future<bool> forgotPassword({
-    required String email,
-  }) async {
-    _setLoading(true);
-    _clearError();
-
-    try {
-      await _authService.forgotPassword(email: email);
-
-      _pendingEmail = email.trim().toLowerCase();
-      return true;
-    } catch (error) {
-      _setError(error);
-      return false;
-    } finally {
-      _setLoading(false);
-    }
-  }
-
-  Future<bool> resetPassword({
-    required String email,
-    required String otp,
-    required String newPassword,
-  }) async {
-    _setLoading(true);
-    _clearError();
-
-    try {
-      await _authService.resetPassword(
-        email: email,
-        otp: otp,
-        newPassword: newPassword,
-      );
-
-      _user = null;
-      _isAuthenticated = false;
-      _challengeId = null;
-      _pendingEmail = null;
-
-      return true;
-    } catch (error) {
-      _setError(error);
+      _setError(_messageFrom(error));
       return false;
     } finally {
       _setLoading(false);
@@ -280,24 +160,29 @@ class AuthViewModel extends ChangeNotifier {
 
   Future<void> logout() async {
     _setLoading(true);
-    _clearError();
+    _error = null;
 
     try {
       await _authService.logout();
-    } catch (error) {
-      _setError(error);
-    } finally {
       _user = null;
-      _challengeId = null;
-      _pendingEmail = null;
-      _isAuthenticated = false;
-
+      _isOtpPending = false;
+    } catch (error) {
+      _setError(_messageFrom(error));
+    } finally {
       _setLoading(false);
     }
   }
 
   void clearError() {
-    _clearError();
+    _error = null;
     notifyListeners();
+  }
+
+  String _messageFrom(Object error) {
+    if (error is ApiException) {
+      return error.message;
+    }
+
+    return 'Something went wrong. Please try again.';
   }
 }

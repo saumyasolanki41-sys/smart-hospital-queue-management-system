@@ -1,327 +1,509 @@
+
 import 'package:flutter/material.dart';
-import '../models/queue_status.dart';
-import '../services/queue_service.dart';
-import '../viewmodels/live_queue_viewmodel.dart';
+import 'package:provider/provider.dart';
+
+import '../models/token_model.dart';
+import '../viewmodels/token_viewmodel.dart';
 
 class LiveQueueScreen extends StatefulWidget {
- 
-  final String? tokenId;
- 
-  final QueueService? queueService;
-
-  const LiveQueueScreen({
-    super.key,
-    this.tokenId,
-    this.queueService,
-  });
+  const LiveQueueScreen({super.key});
 
   @override
   State<LiveQueueScreen> createState() => _LiveQueueScreenState();
 }
 
-class _LiveQueueScreenState extends State<LiveQueueScreen>
-    with WidgetsBindingObserver {
-  static const Color primaryColor = Color(0xFF176B87);
-  late final LiveQueueViewModel _vm;
-  late final QueueService _queueService;
-  late final bool _ownsService;
-
-  bool get _hasToken =>
-      widget.tokenId != null && widget.tokenId!.isNotEmpty;
-
+class _LiveQueueScreenState extends State<LiveQueueScreen> {
   @override
   void initState() {
     super.initState();
-    _ownsService = widget.queueService == null;
-    // NOTE: pass tokenProvider so the Bearer token is sent, e.g.
-    // QueueService(tokenProvider: () async => await TokenService().getToken())
-    _queueService = widget.queueService ?? QueueService();
-    _vm = LiveQueueViewModel(
-      service: _queueService,
-      tokenId: widget.tokenId ?? '',
-      onNearTurn: (s) {
-        // NOTE: call your notification_service here, e.g.
-        // 'Almost your turn: ${s.patientsAhead} patients ahead'
-      },
-      onUnauthorized: () {
-        // NOTE: clear session and navigate to login
-      },
-    );
-    if (_hasToken) _vm.start();
-    WidgetsBinding.instance.addObserver(this);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      context.read<TokenViewModel>().fetchMyTokens();
+    });
   }
 
-  // Pause polling when the app is in the background.
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (!_hasToken) return;
-    if (state == AppLifecycleState.resumed) {
-      _vm.start();
-    } else if (state == AppLifecycleState.paused) {
-      _vm.stop();
+  Future<void> _refreshQueue() async {
+    await context.read<TokenViewModel>().fetchMyTokens(refresh: true);
+  }
+
+  Future<void> _cancelToken(TokenModel token) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Cancel Token'),
+        content: Text(
+          'Are you sure you want to cancel token ${token.tokenNumber}?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Keep Token'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Cancel Token'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    final viewModel = context.read<TokenViewModel>();
+    final messenger = ScaffoldMessenger.of(context);
+
+    try {
+      await viewModel.cancelToken(token.id);
+
+      if (!mounted) return;
+
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text('Token cancellation completed.'),
+        ),
+      );
+
+      await viewModel.fetchMyTokens(refresh: true);
+    } catch (error) {
+      if (!mounted) return;
+
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text('Unable to cancel token: $error'),
+        ),
+      );
     }
   }
 
-  @override
-  void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
-    _vm.dispose();
-    if (_ownsService) _queueService.dispose();
-    super.dispose();
+  bool _canCancel(String status) {
+    final normalized = status.toLowerCase();
+
+    return normalized != 'cancelled' &&
+        normalized != 'canceled' &&
+        normalized != 'completed' &&
+        normalized != 'served' &&
+        normalized != 'in-progress' &&
+        normalized != 'in progress';
+  }
+
+  Color _statusColor(String status, BuildContext context) {
+    final normalized = status.toLowerCase();
+
+    if (normalized == 'completed' || normalized == 'served') {
+      return Colors.green;
+    }
+
+    if (normalized == 'cancelled' || normalized == 'canceled') {
+      return Theme.of(context).colorScheme.error;
+    }
+
+    if (normalized == 'in-progress' || normalized == 'in progress') {
+      return Colors.orange;
+    }
+
+    return Theme.of(context).colorScheme.primary;
+  }
+
+  String _displayText(dynamic value, {String fallback = 'Not available'}) {
+    if (value == null) return fallback;
+
+    final text = value.toString().trim();
+
+    if (text.isEmpty || text == 'null') return fallback;
+
+    return text;
   }
 
   @override
   Widget build(BuildContext context) {
+    final viewModel = context.watch<TokenViewModel>();
+    final colors = Theme.of(context).colorScheme;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF4F7FA),
       appBar: AppBar(
-        title: const Text('Live Queue'),
-        backgroundColor: primaryColor,
-        foregroundColor: Colors.white,
+        title: const Text('Live Queue Status'),
         actions: [
-          if (_hasToken)
-            IconButton(
-              onPressed: _vm.refresh,
-              tooltip: 'Refresh queue',
-              icon: const Icon(Icons.refresh),
-            ),
+          IconButton(
+            tooltip: 'Refresh queue',
+            onPressed: viewModel.isLoading ? null : _refreshQueue,
+            icon: const Icon(Icons.refresh),
+          ),
         ],
       ),
-      body: ListenableBuilder(
-        listenable: _vm,
-        builder: (context, _) {
-          if (!_hasToken) {
-            return const Center(
-              child: Padding(
-                padding: EdgeInsets.all(24),
-                child: Text(
-                  'You have no active token. Book a token first.',
-                  textAlign: TextAlign.center,
-                ),
+      body: RefreshIndicator(
+        onRefresh: _refreshQueue,
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.all(16),
+          children: [
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: colors.primaryContainer,
+                borderRadius: BorderRadius.circular(20),
               ),
-            );
-          }
-          if (_vm.isLoading && _vm.status == null) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (_vm.status == null) {
-            return _ErrorView(message: _vm.error, onRetry: _vm.refresh);
-          }
-          return RefreshIndicator(
-            onRefresh: _vm.refresh,
-            child: _buildContent(_vm.status!, _vm.error),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildContent(QueueStatus s, String? error) {
-    final isMyTurn = s.status == 'called' || s.status == 'in_consultation';
-    final label = switch (s.status) {
-      'called' => 'Your turn - please proceed',
-      'in_consultation' => 'In consultation',
-      'completed' => 'Completed',
-      'cancelled' => 'Cancelled',
-      _ => 'Waiting for your turn',
-    };
-
-    return ListView(
-      physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.all(20),
-      children: [
-        if (error != null)
-          Container(
-            margin: const EdgeInsets.only(bottom: 12),
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: Colors.orange.shade100,
-              borderRadius: BorderRadius.circular(10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    Icons.people_alt_outlined,
+                    size: 36,
+                    color: colors.onPrimaryContainer,
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Your Queue',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: colors.onPrimaryContainer,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Track your token and estimated waiting time.',
+                    style: TextStyle(
+                      color: colors.onPrimaryContainer,
+                    ),
+                  ),
+                ],
+              ),
             ),
-            child: Text('$error Showing last known status.',
-                style: const TextStyle(fontSize: 12)),
-          ),
-        const Text('Your Queue Status',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-        const SizedBox(height: 6),
-        Text('Updates automatically every few seconds.',
-            style: TextStyle(color: Colors.grey.shade700, fontSize: 14)),
-        const SizedBox(height: 22),
-        Container(
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            color: isMyTurn ? Colors.green.shade700 : primaryColor,
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Column(
-            children: [
-              const Icon(Icons.confirmation_num_outlined,
-                  size: 42, color: Colors.white),
-              const SizedBox(height: 12),
-              const Text('YOUR TOKEN NUMBER',
-                  style: TextStyle(
-                      color: Colors.white70, fontSize: 14, letterSpacing: 1.2)),
-              const SizedBox(height: 8),
-              Text(s.myToken,
-                  style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 56,
-                      fontWeight: FontWeight.bold)),
-              const SizedBox(height: 8),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.18),
-                  borderRadius: BorderRadius.circular(20),
+            const SizedBox(height: 20),
+
+            if (viewModel.isLoading && viewModel.tokens.isEmpty)
+              const Padding(
+                padding: EdgeInsets.all(40),
+                child: Center(
+                  child: CircularProgressIndicator(),
                 ),
-                child: Text(label, style: const TextStyle(color: Colors.white)),
+              )
+            else if (viewModel.error != null && viewModel.tokens.isEmpty)
+              _QueueMessage(
+                icon: Icons.error_outline,
+                message: viewModel.error.toString(),
+                buttonText: 'Try Again',
+                onPressed: _refreshQueue,
+              )
+            else if (viewModel.tokens.isEmpty)
+              const _QueueMessage(
+                icon: Icons.confirmation_number_outlined,
+                message: 'You have no booked tokens yet.',
+                subtitle:
+                    'Book a token to see your position in the hospital queue.',
+              )
+            else ...[
+              Row(
+                children: [
+                  const Expanded(
+                    child: Text(
+                      'Your Bookings',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  Text(
+                    '${viewModel.tokens.length} token(s)',
+                    style: TextStyle(
+                      color: colors.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              ...viewModel.tokens.map(
+                (token) => _TokenCard(
+                  token: token,
+                  statusColor: _statusColor(
+                    _displayText(token.status, fallback: 'pending'),
+                    context,
+                  ),
+                  canCancel: _canCancel(
+                    _displayText(token.status, fallback: 'pending'),
+                  ),
+                  displayText: _displayText,
+                  onCancel: () => _cancelToken(token),
+                ),
               ),
             ],
-          ),
-        ),
-        const SizedBox(height: 20),
-        Row(
-          children: [
-            Expanded(
-              child: _InfoCard(
-                icon: Icons.campaign_outlined,
-                title: s.currentlyServing ?? '-',
-                subtitle: 'Now Serving',
-                color: primaryColor,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _InfoCard(
-                icon: Icons.people_alt_outlined,
-                title: '${s.patientsAhead}',
-                subtitle: 'Patients Ahead',
-                color: Colors.orange.shade800,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _InfoCard(
-                icon: Icons.access_time,
-                title: s.estimatedWaitMinutes == null
-                    ? '--'
-                    : '~${s.estimatedWaitMinutes} min',
-                subtitle: 'Estimated Wait',
-                color: Colors.green.shade700,
+
+            const SizedBox(height: 12),
+            Text(
+              'Pull down to refresh your queue status.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: colors.onSurfaceVariant,
+                fontSize: 12,
               ),
             ),
           ],
         ),
-        const SizedBox(height: 26),
-        const Text('Upcoming Tokens',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-        const SizedBox(height: 12),
-        if (s.upcoming.isEmpty)
-          const Padding(
-            padding: EdgeInsets.all(16),
-            child: Text('No upcoming tokens.'),
-          )
-        else
-          Card(
-            color: Colors.white,
-            elevation: 0,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            child: Column(
+      ),
+    );
+  }
+}
+
+class _TokenCard extends StatelessWidget {
+  final TokenModel token;
+  final Color statusColor;
+  final bool canCancel;
+  final String Function(dynamic, {String fallback}) displayText;
+  final VoidCallback onCancel;
+
+  const _TokenCard({
+    required this.token,
+    required this.statusColor,
+    required this.canCancel,
+    required this.displayText,
+    required this.onCancel,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 16),
+      clipBehavior: Clip.antiAlias,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
               children: [
-                for (int i = 0; i < s.upcoming.length; i++) ...[
-                  ListTile(
-                    leading: CircleAvatar(
-                      backgroundColor: const Color(0xFFE5F2F6),
-                      child: Text(s.upcoming[i].token,
-                          style: const TextStyle(
-                              color: primaryColor,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 12)),
-                    ),
-                    title: Text('Token ${s.upcoming[i].token}',
-                        style: const TextStyle(fontWeight: FontWeight.w600)),
-                    trailing: Text(s.upcoming[i].status),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: colors.primaryContainer,
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                  if (i < s.upcoming.length - 1)
-                    const Divider(height: 1, indent: 72),
-                ],
+                  child: Icon(
+                    Icons.confirmation_number_outlined,
+                    size: 28,
+                    color: colors.onPrimaryContainer,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Token Number'),
+                      Text(
+                        displayText(token.tokenNumber),
+                        style: const TextStyle(
+                          fontSize: 23,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: statusColor.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    displayText(token.status, fallback: 'pending'),
+                    style: TextStyle(
+                      color: statusColor,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
               ],
             ),
+            const Divider(height: 28),
+            _TokenDetail(
+              icon: Icons.person_outline,
+              label: 'Doctor',
+              value: displayText(token.doctorName),
+            ),
+            const SizedBox(height: 12),
+            _TokenDetail(
+              icon: Icons.local_hospital_outlined,
+              label: 'Department',
+              value: displayText(token.departmentName),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: _QueueStat(
+                    icon: Icons.people_outline,
+                    label: 'Patients ahead',
+                    value: displayText(token.patientsAhead, fallback: '0'),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _QueueStat(
+                    icon: Icons.schedule,
+                    label: 'Est. waiting',
+                    value:
+                        '${displayText(token.estimatedWaitMinutes, fallback: '0')} min',
+                  ),
+                ),
+              ],
+            ),
+            if (canCancel) ...[
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: onCancel,
+                  icon: const Icon(Icons.cancel_outlined),
+                  label: const Text('Cancel Token'),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _TokenDetail extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+
+  const _TokenDetail({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(
+          icon,
+          size: 20,
+          color: Theme.of(context).colorScheme.primary,
+        ),
+        const SizedBox(width: 10),
+        Text('$label: '),
+        Expanded(
+          child: Text(
+            value,
+            textAlign: TextAlign.end,
+            style: const TextStyle(fontWeight: FontWeight.w600),
           ),
-        const SizedBox(height: 16),
-        const Text(
-          'Waiting time is an estimate and may change.',
-          textAlign: TextAlign.center,
-          style: TextStyle(color: Colors.black54, fontSize: 12),
         ),
       ],
     );
   }
 }
 
-class _ErrorView extends StatelessWidget {
-  final String? message;
-  final Future<void> Function() onRetry;
+class _QueueStat extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
 
-  const _ErrorView({required this.message, required this.onRetry});
+  const _QueueStat({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.cloud_off, size: 48, color: Colors.grey),
-            const SizedBox(height: 12),
-            Text(message ?? 'Something went wrong.',
-                textAlign: TextAlign.center),
-            const SizedBox(height: 16),
-            FilledButton(onPressed: onRetry, child: const Text('Try again')),
-          ],
-        ),
+    final colors = Theme.of(context).colorScheme;
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: colors.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: colors.primary),
+          const SizedBox(height: 8),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 19,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              color: colors.onSurfaceVariant,
+            ),
+          ),
+        ],
       ),
     );
   }
 }
 
-class _InfoCard extends StatelessWidget {
+class _QueueMessage extends StatelessWidget {
   final IconData icon;
-  final String title;
-  final String subtitle;
-  final Color color;
+  final String message;
+  final String? subtitle;
+  final String? buttonText;
+  final VoidCallback? onPressed;
 
-  const _InfoCard({
+  const _QueueMessage({
     required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.color,
+    required this.message,
+    this.subtitle,
+    this.buttonText,
+    this.onPressed,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      color: Colors.white,
-      elevation: 0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 20),
-        child: Column(
-          children: [
-            Icon(icon, color: color, size: 28),
-            const SizedBox(height: 12),
-            Text(title,
-                style:
-                    const TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 6),
-            Text(subtitle,
-                textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.grey.shade700, fontSize: 11)),
+    final colors = Theme.of(context).colorScheme;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 28),
+      child: Column(
+        children: [
+          Icon(icon, size: 52, color: colors.primary),
+          const SizedBox(height: 12),
+          Text(
+            message,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 17,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          if (subtitle != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              subtitle!,
+              textAlign: TextAlign.center,
+              style: TextStyle(color: colors.onSurfaceVariant),
+            ),
           ],
-        ),
+          if (buttonText != null && onPressed != null) ...[
+            const SizedBox(height: 16),
+            OutlinedButton(
+              onPressed: onPressed,
+              child: Text(buttonText!),
+            ),
+          ],
+        ],
       ),
     );
   }

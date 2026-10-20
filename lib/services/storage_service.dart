@@ -14,11 +14,19 @@ class StorageService {
   }
 
   Future<String?> getAccessToken() async {
-    return _storage.read(key: _accessTokenKey);
+    return await _storage.read(
+      key: _accessTokenKey,
+    );
   }
 
-  Future<void> clearAccessToken() async {
-    await _storage.delete(key: _accessTokenKey);
+  Future<void> deleteAccessToken() async {
+    await _storage.delete(
+      key: _accessTokenKey,
+    );
+  }
+
+  Future<void> clearStorage() async {
+    await _storage.deleteAll();
   }
 
   Future<bool> hasAccessToken() async {
