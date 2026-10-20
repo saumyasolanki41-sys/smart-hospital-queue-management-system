@@ -58,6 +58,27 @@ const DEPARTMENTS = [
   { icon: Heart, name: "Cardiology", text: "Heart and blood vessel care." },
   { icon: Hand, name: "Dermatology", text: "Skin, hair and nail care." },
   { icon: Bone, name: "Orthopaedics", text: "Bone, joint and muscle care." },
+  { icon: Stethoscope, name: "Gastroenterology", text: "Digestive system care." },
+  { icon: Stethoscope, name: "General Medicine", text: "Comprehensive medical care." },
+  { icon: Stethoscope, name: "Internal Medicine", text: "Adult medical diagnosis and care." },
+  { icon: Stethoscope, name: "Neurology", text: "Brain and nervous system care." },
+  { icon: Stethoscope, name: "Obstetrics & Gynecology", text: "Pregnancy and reproductive health." },
+  { icon: Stethoscope, name: "Pediatrics", text: "Medical care for children." },
+  { icon: Stethoscope, name: "Psychiatry", text: "Mental and behavioral health care." },
+  { icon: Stethoscope, name: "Pulmonology", text: "Lung and respiratory care." },
+  { icon: Stethoscope, name: "ENT", text: "Ear, nose and throat care." },
+  { icon: Stethoscope, name: "Ophthalmology", text: "Eye and vision care." },
+  { icon: Stethoscope, name: "Urology", text: "Urinary tract and reproductive health." },
+  { icon: Stethoscope, name: "Nephrology", text: "Kidney care." },
+  { icon: Stethoscope, name: "Endocrinology", text: "Hormone and metabolic health." },
+  { icon: Stethoscope, name: "Oncology", text: "Cancer diagnosis and treatment." },
+  { icon: Stethoscope, name: "Rheumatology", text: "Joint and autoimmune condition care." },
+  { icon: Stethoscope, name: "General Surgery", text: "Surgical evaluation and treatment." },
+  { icon: Stethoscope, name: "Neurosurgery", text: "Surgical care for the brain and spine." },
+  { icon: Stethoscope, name: "Plastic Surgery", text: "Reconstructive and plastic surgical care." },
+  { icon: Stethoscope, name: "Pediatric Surgery", text: "Surgical care for children." },
+  { icon: Stethoscope, name: "Cardiac Surgery", text: "Surgical care for the heart." },
+  { icon: Stethoscope, name: "Geriatric Medicine", text: "Health care for older adults." },
 ];
 
 export default function About() {
@@ -126,7 +147,7 @@ export default function About() {
           <h2 className="mb-6 text-2xl font-semibold text-slate-900">
             Departments we cover
           </h2>
-          <div className="grid gap-6 sm:grid-cols-3">
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {DEPARTMENTS.map(({ icon: Icon, name, text }) => (
               <div
                 key={name}
