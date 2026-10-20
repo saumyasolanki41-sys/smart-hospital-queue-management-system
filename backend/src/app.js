@@ -10,8 +10,10 @@ const ambulanceRoutes = require('./routes/ambulance.routes');
 const ambulanceRequestRoutes = require('./routes/ambulance-request.routes');
 const cors = require('cors');
 const app = express();
+const frontendOrigins = (process.env.FRONTEND_ORIGIN || 'http://localhost:5173')
+  .split(',').map(origin => origin.trim()).filter(Boolean);
 app.use(cors({
-  origin: process.env.FRONTEND_ORIGIN || 'http://localhost:5173',
+  origin: frontendOrigins,
   methods: ['GET', 'POST', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));

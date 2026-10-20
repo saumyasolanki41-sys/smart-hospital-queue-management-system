@@ -43,9 +43,17 @@ npm.cmd --prefix backend start
 Backend environment configuration is required. Keep the real `.env` on the server;
 clients need the API base URL and public Google client configuration only.
 
-Browser CORS currently allows exactly `FRONTEND_ORIGIN`, default
-`http://localhost:5173`. Tell the backend developer the exact frontend origin
-(scheme, host and port) if it differs, then restart the backend after configuration.
+Browser CORS allows the exact origins listed in `FRONTEND_ORIGIN`, separated by
+commas. The default is `http://localhost:5173`. For local and deployed web access:
+
+```text
+FRONTEND_ORIGIN=http://localhost:5173,https://smart-hospital-queue-managment-syst.vercel.app
+```
+
+Use origins without paths or trailing slashes. Restart locally or redeploy after
+changing server configuration. Railway needs both the updated code and variable.
+Keep both web origins in the Google OAuth client's Authorized JavaScript origins
+as separate entries as well; Google origin registration is separate from CORS.
 Native mobile HTTP calls are not subject to browser CORS; Flutter Web is.
 
 ## Endpoint overview

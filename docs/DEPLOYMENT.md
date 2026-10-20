@@ -53,7 +53,15 @@ FRONTEND_ORIGIN=http://localhost:5173
 Replace placeholders privately in hosting settings. Do not set a fixed PORT when
 the host supplies one. SMTP_USER/SMTP_PASS are not required for the Brevo path.
 Set FRONTEND_ORIGIN to the frontend developer's exact browser origin. The current
-code supports one origin; coordinate if multiple browser origins are needed.
+code supports a comma-separated list of exact origins. To allow local and deployed
+web clients together, set:
+
+```text
+FRONTEND_ORIGIN=http://localhost:5173,https://smart-hospital-queue-managment-syst.vercel.app
+```
+
+Deploy the code that supports this list before using the comma-separated value.
+Configure those origins separately in the Google OAuth web client too.
 Ensure Atlas network access permits the hosting service's outbound connection.
 An isolated development database/account is preferable for shared testing.
 
