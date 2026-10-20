@@ -46,7 +46,7 @@ class HospitalQueueApp extends StatelessWidget {
         ),
       ],
       child: MaterialApp(
-        title: 'Smart Hospital Queue',
+        title: 'Smart Hospital',
         debugShowCheckedModeBanner: false,
         themeMode: ThemeMode.system,
         theme: ThemeData(
