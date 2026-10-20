@@ -1,17 +1,15 @@
 // src/pages/QueueDashboard.jsx
-// One dashboard for two roles:
-//   mode="staff"  -> admin / receptionist: pick any doctor and manage their queue
-//   mode="doctor" -> doctor: manage only their own queue
 import { useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { PhoneCall, Check, SkipForward, RefreshCw } from "lucide-react";
 import Navbar from "../components/layout/Navbar";
+import AllDoctorsOverview from "../components/staff/AllDoctorsOverview";
 import { useAuth } from "../components/context/AuthContext";
 import { getDoctors } from "../api/hospital";
-import { getDoctorQueue, callNext, completeToken, skipToken } from "../api/staff";
+import { getDoctorQueue, callNext, completeToken, skipToken, getDashboardSummary } from "../api/staff";
 
 const REFRESH_MS = 10000;
-const LIST_LIMIT = 50; // the API's maximum page size
+const LIST_LIMIT = 50; 
 
 const ACTION_MESSAGES = {
   QUEUE_BUSY: "Another patient is already being served. The queue has been refreshed.",
@@ -33,11 +31,42 @@ function Skeleton() {
   );
 }
 
+const TOKEN_TILES = [
+  { key: "total", label: "Total tokens", style: "bg-slate-50 text-slate-900" },
+  { key: "waiting", label: "Waiting", style: "bg-yellow-50 text-yellow-900" },
+  { key: "called", label: "Being served", style: "bg-primary/5 text-primary/90" },
+  { key: "completed", label: "Completed", style: "bg-green-50 text-green-900" },
+  { key: "cancelled", label: "Cancelled", style: "bg-gray-100 text-gray-800" },
+  { key: "skipped", label: "Skipped", style: "bg-orange-50 text-orange-900" },
+];
+
+function SummaryStrip({ summary }) {
+  const { tokens, doctors, departments } = summary;
+  return (
+    <section aria-label="Today's summary" className="mb-6 rounded-3xl bg-white/95 p-5 shadow-xl">
+      <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">Hospital-wide today</h2>
+        <p className="text-sm text-slate-600">
+          {doctors.available} of {doctors.total} doctors accepting bookings · {departments}{" "}
+          {departments === 1 ? "department" : "departments"}
+        </p>
+      </div>
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+        {TOKEN_TILES.map(({ key, label, style }) => (
+          <div key={key} className={`rounded-2xl p-3 ${style}`}>
+            <p className="text-2xl font-bold">{tokens[key]}</p>
+            <p className="text-xs">{label}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 export default function QueueDashboard({ mode }) {
   const { token: accessToken, signOut } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // Setup: doctor list (and, for doctors, finding their own profile)
   const [doctors, setDoctors] = useState([]);
   const [ownDoctorId, setOwnDoctorId] = useState(null);
   const [setupLoading, setSetupLoading] = useState(true);
@@ -50,8 +79,12 @@ export default function QueueDashboard({ mode }) {
   const [updatedAt, setUpdatedAt] = useState(null);
   const [acting, setActing] = useState(false);
   const [confirmSkip, setConfirmSkip] = useState(false);
+  const [summary, setSummary] = useState(null); // hospital-wide counts (staff mode only)
 
-  const doctorId = mode === "doctor" ? ownDoctorId : searchParams.get("doctor") || doctors[0]?._id;
+  // Staff can look at one doctor or all
+  const selection = searchParams.get("doctor") || "all";
+  const isAll = mode === "staff" && selection === "all";
+  const doctorId = mode === "doctor" ? ownDoctorId : isAll ? null : selection;
   const doctor = doctors.find((d) => d._id === doctorId);
 
   useEffect(() => {
@@ -64,9 +97,7 @@ export default function QueueDashboard({ mode }) {
         setDoctors(list);
 
         if (mode === "doctor") {
-          // The API has no "my doctor profile" endpoint. A doctor gets 403 for every queue except
-          // their own, so try each profile until one works.
-          // Better long-term: ask the backend for GET /api/doctors/me.
+        
           for (const d of list) {
             try {
               await getDoctorQueue(accessToken, d._id, { limit: 1 });
@@ -77,7 +108,7 @@ export default function QueueDashboard({ mode }) {
                 signOut();
                 return;
               }
-              if (err.status !== 403) throw err; // 403 = someone else's queue, keep looking
+              if (err.status !== 403) throw err;
             }
           }
         }
@@ -103,7 +134,7 @@ export default function QueueDashboard({ mode }) {
       setError("");
     } catch (err) {
       if (err.code === "UNAUTHORIZED") {
-        signOut(); // session expired: ProtectedRoute sends the user to login
+        signOut();
         return;
       }
       setError(ACTION_MESSAGES[err.code] ?? err.message);
@@ -112,13 +143,29 @@ export default function QueueDashboard({ mode }) {
     }
   }, [accessToken, doctorId, signOut]);
 
-  // Load now, then keep the screen fresh.
+  const loadSummary = useCallback(async () => {
+    if (mode !== "staff") return;
+    try {
+      setSummary(await getDashboardSummary(accessToken));
+    } catch (err) {
+      if (err.code === "UNAUTHORIZED") signOut();
+      
+    }
+  }, [mode, accessToken, signOut]);
+
   useEffect(() => {
     if (!doctorId) return;
     load();
     const timer = setInterval(load, REFRESH_MS);
     return () => clearInterval(timer);
   }, [doctorId, load]);
+
+  useEffect(() => {
+    if (mode !== "staff") return;
+    loadSummary();
+    const timer = setInterval(loadSummary, REFRESH_MS);
+    return () => clearInterval(timer);
+  }, [mode, loadSummary]);
 
   function changeDoctor(id) {
     setQueue(null);
@@ -128,8 +175,7 @@ export default function QueueDashboard({ mode }) {
     setSearchParams({ doctor: id }, { replace: true });
   }
 
-  // Run an action, then always refresh. The API docs say to refresh after an action,
-  // including a failed or lost one, before retrying.
+  
   async function run(action) {
     setActing(true);
     setError("");
@@ -144,6 +190,7 @@ export default function QueueDashboard({ mode }) {
       setError(ACTION_MESSAGES[err.code] ?? err.message);
     }
     await load();
+    loadSummary();
     setActing(false);
   }
 
@@ -160,6 +207,8 @@ export default function QueueDashboard({ mode }) {
         Couldn't load the dashboard. {setupError}
       </p>
     );
+  } else if (isAll && doctors.length > 0) {
+    body = <AllDoctorsOverview doctors={doctors} onSelect={changeDoctor} />;
   } else if (!doctorId) {
     body = (
       <p className="rounded-2xl bg-white/80 p-8 text-center text-slate-600">
@@ -323,6 +372,15 @@ export default function QueueDashboard({ mode }) {
                 {doctor.name} · {doctor.specialization}
               </p>
             )}
+            {mode === "staff" && !isAll && doctors.length > 0 && (
+              <button
+                type="button"
+                onClick={() => changeDoctor("all")}
+                className="mt-1 text-sm font-medium text-primary/70 hover:underline"
+              >
+                ← All doctors
+              </button>
+            )}
           </div>
 
           <div className="flex flex-wrap items-center gap-4">
@@ -333,10 +391,11 @@ export default function QueueDashboard({ mode }) {
                 </label>
                 <select
                   id="doctor"
-                  value={doctorId ?? ""}
+                  value={selection}
                   onChange={(e) => changeDoctor(e.target.value)}
-                  className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-primary/60 focus:ring-2 focus:ring-primary/50/40"
+                  className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-primary/60 focus:ring-2 focus:ring-primary/40"
                 >
+                  <option value="all">All doctors</option>
                   {doctors.map((d) => (
                     <option key={d._id} value={d._id}>
                       {d.name} · {d.specialization}
@@ -357,6 +416,8 @@ export default function QueueDashboard({ mode }) {
             )}
           </div>
         </header>
+
+        {mode === "staff" && summary && <SummaryStrip summary={summary} />}
 
         {body}
       </main>

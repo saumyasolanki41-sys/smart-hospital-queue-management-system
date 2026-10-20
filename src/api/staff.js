@@ -1,3 +1,4 @@
+// src/api/staff.js — queue management for staff (admin, receptionist) and doctors.
 import { request } from "./client";
 
 const base = (doctorId) => `/api/staff/queues/doctors/${doctorId}`;
@@ -19,3 +20,6 @@ export const skipToken = (accessToken, doctorId, tokenId) =>
   request(`${base(doctorId)}/tokens/${tokenId}/skip`, { method: "PATCH", token: accessToken }).then(
     (d) => d.token
   );
+
+export const getDashboardSummary = (accessToken) =>
+  request("/api/staff/dashboard", { token: accessToken });
