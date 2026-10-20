@@ -7,6 +7,7 @@ import AllDoctorsOverview from "../components/staff/AllDoctorsOverview";
 import { useAuth } from "../components/context/AuthContext";
 import { getDoctors } from "../api/hospital";
 import { getDoctorQueue, callNext, completeToken, skipToken, getDashboardSummary } from "../api/staff";
+import { getDoctorDashboard } from "../api/doctor";
 
 const REFRESH_MS = 10000;
 const LIST_LIMIT = 50; 
@@ -63,6 +64,42 @@ function SummaryStrip({ summary }) {
   );
 }
 
+function DoctorSummaryStrip({ summary }) {
+  const { doctor: profile, tokens } = summary;
+  const tiles = [
+    { key: "total", label: "Total tokens" },
+    { key: "waiting", label: "Waiting" },
+    { key: "called", label: "Called today" },
+    { key: "completed", label: "Completed" },
+    { key: "cancelled", label: "Cancelled" },
+    { key: "skipped", label: "Skipped" },
+  ];
+
+  return (
+    <section aria-label="Today's doctor summary" className="mb-6 rounded-3xl bg-white/95 p-5 shadow-xl">
+      <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+          Today · {summary.date}
+        </h2>
+        <p className="text-sm text-slate-600">
+          {profile.department?.name ?? "Department unavailable"}
+          {profile.averageConsultationMinutes
+            ? ` · About ${profile.averageConsultationMinutes} min per consultation`
+            : ""}
+        </p>
+      </div>
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+        {tiles.map(({ key, label }) => (
+          <div key={key} className="rounded-2xl bg-secondary/5 p-3 text-slate-900">
+            <p className="text-2xl font-bold">{tokens[key] ?? 0}</p>
+            <p className="text-xs">{label}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 export default function QueueDashboard({ mode }) {
   const { token: accessToken, signOut } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -80,6 +117,7 @@ export default function QueueDashboard({ mode }) {
   const [acting, setActing] = useState(false);
   const [confirmSkip, setConfirmSkip] = useState(false);
   const [summary, setSummary] = useState(null); // hospital-wide counts (staff mode only)
+  const [doctorSummary, setDoctorSummary] = useState(null);
 
   // Staff can look at one doctor or all
   const selection = searchParams.get("doctor") || "all";
@@ -92,28 +130,30 @@ export default function QueueDashboard({ mode }) {
 
     async function setup() {
       try {
+        if (mode === "doctor") {
+          const dashboard = await getDoctorDashboard(accessToken);
+          if (ignore) return;
+          setDoctorSummary(dashboard);
+          setDoctors([dashboard.doctor]);
+          setOwnDoctorId(dashboard.doctor._id);
+          return;
+        }
+
         const list = await getDoctors({ limit: LIST_LIMIT });
         if (ignore) return;
         setDoctors(list);
-
-        if (mode === "doctor") {
-        
-          for (const d of list) {
-            try {
-              await getDoctorQueue(accessToken, d._id, { limit: 1 });
-              if (!ignore) setOwnDoctorId(d._id);
-              break;
-            } catch (err) {
-              if (err.code === "UNAUTHORIZED") {
-                signOut();
-                return;
-              }
-              if (err.status !== 403) throw err;
-            }
-          }
-        }
       } catch (err) {
-        if (!ignore) setSetupError(err.message);
+        if (!ignore) {
+          if (err.code === "UNAUTHORIZED") {
+            signOut();
+            return;
+          }
+          setSetupError(
+            err.code === "DOCTOR_NOT_FOUND"
+              ? "No doctor profile is linked to your account yet. Ask an administrator to link it."
+              : err.message
+          );
+        }
       } finally {
         if (!ignore) setSetupLoading(false);
       }
@@ -128,8 +168,16 @@ export default function QueueDashboard({ mode }) {
   const load = useCallback(async () => {
     if (!doctorId) return;
     try {
-      const result = await getDoctorQueue(accessToken, doctorId, { limit: LIST_LIMIT });
-      setQueue(result);
+      if (mode === "doctor") {
+        const [dashboard, result] = await Promise.all([
+          getDoctorDashboard(accessToken),
+          getDoctorQueue(accessToken, doctorId, { limit: LIST_LIMIT }),
+        ]);
+        setDoctorSummary(dashboard);
+        setQueue({ ...result, currentToken: dashboard.currentToken, date: dashboard.date });
+      } else {
+        setQueue(await getDoctorQueue(accessToken, doctorId, { limit: LIST_LIMIT }));
+      }
       setUpdatedAt(new Date());
       setError("");
     } catch (err) {
@@ -141,7 +189,7 @@ export default function QueueDashboard({ mode }) {
     } finally {
       setLoading(false);
     }
-  }, [accessToken, doctorId, signOut]);
+  }, [accessToken, doctorId, mode, signOut]);
 
   const loadSummary = useCallback(async () => {
     if (mode !== "staff") return;
@@ -246,6 +294,14 @@ export default function QueueDashboard({ mode }) {
                   {current.patient?.name ?? "Unknown patient"}
                 </p>
                 <p className="text-sm text-slate-500">Called at {fmtTime(current.calledAt)}</p>
+                {mode === "doctor" &&
+                  current.queueDate &&
+                  doctorSummary?.date &&
+                  current.queueDate !== doctorSummary.date && (
+                    <p className="mt-1 text-xs text-slate-500">
+                      This consultation was carried over from {current.queueDate}.
+                    </p>
+                  )}
 
                 <div className="mt-6 space-y-3">
                   <button
@@ -369,7 +425,9 @@ export default function QueueDashboard({ mode }) {
             </h1>
             {mode === "doctor" && doctor && (
               <p className="mt-1 text-slate-600">
-                {doctor.name} · {doctor.specialization}
+                {doctor.name}
+                {doctor.specialization ? ` · ${doctor.specialization}` : ""}
+                {doctor.isAvailable === false ? " · Not accepting bookings" : ""}
               </p>
             )}
             {mode === "staff" && !isAll && doctors.length > 0 && (
@@ -418,6 +476,7 @@ export default function QueueDashboard({ mode }) {
         </header>
 
         {mode === "staff" && summary && <SummaryStrip summary={summary} />}
+        {mode === "doctor" && doctorSummary && <DoctorSummaryStrip summary={doctorSummary} />}
 
         {body}
       </main>
