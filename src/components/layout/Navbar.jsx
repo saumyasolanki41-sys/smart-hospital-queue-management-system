@@ -19,6 +19,7 @@ const ROLE_LINK = {
 };
 
 const STAFF_ROLES = ["receptionist", "admin"];
+const DASHBOARD_ROLES = [...STAFF_ROLES, "doctor"];
 const AMBULANCE_LINK = { label: "Ambulance Tracking", to: "/ambulance" };
 
 const baseLink = "border-b-2 pb-1 text-sm font-medium transition-colors";
@@ -122,9 +123,12 @@ export default function Navbar() {
   const { user } = useAuth();
   const homePath = user ? ROLE_HOME[user.role] ?? "/" : "/";
   const isStaff = STAFF_ROLES.includes(user?.role);
+  const isDashboardUser = DASHBOARD_ROLES.includes(user?.role);
   const extra = user && ROLE_LINK[user.role];
   const links = NAV_LINKS.filter(
-    (link) => !isStaff || !["Home", "About", "Features", "How It Works"].includes(link.label)
+    (link) =>
+      !isDashboardUser ||
+      !["Home", "About", "Features", "How It Works"].includes(link.label)
   ).map((link) => {
     if (link.label === "Home") return { ...link, to: homePath };
     if (link.label === "About" && user?.role === "patient") {
