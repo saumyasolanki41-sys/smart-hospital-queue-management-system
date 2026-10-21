@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -64,19 +63,14 @@ class _SignupScreenState extends State<SignupScreen> {
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            auth.error ?? 'Registration failed. Please try again.',
-          ),
+          content: Text(auth.error ?? 'Registration failed. Please try again.'),
           backgroundColor: Colors.red.shade700,
         ),
       );
     }
   }
 
-  InputDecoration _inputDecoration({
-    required String hint,
-    Widget? suffixIcon,
-  }) {
+  InputDecoration _inputDecoration({required String hint, Widget? suffixIcon}) {
     return InputDecoration(
       hintText: hint,
       hintStyle: const TextStyle(
@@ -86,10 +80,7 @@ class _SignupScreenState extends State<SignupScreen> {
       ),
       filled: true,
       fillColor: const Color(0xFFF0F8FF),
-      contentPadding: const EdgeInsets.symmetric(
-        horizontal: 22,
-        vertical: 19,
-      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 22, vertical: 19),
       suffixIcon: suffixIcon,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(15),
@@ -101,24 +92,15 @@ class _SignupScreenState extends State<SignupScreen> {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(15),
-        borderSide: const BorderSide(
-          color: _cyan,
-          width: 2,
-        ),
+        borderSide: const BorderSide(color: _cyan, width: 2),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(15),
-        borderSide: const BorderSide(
-          color: Colors.redAccent,
-          width: 1,
-        ),
+        borderSide: const BorderSide(color: Colors.redAccent, width: 1),
       ),
       focusedErrorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(15),
-        borderSide: const BorderSide(
-          color: Colors.redAccent,
-          width: 1.5,
-        ),
+        borderSide: const BorderSide(color: Colors.redAccent, width: 1.5),
       ),
     );
   }
@@ -139,10 +121,7 @@ class _SignupScreenState extends State<SignupScreen> {
                     gradient: RadialGradient(
                       center: Alignment(0, -0.75),
                       radius: 1.35,
-                      colors: [
-                        Color(0xFFE6FAFF),
-                        Color(0xFFBDEBF6),
-                      ],
+                      colors: [Color(0xFFE6FAFF), Color(0xFFBDEBF6)],
                     ),
                   ),
                 ),
@@ -167,11 +146,7 @@ class _SignupScreenState extends State<SignupScreen> {
                 left: 0,
                 right: 0,
                 bottom: 0,
-                child: Container(
-                  decoration: const BoxDecoration(
-                    color: _blue,
-                  ),
-                ),
+                child: Container(decoration: const BoxDecoration(color: _blue)),
               ),
 
               Positioned(
@@ -180,10 +155,7 @@ class _SignupScreenState extends State<SignupScreen> {
                 right: 0,
                 height: constraints.maxHeight * 0.105,
                 child: CustomPaint(
-                  painter: SignupMiddleWavePainter(
-                    navy: _blue,
-                    cyan: _cyan,
-                  ),
+                  painter: SignupMiddleWavePainter(navy: _blue, cyan: _cyan),
                 ),
               ),
 
@@ -200,9 +172,7 @@ class _SignupScreenState extends State<SignupScreen> {
                           children: [
                             const SizedBox(height: 2),
 
-                            const Center(
-                              child: SignupMedicalLogo(),
-                            ),
+                            const Center(child: SignupMedicalLogo()),
 
                             const SizedBox(height: 12),
 
@@ -217,9 +187,7 @@ class _SignupScreenState extends State<SignupScreen> {
                               ),
                             ),
 
-                            SizedBox(
-                              height: constraints.maxHeight * 0.075,
-                            ),
+                            SizedBox(height: constraints.maxHeight * 0.075),
 
                             const Text(
                               'Welcome!',
@@ -237,10 +205,13 @@ class _SignupScreenState extends State<SignupScreen> {
                               controller: _nameController,
                               textCapitalization: TextCapitalization.words,
                               textInputAction: TextInputAction.next,
+                               style: const TextStyle(
+                                color: Colors.black,
+                                fontSize: 16,
+                              ),
                               decoration: _inputDecoration(hint: 'Name'),
                               validator: (value) {
-                                if (value == null ||
-                                    value.trim().isEmpty) {
+                                if (value == null || value.trim().isEmpty) {
                                   return 'Please enter your name.';
                                 }
                                 if (value.trim().length < 2) {
@@ -256,6 +227,10 @@ class _SignupScreenState extends State<SignupScreen> {
                               controller: _emailController,
                               keyboardType: TextInputType.emailAddress,
                               textInputAction: TextInputAction.next,
+                               style: const TextStyle(
+                                color: Colors.black,
+                                fontSize: 16,
+                              ),
                               autocorrect: false,
                               decoration: _inputDecoration(hint: 'Email'),
                               validator: (value) {
@@ -265,9 +240,8 @@ class _SignupScreenState extends State<SignupScreen> {
                                   return 'Please enter your email.';
                                 }
 
-                                if (!RegExp(
-                                  r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
-                                ).hasMatch(email)) {
+                                if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
+                                    .hasMatch(email)) {
                                   return 'Please enter a valid email.';
                                 }
 
@@ -281,6 +255,10 @@ class _SignupScreenState extends State<SignupScreen> {
                               controller: _passwordController,
                               obscureText: _obscurePassword,
                               textInputAction: TextInputAction.next,
+                              style: const TextStyle(
+                                color: Colors.black,
+                                fontSize: 16,
+                              ),
                               decoration: _inputDecoration(
                                 hint: 'Password',
                                 suffixIcon: IconButton(
@@ -315,6 +293,10 @@ class _SignupScreenState extends State<SignupScreen> {
                               controller: _confirmPasswordController,
                               obscureText: _obscureConfirmPassword,
                               textInputAction: TextInputAction.done,
+                               style: const TextStyle(
+                                color: Colors.black,
+                                fontSize: 16,
+                              ),
                               onFieldSubmitted: (_) => _signup(),
                               decoration: _inputDecoration(
                                 hint: 'Confirm Password',
@@ -353,8 +335,9 @@ class _SignupScreenState extends State<SignupScreen> {
                                 onPressed: auth.isLoading ? null : _signup,
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: _cyan,
-                                  disabledBackgroundColor:
-                                      _cyan.withValues(alpha: 0.7),
+                                  disabledBackgroundColor: _cyan.withValues(
+                                    alpha: 0.7,
+                                  ),
                                   foregroundColor: Colors.white,
                                   elevation: 4,
                                   shadowColor: Colors.black.withValues(
@@ -422,12 +405,12 @@ class _SignupScreenState extends State<SignupScreen> {
                                     : () {
                                         ScaffoldMessenger.of(context)
                                             .showSnackBar(
-                                          const SnackBar(
-                                            content: Text(
-                                              'Google sign-in is not connected on this registration screen yet.',
-                                            ),
-                                          ),
-                                        );
+                                              const SnackBar(
+                                                content: Text(
+                                                  'Google sign-in is not connected on this registration screen yet.',
+                                                ),
+                                              ),
+                                            );
                                       },
                                 style: OutlinedButton.styleFrom(
                                   backgroundColor: const Color(0xFFF0F8FF),
@@ -536,11 +519,7 @@ class SignupMedicalLogo extends StatelessWidget {
           ),
           const Positioned(
             top: 39,
-            child: Icon(
-              Icons.add_rounded,
-              size: 70,
-              color: Colors.white,
-            ),
+            child: Icon(Icons.add_rounded, size: 70, color: Colors.white),
           ),
         ],
       ),
@@ -583,10 +562,7 @@ class SignupTopWavePainter extends CustomPainter {
       )
       ..close();
 
-    canvas.drawPath(
-      path,
-      Paint()..color = const Color(0xFF70C8D3),
-    );
+    canvas.drawPath(path, Paint()..color = const Color(0xFF70C8D3));
 
     final darkPath = Path()
       ..moveTo(0, 0)
@@ -662,10 +638,7 @@ class SignupMiddleWavePainter extends CustomPainter {
   final Color navy;
   final Color cyan;
 
-  SignupMiddleWavePainter({
-    required this.navy,
-    required this.cyan,
-  });
+  SignupMiddleWavePainter({required this.navy, required this.cyan});
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -714,10 +687,7 @@ class SignupMiddleWavePainter extends CustomPainter {
       )
       ..close();
 
-    canvas.drawPath(
-      rightWave,
-      Paint()..color = cyan.withValues(alpha: 0.55),
-    );
+    canvas.drawPath(rightWave, Paint()..color = cyan.withValues(alpha: 0.55));
 
     final line = Path()
       ..moveTo(0, size.height * 0.24)
