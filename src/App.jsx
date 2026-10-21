@@ -7,11 +7,11 @@ import About from "./pages/About";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Departments from "./pages/Departments";
-import Contact from "./pages/Contact";
 import Home from "./pages/Home";
 import MyQueue from "./pages/MyQueue";
 import QueueStatus from "./pages/QueueStatus";
 import QueueDashboard from "./pages/QueueDashboard";
+import AmbulanceDashboard from "./pages/AmbulanceDashboard";
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID ?? "";
 
@@ -26,7 +26,6 @@ export default function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/departments" element={<Departments />} />
-          <Route path="/contact" element={<Contact />} />
 
           {/* Patients only */}
           <Route element={<ProtectedRoute roles={["patient"]} />}>
@@ -35,9 +34,10 @@ export default function App() {
             <Route path="/queue/:tokenId" element={<QueueStatus />} />
           </Route>
 
-          {/* Staff (admin, receptionist) manage any doctor's queue */}
+          {/* Staff (admin, receptionist) manage any doctor's queue and the ambulances */}
           <Route element={<ProtectedRoute roles={["receptionist", "admin"]} />}>
             <Route path="/staff" element={<QueueDashboard mode="staff" />} />
+            <Route path="/ambulance" element={<AmbulanceDashboard />} />
           </Route>
 
           {/* Doctors manage only their own queue */}
