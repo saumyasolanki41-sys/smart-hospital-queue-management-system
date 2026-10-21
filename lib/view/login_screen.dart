@@ -239,6 +239,10 @@ class _LoginScreenState extends State<LoginScreen> {
                               keyboardType: TextInputType.emailAddress,
                               textInputAction: TextInputAction.next,
                               autocorrect: false,
+                               style: const TextStyle(
+                                color: Colors.black,
+                                fontSize: 16,
+                              ),
                               decoration: _inputDecoration(
                                 hint: 'Email',
                               ),
@@ -265,6 +269,10 @@ class _LoginScreenState extends State<LoginScreen> {
                               controller: _passwordController,
                               obscureText: _obscurePassword,
                               textInputAction: TextInputAction.done,
+                               style: const TextStyle(
+                                color: Colors.black,
+                                fontSize: 16,
+                              ),
                               onFieldSubmitted: (_) => _login(),
                               decoration: _inputDecoration(
                                 hint: 'Password',
