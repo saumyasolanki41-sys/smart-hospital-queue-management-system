@@ -1,8 +1,12 @@
 
+import axios from "axios";
+
 const BASE_URL = (
   import.meta.env.VITE_API_BASE_URL ||
   "https://smart-hospital-queue-management-system-production.up.railway.app"
 ).replace(/\/+$/, "");
+
+const client = axios.create({ baseURL: BASE_URL });
 
 export class ApiError extends Error {
   constructor(message, { status, code } = {}) {
@@ -14,32 +18,36 @@ export class ApiError extends Error {
 }
 
 export async function request(path, { method = "GET", body, token } = {}) {
-  let res;
+  let response;
   try {
-    res = await fetch(`${BASE_URL}${path}`, {
+    response = await client.request({
+      url: path,
       method,
-      headers: {
-        ...(body ? { "Content-Type": "application/json" } : {}),
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
-      body: body ? JSON.stringify(body) : undefined,
+      data: body,
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
     });
-  } catch {
-    throw new ApiError("Can't reach the server. Check your connection and try again.", {
-      code: "NETWORK_ERROR",
-    });
+  } catch (error) {
+    if (!axios.isAxiosError(error)) throw error;
+
+    if (!error.response) {
+      throw new ApiError("Can't reach the server. Check your connection and try again.", {
+        code: "NETWORK_ERROR",
+      });
+    }
+
+    throw new ApiError(
+      error.response.data?.error?.message || "Something went wrong. Please try again.",
+      {
+        status: error.response.status,
+        code: error.response.data?.error?.code,
+      }
+    );
   }
 
-  let json = null;
-  try {
-    json = await res.json();
-  } catch {
-
-  }
-
-  if (!res.ok || !json?.success) {
+  const json = response.data;
+  if (!json?.success) {
     throw new ApiError(json?.error?.message || "Something went wrong. Please try again.", {
-      status: res.status,
+      status: response.status,
       code: json?.error?.code,
     });
   }
