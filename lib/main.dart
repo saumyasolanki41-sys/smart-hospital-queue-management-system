@@ -9,6 +9,7 @@ import 'viewmodels/doctor_viewmodel.dart';
 import 'viewmodels/token_viewmodel.dart';
 import 'viewmodels/ambulance_viewmodel.dart';
 
+import 'view/intro_splash_screen.dart';
 import 'view/splash_screen.dart';
 import 'view/login_screen.dart';
 import 'view/signup_screen.dart';
@@ -49,7 +50,16 @@ class HospitalQueueApp extends StatelessWidget {
         title: 'Smart Hospital',
         debugShowCheckedModeBanner: false,
 
-        // Always use the light theme, regardless of phone settings.
+        initialRoute: '/',
+
+        routes: {
+          '/': (context) => const IntroSplashScreen(),
+          '/get-started': (context) => const SplashScreen(),
+          '/login': (context) => const LoginScreen(),
+          '/signup': (context) => const SignupScreen(),
+          '/home': (context) => const HomeScreen(),
+        },
+
         themeMode: ThemeMode.light,
 
         theme: ThemeData(
@@ -88,7 +98,7 @@ class HospitalQueueApp extends StatelessWidget {
           ),
         ),
 
-        // Prevent the system dark theme from making the app dark.
+        
         darkTheme: ThemeData(
           useMaterial3: true,
           brightness: Brightness.light,
@@ -98,14 +108,6 @@ class HospitalQueueApp extends StatelessWidget {
           ),
           scaffoldBackgroundColor: const Color(0xFFF3F8FB),
         ),
-
-        initialRoute: '/',
-        routes: {
-          '/': (context) => const SplashScreen(),
-          '/login': (context) => const LoginScreen(),
-          '/signup': (context) => const SignupScreen(),
-          '/home': (context) => const HomeScreen(),
-        },
       ),
     );
   }

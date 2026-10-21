@@ -167,7 +167,7 @@ class AmbulanceService {
       return int.tryParse(minutes);
     }
 
-    // The backend may not have calculated an ETA yet.
+    
     return null;
   }
 

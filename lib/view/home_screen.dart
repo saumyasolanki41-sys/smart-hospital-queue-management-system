@@ -2,8 +2,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../models/token_model.dart';
 import '../viewmodels/auth_viewmodel.dart';
-import '../viewmodels/queue_viewmodel.dart';
+import '../viewmodels/token_viewmodel.dart';
 
 import 'ambulance_screen.dart';
 import 'department_screen.dart';
@@ -11,12 +12,27 @@ import 'live_queue_screen.dart';
 import 'my_tokens_screen.dart';
 import 'profile_screen.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
   static const Color _primary = Color(0xFF236D96);
   static const Color _background = Color(0xFFC2E9EC);
   static const Color _textColor = Color(0xFF285C7D);
+
+  @override
+  void initState() {
+    super.initState();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      context.read<TokenViewModel>().fetchMyTokens(refresh: true);
+    });
+  }
 
   Future<void> _logout(BuildContext context) async {
     final shouldLogout = await showDialog<bool>(
@@ -50,6 +66,8 @@ class HomeScreen extends StatelessWidget {
 
     if (!context.mounted) return;
 
+    context.read<TokenViewModel>().clearTokens();
+
     Navigator.pushNamedAndRemoveUntil(
       context,
       '/login',
@@ -58,26 +76,331 @@ class HomeScreen extends StatelessWidget {
   }
 
   Future<void> _refreshBackend(BuildContext context) async {
-    await context.read<QueueViewModel>().checkBackendConnection();
+    await context.read<TokenViewModel>().fetchMyTokens(refresh: true);
   }
 
-  void _navigate(BuildContext context, Widget screen) {
-    Navigator.push(
+  Future<void> _navigate(BuildContext context, Widget screen) async {
+    await Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => screen),
     );
+
+    if (!mounted) return;
+
+    await context.read<TokenViewModel>().fetchMyTokens(refresh: true);
   }
 
   void _openDepartment(
     BuildContext context,
     String departmentName,
   ) {
-    Navigator.push(
+    _navigate(
       context,
-      MaterialPageRoute(
-        builder: (_) => DepartmentScreen(
-          selectedDepartmentName: departmentName,
-        ),
+      DepartmentScreen(selectedDepartmentName: departmentName),
+    );
+  }
+
+  bool _isActiveToken(TokenModel token) {
+    final status = token.status.trim().toLowerCase();
+
+    return !{
+      'cancelled',
+      'canceled',
+      'completed',
+      'complete',
+      'served',
+      'done',
+      'rejected',
+      'expired',
+    }.contains(status);
+  }
+
+  TokenModel? _getUpcomingAppointment(
+    List<TokenModel> tokens,
+    TokenModel? selectedToken,
+  ) {
+    final now = DateTime.now();
+
+    final upcoming = tokens.where((token) {
+      final time = token.appointmentTime;
+      return _isActiveToken(token) &&
+          time != null &&
+          !time.toLocal().isBefore(now);
+    }).toList();
+
+    upcoming.sort((a, b) {
+      return a.appointmentTime!
+          .toLocal()
+          .compareTo(b.appointmentTime!.toLocal());
+    });
+
+    if (upcoming.isNotEmpty) {
+      return upcoming.first;
+    }
+
+    if (selectedToken != null && _isActiveToken(selectedToken)) {
+      return selectedToken;
+    }
+
+    final activeTokens = tokens.where(_isActiveToken).toList();
+
+    activeTokens.sort((a, b) {
+      final aDate = a.createdAt;
+      final bDate = b.createdAt;
+
+      if (aDate == null && bDate == null) return 0;
+      if (aDate == null) return 1;
+      if (bDate == null) return -1;
+
+      return bDate.compareTo(aDate);
+    });
+
+    if (activeTokens.isNotEmpty) {
+      return activeTokens.first;
+    }
+
+    return null;
+  }
+
+  String _formatAppointmentDate(DateTime dateTime) {
+    final date = dateTime.toLocal();
+    final now = DateTime.now();
+
+    final today = DateTime(now.year, now.month, now.day);
+    final appointmentDate = DateTime(date.year, date.month, date.day);
+
+    if (appointmentDate == today) return 'Today';
+
+    if (appointmentDate == today.add(const Duration(days: 1))) {
+      return 'Tomorrow';
+    }
+
+    const months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    ];
+
+    return '${date.day} ${months[date.month - 1]} ${date.year}';
+  }
+
+  String _formatAppointmentTime(DateTime dateTime) {
+    final date = dateTime.toLocal();
+    final hour = date.hour % 12 == 0 ? 12 : date.hour % 12;
+    final minute = date.minute.toString().padLeft(2, '0');
+    final period = date.hour >= 12 ? 'PM' : 'AM';
+
+    return '$hour:$minute $period';
+  }
+
+  Widget _buildAppointmentCard(
+    BuildContext context, {
+    required TokenViewModel tokenViewModel,
+    required bool isDark,
+    required ColorScheme colors,
+  }) {
+    final token = _getUpcomingAppointment(
+      tokenViewModel.tokens,
+      tokenViewModel.selectedToken,
+    );
+
+    final isLoading = tokenViewModel.isLoading;
+    final hasError = tokenViewModel.error != null;
+
+    final appointmentTime = token?.appointmentTime;
+    final doctorName = token?.doctorName?.trim();
+    final departmentName = token?.departmentName?.trim();
+    final tokenNumber = token?.tokenNumber.trim();
+
+    return Container(
+      padding: const EdgeInsets.all(17),
+      decoration: BoxDecoration(
+        color: isDark ? colors.surfaceContainer : const Color(0xFFF3FAFF),
+        borderRadius: BorderRadius.circular(19),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF285C7D).withValues(alpha: 0.13),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            height: 72,
+            width: 72,
+            decoration: const BoxDecoration(
+              color: Color(0xFFD5F1F8),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.medical_services_rounded,
+              color: Color(0xFF438DA7),
+              size: 36,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Next Appointment',
+                  style: TextStyle(
+                    color: isDark
+                        ? colors.onSurfaceVariant
+                        : const Color(0xFF7EA6BC),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 9),
+
+                if (isLoading &&
+                    tokenViewModel.tokens.isEmpty &&
+                    tokenViewModel.selectedToken == null) ...[
+                  const Row(
+                    children: [
+                      SizedBox(
+                        height: 17,
+                        width: 17,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: _primary,
+                        ),
+                      ),
+                      SizedBox(width: 9),
+                      Flexible(
+                        child: Text(
+                          'Loading your appointment...',
+                          style: TextStyle(fontSize: 12),
+                        ),
+                      ),
+                    ],
+                  ),
+                ] else if (token != null) ...[
+                  if (appointmentTime != null)
+                    Text(
+                      '${_formatAppointmentDate(appointmentTime)} at '
+                      '${_formatAppointmentTime(appointmentTime)}',
+                      style: TextStyle(
+                        color: isDark ? colors.onSurface : _textColor,
+                        fontSize: 17,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    )
+                  else
+                    Text(
+                      'Appointment time unavailable',
+                      style: TextStyle(
+                        color: isDark ? colors.onSurface : _textColor,
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+
+                  const SizedBox(height: 7),
+
+                  Text(
+                    doctorName != null && doctorName.isNotEmpty
+                        ? (doctorName.toLowerCase().startsWith('dr.')
+                            ? doctorName
+                            : 'Dr. $doctorName')
+                        : 'Doctor details unavailable',
+                    style: TextStyle(
+                      color: isDark
+                          ? colors.onSurface
+                          : const Color(0xFF53768B),
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+
+                  const SizedBox(height: 4),
+
+                  Text(
+                    departmentName != null && departmentName.isNotEmpty
+                        ? departmentName
+                        : 'Department details unavailable',
+                    style: const TextStyle(
+                      color: Color(0xFF82A5B8),
+                      fontSize: 12,
+                    ),
+                  ),
+
+                  if (tokenNumber != null && tokenNumber.isNotEmpty) ...[
+                    const SizedBox(height: 5),
+                    Text(
+                      'Token: $tokenNumber',
+                      style: const TextStyle(
+                        color: Color(0xFF438DA7),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+
+                  const SizedBox(height: 10),
+
+                  InkWell(
+                    onTap: () => _navigate(
+                      context,
+                      const MyTokensScreen(),
+                    ),
+                    child: const Text(
+                      'View My Tokens  >',
+                      style: TextStyle(
+                        color: Color(0xFF6F9BB4),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ] else ...[
+                  Text(
+                    isLoading
+                        ? 'Loading your appointment...'
+                        : hasError
+                            ? 'Unable to load appointments'
+                            : 'No upcoming appointment',
+                    style: TextStyle(
+                      color: isDark ? colors.onSurface : _textColor,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 7),
+                  Text(
+                    hasError
+                        ? 'Pull down to refresh and try again.'
+                        : 'Book an appointment to see your doctor and visit time here.',
+                    style: const TextStyle(
+                      color: Color(0xFF82A5B8),
+                      fontSize: 12,
+                      height: 1.4,
+                    ),
+                  ),
+                  const SizedBox(height: 9),
+                  InkWell(
+                    onTap: () => _navigate(
+                      context,
+                      const DepartmentScreen(),
+                    ),
+                    child: const Text(
+                      'Book an Appointment  >',
+                      style: TextStyle(
+                        color: Color(0xFF6F9BB4),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -85,8 +408,8 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    final queueViewModel = context.watch<QueueViewModel>();
     final authViewModel = context.watch<AuthViewModel>();
+    final tokenViewModel = context.watch<TokenViewModel>();
 
     final rawName = authViewModel.user?.name;
     final name = rawName == null || rawName.trim().isEmpty
@@ -128,7 +451,6 @@ class HomeScreen extends StatelessWidget {
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.fromLTRB(20, 18, 20, 110),
                 children: [
-                  // Header
                   Row(
                     children: [
                       Expanded(
@@ -138,9 +460,7 @@ class HomeScreen extends StatelessWidget {
                             Text(
                               'Home',
                               style: TextStyle(
-                                color: isDark
-                                    ? colors.onSurface
-                                    : _textColor,
+                                color: isDark ? colors.onSurface : _textColor,
                                 fontSize: 29,
                                 fontWeight: FontWeight.w500,
                               ),
@@ -161,9 +481,7 @@ class HomeScreen extends StatelessWidget {
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
-                                color: isDark
-                                    ? colors.onSurface
-                                    : _textColor,
+                                color: isDark ? colors.onSurface : _textColor,
                                 fontSize: 24,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -189,100 +507,15 @@ class HomeScreen extends StatelessWidget {
 
                   const SizedBox(height: 25),
 
-                  // Next appointment card
-                  Container(
-                    padding: const EdgeInsets.all(17),
-                    decoration: BoxDecoration(
-                      color: isDark
-                          ? colors.surfaceContainer
-                          : const Color(0xFFF3FAFF),
-                      borderRadius: BorderRadius.circular(19),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFF285C7D)
-                              .withValues(alpha: 0.13),
-                          blurRadius: 12,
-                          offset: const Offset(0, 6),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          height: 100,
-                          width: 100,
-                          decoration: const BoxDecoration(
-                            color: Color(0xFFD5F1F8),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.medical_services_rounded,
-                            color: Color(0xFF438DA7),
-                            size: 48,
-                          ),
-                        ),
-                        const SizedBox(width: 15),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'Next Appointment',
-                                style: TextStyle(
-                                  color: Color(0xFF7EA6BC),
-                                  fontSize: 16,
-                                ),
-                              ),
-                              const SizedBox(height: 12),
-                              Text(
-                                'Ready for your visit?',
-                                style: TextStyle(
-                                  color: isDark
-                                      ? colors.onSurface
-                                      : _textColor,
-                                  fontSize: 17,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              const Text(
-                                'Book a token to get started.',
-                                style: TextStyle(
-                                  color: Color(0xFF82A5B8),
-                                  fontSize: 12,
-                                  height: 1.4,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              InkWell(
-                                onTap: () => _navigate(
-                                  context,
-                                  const MyTokensScreen(),
-                                ),
-                                child: const Text(
-                                  'View My Tokens  >',
-                                  style: TextStyle(
-                                    color: Color(0xFF6F9BB4),
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const Icon(
-                          Icons.chevron_right_rounded,
-                          color: Color(0xFF7EA6BC),
-                          size: 29,
-                        ),
-                      ],
-                    ),
+                  _buildAppointmentCard(
+                    context,
+                    tokenViewModel: tokenViewModel,
+                    isDark: isDark,
+                    colors: colors,
                   ),
 
                   const SizedBox(height: 25),
 
-                  // Main actions
                   Row(
                     children: [
                       Expanded(
@@ -311,16 +544,13 @@ class HomeScreen extends StatelessWidget {
 
                   const SizedBox(height: 27),
 
-                  // Departments heading
                   Row(
                     children: [
                       Expanded(
                         child: Text(
                           'Departments',
                           style: TextStyle(
-                            color: isDark
-                                ? colors.onSurface
-                                : _textColor,
+                            color: isDark ? colors.onSurface : _textColor,
                             fontSize: 22,
                             fontWeight: FontWeight.w600,
                           ),
@@ -345,7 +575,6 @@ class HomeScreen extends StatelessWidget {
 
                   const SizedBox(height: 12),
 
-                  // Department tiles
                   GridView.count(
                     crossAxisCount: 3,
                     shrinkWrap: true,
@@ -416,80 +645,6 @@ class HomeScreen extends StatelessWidget {
                       ),
                     ],
                   ),
-
-                  const SizedBox(height: 22),
-
-                  // Backend connection status
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 12,
-                    ),
-                    decoration: BoxDecoration(
-                      color: isDark
-                          ? colors.surfaceContainer
-                          : Colors.white.withValues(alpha: 0.78),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          queueViewModel.isBackendConnected
-                              ? Icons.cloud_done_rounded
-                              : Icons.cloud_off_rounded,
-                          color: queueViewModel.isBackendConnected
-                              ? Colors.green
-                              : colors.error,
-                          size: 25,
-                        ),
-                        const SizedBox(width: 11),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Server Status',
-                                style: TextStyle(
-                                  color: colors.onSurface,
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 13,
-                                ),
-                              ),
-                              const SizedBox(height: 3),
-                              Text(
-                                queueViewModel.isBackendConnected
-                                    ? 'Connected successfully'
-                                    : 'Not connected',
-                                style: TextStyle(
-                                  color: colors.onSurfaceVariant,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        IconButton(
-                          tooltip: 'Check connection',
-                          onPressed: queueViewModel.isLoading
-                              ? null
-                              : () => _refreshBackend(context),
-                          icon: queueViewModel.isLoading
-                              ? const SizedBox(
-                                  height: 19,
-                                  width: 19,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: _primary,
-                                  ),
-                                )
-                              : const Icon(
-                                  Icons.refresh_rounded,
-                                  color: _primary,
-                                ),
-                        ),
-                      ],
-                    ),
-                  ),
                 ],
               ),
             ),
@@ -497,7 +652,6 @@ class HomeScreen extends StatelessWidget {
         ),
       ),
 
-      // Bottom navigation
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: _primary,
@@ -664,11 +818,7 @@ class _DepartmentTile extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                icon,
-                size: 43,
-                color: color,
-              ),
+              Icon(icon, size: 43, color: color),
               const SizedBox(height: 12),
               Text(
                 title,
@@ -723,11 +873,7 @@ class _BottomNavItem extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              icon,
-              size: 25,
-              color: Colors.white,
-            ),
+            Icon(icon, size: 25, color: Colors.white),
             const SizedBox(height: 3),
             Text(
               label,

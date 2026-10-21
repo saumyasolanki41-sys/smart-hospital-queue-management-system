@@ -29,7 +29,7 @@ class DepartmentService {
           data['results'];
     }
 
-    // Also handle APIs that return the list at the top level.
+    
     departments ??= response['departments'];
 
     if (departments is! List) {
