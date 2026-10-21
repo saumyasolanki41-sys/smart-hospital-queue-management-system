@@ -8,7 +8,6 @@
     "start:prod": "node src/server.js",
     "dev": "node --watch --env-file=.env src/server.js",
     "check": "node --check src/app.js && node --check src/server.js",
-    "test": "node --test",
     "seed:hospital": "node --env-file=.env seed-hospital.js"
   },
   "repository": {

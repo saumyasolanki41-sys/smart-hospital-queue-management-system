@@ -115,16 +115,15 @@ instances need a shared rate-limit store and correct trusted-proxy configuration
 From the repository root on Windows:
 
 ```powershell
-npm.cmd --prefix backend test
 npm.cmd --prefix backend run check
 npm.cmd --prefix backend audit
 npm.cmd --prefix backend start
 ```
 
-Tests cover service decisions with mocked database/SMTP, a real bcrypt comparison,
-JWT signature/claims, and HTTP routing/errors/rate limits on an ephemeral local port.
-They do not send email or modify Atlas. Live Atlas/SMTP delivery and simultaneous
-transaction rollback/consumption require an integration check against a test account.
+The automated test folder was removed at the project owner's request. Use the
+Postman collection for manual API checks. Syntax checking does not replace
+functional verification. Live Atlas/email delivery and simultaneous transaction
+behavior require integration checks against isolated test accounts.
 The new LoginChallenge model initializes a collection and unique/TTL indexes when
 the running app connects; existing User/PendingRegistration schemas are unchanged.
 

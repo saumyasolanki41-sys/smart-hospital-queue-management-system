@@ -1,5 +1,11 @@
 # Backend review - 2026-10-19
 
+Subsequent update: the project owner requested removal of the automated test
+folder and npm test command. All 209 tests passed immediately before removal.
+The earlier test coverage and counts below are historical results, not a test
+suite currently included in the repository. Runtime APIs remain separate from
+the removed tests; use syntax checks and the Postman collection for verification.
+
 Subsequent update: backend ML queue and ambulance ETA integration is implemented.
 See [ML-INTEGRATION.md](ML-INTEGRATION.md) for current configuration and verification.
 The scope and deferred-work statements below describe the earlier review snapshot.

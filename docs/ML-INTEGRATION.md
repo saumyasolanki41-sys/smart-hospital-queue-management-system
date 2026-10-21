@@ -10,7 +10,7 @@ or a guarantee of ambulance arrival. The frontend calls this backend, not ML dir
 Add these variables privately in backend/.env and Railway Variables:
 
 ```text
-ML_SERVICE_URL=https://smart-hospital-queue-management-system-m88w.onrender.com
+ML_SERVICE_URL=https://smart-hospital-queue-management-system-1-1ahd.onrender.com
 OPENROUTESERVICE_API_KEY=YOUR_PRIVATE_ROUTING_KEY
 ```
 
@@ -149,6 +149,15 @@ these are test values, not a real booking. End-to-end assigned-request ETA still
 requires a fresh vehicle location and an owner/staff token. No runtime dependencies changed.
 
 ## Next steps for the team
+
+Replacement service verified on 2026-10-20: `/health` returned HTTP 200 with both
+models loaded. The existing backend ML adapter successfully called queue and
+ambulance prediction endpoints with synthetic inputs, returning `source: ml` and
+`reason: null`. Test estimates were 47.75 queue minutes and 25.08 arrival minutes;
+these are integration checks, not model accuracy measurements. Update Railway's
+`ML_SERVICE_URL` to the new URL above and redeploy; local configuration alone does
+not update the hosted backend. These checks do not revalidate an entire hosted
+patient booking or assigned-ambulance request on the replacement service.
 
 Hosted verification on 2026-10-19 used temporary test patients, an isolated test
 doctor, queue tokens and an ambulance request. The real hosted queue flow passed:
