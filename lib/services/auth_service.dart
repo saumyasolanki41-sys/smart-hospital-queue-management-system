@@ -1,4 +1,3 @@
-
 import '../models/user_model.dart';
 import 'api_service.dart';
 import 'storage_service.dart';
@@ -29,6 +28,18 @@ class AuthService {
     );
   }
 
+  Future<void> resendRegistrationOtp({
+    required String name,
+    required String email,
+    required String password,
+  }) async {
+    await _apiService.register(
+      name: name,
+      email: email,
+      password: password,
+    );
+  }
+
   Future<UserModel> verifyRegistration({
     required String email,
     required String otp,
@@ -40,8 +51,7 @@ class AuthService {
 
     final data = response['data'];
 
-    if (data is! Map ||
-        data['user'] is! Map) {
+    if (data is! Map || data['user'] is! Map) {
       throw const ApiException(
         'Registration response did not contain user details.',
       );
@@ -52,11 +62,8 @@ class AuthService {
         data['access_token'] ??
         data['token'];
 
-    if (accessToken is String &&
-        accessToken.trim().isNotEmpty) {
-      await _storageService.saveAccessToken(
-        accessToken.trim(),
-      );
+    if (accessToken is String && accessToken.trim().isNotEmpty) {
+      await _storageService.saveAccessToken(accessToken.trim());
     }
 
     return UserModel.fromJson(
@@ -73,6 +80,23 @@ class AuthService {
       password: password,
     );
 
+    _updateChallengeId(response);
+  }
+
+  Future<void> resendLoginOtp({
+    required String email,
+    required String password,
+  }) async {
+    final response = await _apiService.login(
+      email: email,
+      password: password,
+    );
+
+    // Use the latest challenge ID returned by the backend.
+    _updateChallengeId(response);
+  }
+
+  void _updateChallengeId(Map<String, dynamic> response) {
     final data = response['data'];
 
     if (data is! Map) {
@@ -83,8 +107,7 @@ class AuthService {
 
     final challenge = data['challengeId'];
 
-    if (challenge is! String ||
-        challenge.isEmpty) {
+    if (challenge is! String || challenge.isEmpty) {
       throw const ApiException(
         'Login response did not contain a valid challenge ID.',
       );
@@ -104,7 +127,6 @@ class AuthService {
       );
     }
 
-    // ApiService.verifyLogin saves the access token.
     final response = await _apiService.verifyLogin(
       challengeId: challenge,
       otp: otp,
@@ -112,8 +134,7 @@ class AuthService {
 
     final data = response['data'];
 
-    if (data is! Map ||
-        data['user'] is! Map) {
+    if (data is! Map || data['user'] is! Map) {
       throw const ApiException(
         'Login response did not contain user details.',
       );
@@ -131,15 +152,13 @@ class AuthService {
   Future<UserModel> loginWithGoogle({
     required String idToken,
   }) async {
-    // ApiService.loginWithGoogle saves the access token.
     final response = await _apiService.loginWithGoogle(
       idToken: idToken,
     );
 
     final data = response['data'];
 
-    if (data is! Map ||
-        data['user'] is! Map) {
+    if (data is! Map || data['user'] is! Map) {
       throw const ApiException(
         'Google login response did not contain user details.',
       );
@@ -161,8 +180,7 @@ class AuthService {
       final response = await _apiService.getCurrentUser();
       final data = response['data'];
 
-      if (data is! Map ||
-          data['user'] is! Map) {
+      if (data is! Map || data['user'] is! Map) {
         throw const ApiException(
           'Current-user response did not contain user details.',
         );

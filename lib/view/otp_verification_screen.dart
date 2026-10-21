@@ -1,4 +1,3 @@
-
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -34,6 +33,8 @@ class _OtpVerificationScreenState
   static const Color _paleCyan = Color(0xFFD9F8FC);
   static const Color _fieldColor = Color(0xFFF1FBFE);
 
+  static const int _resendCooldown = 60;
+
   final List<TextEditingController> _controllers =
       List.generate(6, (_) => TextEditingController());
 
@@ -41,8 +42,9 @@ class _OtpVerificationScreenState
       List.generate(6, (_) => FocusNode());
 
   Timer? _timer;
-  int _secondsRemaining = 45;
+  int _secondsRemaining = _resendCooldown;
   bool _isVerifying = false;
+  bool _isResending = false;
 
   @override
   void initState() {
@@ -67,8 +69,9 @@ class _OtpVerificationScreenState
 
   void _startTimer() {
     _timer?.cancel();
+
     setState(() {
-      _secondsRemaining = 45;
+      _secondsRemaining = _resendCooldown;
     });
 
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
@@ -90,12 +93,61 @@ class _OtpVerificationScreenState
       _controllers.map((controller) => controller.text).join();
 
   void _showMessage(String message, {bool isError = true}) {
+    if (!mounted) return;
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
         backgroundColor: isError ? Colors.red.shade700 : _navy,
       ),
     );
+  }
+
+  Future<void> _resendOtp() async {
+    if (_secondsRemaining > 0 || _isResending || _isVerifying) {
+      return;
+    }
+
+    setState(() => _isResending = true);
+
+    final auth = context.read<AuthViewModel>();
+
+    try {
+      final success = await auth.resendOtp(
+        isRegistration: widget.isRegistration,
+      );
+
+      if (!mounted) return;
+
+      if (!success) {
+        _showMessage(
+          auth.error ?? 'Unable to resend OTP. Please try again.',
+        );
+        return;
+      }
+
+      // Clear the old code because a new OTP has been requested.
+      for (final controller in _controllers) {
+        controller.clear();
+      }
+
+      FocusScope.of(context).requestFocus(_focusNodes.first);
+
+      _startTimer();
+
+      _showMessage(
+        'A new OTP request was accepted. Check your email.',
+        isError: false,
+      );
+    } catch (_) {
+      if (mounted) {
+        _showMessage('Unable to resend OTP. Please try again.');
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isResending = false);
+      }
+    }
   }
 
   Future<void> _verifyOtp() async {
@@ -131,6 +183,7 @@ class _OtpVerificationScreenState
         if (password == null || password.isEmpty) {
           _showMessage(
             'Registration verified. Please log in to continue.',
+            isError: false,
           );
 
           Navigator.pushAndRemoveUntil(
@@ -143,7 +196,6 @@ class _OtpVerificationScreenState
           return;
         }
 
-        // Request the login OTP using the same credentials.
         final loginSuccess = await auth.login(
           email: widget.email,
           password: password,
@@ -346,6 +398,68 @@ class _OtpVerificationScreenState
     );
   }
 
+  Widget _buildResendControl() {
+    if (_secondsRemaining > 0) {
+      return Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Text(
+            "Didn't receive the code? ",
+            style: TextStyle(
+              color: _paleCyan,
+              fontSize: 14,
+            ),
+          ),
+          Text(
+            '00:${_secondsRemaining.toString().padLeft(2, '0')}',
+            style: const TextStyle(
+              color: _cyan,
+              fontWeight: FontWeight.bold,
+              fontSize: 14,
+            ),
+          ),
+        ],
+      );
+    }
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        const Text(
+          "Didn't receive the code? ",
+          style: TextStyle(
+            color: _paleCyan,
+            fontSize: 14,
+          ),
+        ),
+        TextButton(
+          onPressed: _isResending || _isVerifying ? null : _resendOtp,
+          style: TextButton.styleFrom(
+            foregroundColor: _cyan,
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+          ),
+          child: _isResending
+              ? const SizedBox(
+                  height: 16,
+                  width: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: _cyan,
+                  ),
+                )
+              : const Text(
+                  'Resend OTP',
+                  style: TextStyle(
+                    color: _cyan,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
+                ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final heading = widget.isRegistration
@@ -446,17 +560,15 @@ class _OtpVerificationScreenState
                           const SizedBox(height: 28),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: List.generate(
-                              6,
-                              _buildOtpBox,
-                            ),
+                            children: List.generate(6, _buildOtpBox),
                           ),
                           const SizedBox(height: 22),
                           SizedBox(
                             height: 54,
                             child: ElevatedButton(
-                              onPressed:
-                                  _isVerifying ? null : _verifyOtp,
+                              onPressed: _isVerifying || _isResending
+                                  ? null
+                                  : _verifyOtp,
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: _cyan,
                                 foregroundColor: Colors.white,
@@ -485,38 +597,16 @@ class _OtpVerificationScreenState
                             ),
                           ),
                           const SizedBox(height: 22),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Text(
-                                "Didn't receive the code? ",
-                                style: TextStyle(
-                                  color: _paleCyan,
-                                  fontSize: 14,
-                                ),
-                              ),
-                              Text(
-                                _secondsRemaining > 0
-                                    ? '00:${_secondsRemaining.toString().padLeft(2, '0')}'
-                                    : 'Resend unavailable',
-                                style: const TextStyle(
-                                  color: _cyan,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 14,
-                                ),
-                              ),
-                            ],
-                          ),
+                          _buildResendControl(),
                           const SizedBox(height: 22),
                           TextButton.icon(
-                            onPressed: _isVerifying
+                            onPressed: _isVerifying || _isResending
                                 ? null
                                 : () {
                                     Navigator.pushAndRemoveUntil(
                                       context,
                                       MaterialPageRoute(
-                                        builder: (_) =>
-                                            const LoginScreen(),
+                                        builder: (_) => const LoginScreen(),
                                       ),
                                       (route) => false,
                                     );

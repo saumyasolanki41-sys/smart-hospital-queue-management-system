@@ -1,4 +1,3 @@
-
 import 'package:flutter/foundation.dart';
 
 import '../models/user_model.dart';
@@ -16,6 +15,13 @@ class AuthViewModel extends ChangeNotifier {
   bool _isInitialized = false;
   String? _error;
   bool _isOtpPending = false;
+
+  String? _registrationName;
+  String? _registrationEmail;
+  String? _registrationPassword;
+
+  String? _loginEmail;
+  String? _loginPassword;
 
   UserModel? get user => _user;
   bool get isLoading => _isLoading;
@@ -65,6 +71,10 @@ class AuthViewModel extends ChangeNotifier {
         password: password,
       );
 
+      _registrationName = name;
+      _registrationEmail = email;
+      _registrationPassword = password;
+
       _isOtpPending = true;
       return true;
     } catch (error) {
@@ -87,6 +97,10 @@ class AuthViewModel extends ChangeNotifier {
         email: email,
         otp: otp,
       );
+
+      _registrationName = null;
+      _registrationEmail = null;
+      _registrationPassword = null;
 
       _isOtpPending = false;
       return true;
@@ -111,7 +125,60 @@ class AuthViewModel extends ChangeNotifier {
         password: password,
       );
 
+      _loginEmail = email;
+      _loginPassword = password;
+
       _isOtpPending = true;
+      return true;
+    } catch (error) {
+      _setError(_messageFrom(error));
+      return false;
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  Future<bool> resendOtp({
+    required bool isRegistration,
+  }) async {
+    _setLoading(true);
+    _error = null;
+
+    try {
+      if (isRegistration) {
+        final name = _registrationName;
+        final email = _registrationEmail;
+        final password = _registrationPassword;
+
+        if (name == null || email == null || password == null) {
+          throw const ApiException(
+            'Registration details are no longer available. '
+            'Please return to registration and try again.',
+          );
+        }
+
+        await _authService.resendRegistrationOtp(
+          name: name,
+          email: email,
+          password: password,
+        );
+      } else {
+        final email = _loginEmail;
+        final password = _loginPassword;
+
+        if (email == null || password == null) {
+          throw const ApiException(
+            'Your login details are no longer available. '
+            'Please return to login and try again.',
+          );
+        }
+
+        await _authService.resendLoginOtp(
+          email: email,
+          password: password,
+        );
+      }
+
       return true;
     } catch (error) {
       _setError(_messageFrom(error));
@@ -129,7 +196,11 @@ class AuthViewModel extends ChangeNotifier {
 
     try {
       _user = await _authService.verifyLogin(otp: otp);
+
+      _loginEmail = null;
+      _loginPassword = null;
       _isOtpPending = false;
+
       return true;
     } catch (error) {
       _setError(_messageFrom(error));
@@ -150,7 +221,10 @@ class AuthViewModel extends ChangeNotifier {
         idToken: idToken,
       );
 
+      _loginEmail = null;
+      _loginPassword = null;
       _isOtpPending = false;
+
       return true;
     } catch (error) {
       _setError(_messageFrom(error));
@@ -166,8 +240,16 @@ class AuthViewModel extends ChangeNotifier {
 
     try {
       await _authService.logout();
+
       _user = null;
       _isOtpPending = false;
+
+      _registrationName = null;
+      _registrationEmail = null;
+      _registrationPassword = null;
+
+      _loginEmail = null;
+      _loginPassword = null;
     } catch (error) {
       _setError(_messageFrom(error));
     } finally {
