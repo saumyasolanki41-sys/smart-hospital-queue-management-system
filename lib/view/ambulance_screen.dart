@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:provider/provider.dart';
+
 import '../models/ambulance_request_model.dart';
 import '../viewmodels/ambulance_viewmodel.dart';
 
@@ -13,6 +14,12 @@ class AmbulanceScreen extends StatefulWidget {
 }
 
 class _AmbulanceScreenState extends State<AmbulanceScreen> {
+  static const Color _primary = Color(0xFF236D96);
+  static const Color _background = Color(0xFFC2E9EC);
+  static const Color _heading = Color(0xFF285C7D);
+  static const Color _cardColor = Color(0xFFF3FAFF);
+  static const Color _muted = Color(0xFF78A8BB);
+
   final _addressController = TextEditingController();
   final _phoneController = TextEditingController();
 
@@ -48,9 +55,7 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
 
       if (!serviceEnabled) {
         if (mounted) {
-          _showMessage(
-            'Please turn on Location/GPS on your device.',
-          );
+          _showMessage('Please turn on Location/GPS on your device.');
         }
         return false;
       }
@@ -77,7 +82,6 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
             'Location permission is permanently denied. '
             'Enable it in your app settings.',
           );
-
           await Geolocator.openAppSettings();
         }
         return false;
@@ -129,7 +133,6 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
 
     if (_latitude == null || _longitude == null) {
       final locationObtained = await _getCurrentLocation();
-
       if (!locationObtained || !mounted) return;
     }
 
@@ -144,11 +147,11 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
     final viewModel = context.read<AmbulanceViewModel>();
 
     await viewModel.requestAmbulance(
-  pickupAddress: address,
-  latitude: latitude,
-  longitude: longitude,
-  contactPhone: phone,
-);
+      pickupAddress: address,
+      latitude: latitude,
+      longitude: longitude,
+      contactPhone: phone,
+    );
 
     if (!mounted) return;
 
@@ -156,7 +159,6 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
         viewModel.selectedRequest != null) {
       _addressController.clear();
       _phoneController.clear();
-
       _showMessage('Ambulance request submitted successfully.');
     } else {
       _showMessage(
@@ -171,11 +173,8 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
         .fetchMyRequests(refresh: true);
   }
 
-  Future<void> _refreshEta(
-    AmbulanceRequestModel request,
-  ) async {
+  Future<void> _refreshEta(AmbulanceRequestModel request) async {
     final viewModel = context.read<AmbulanceViewModel>();
-
     await viewModel.refreshEta(request.id);
 
     if (!mounted) return;
@@ -187,25 +186,29 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
     }
   }
 
-  Future<void> _cancelRequest(
-    AmbulanceRequestModel request,
-  ) async {
+  Future<void> _cancelRequest(AmbulanceRequestModel request) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Cancel Request'),
+        backgroundColor: _cardColor,
+        title: const Text(
+          'Cancel Request',
+          style: TextStyle(color: _heading),
+        ),
         content: const Text(
           'Are you sure you want to cancel this ambulance request?',
         ),
         actions: [
           TextButton(
-            onPressed: () =>
-                Navigator.pop(dialogContext, false),
+            onPressed: () => Navigator.pop(dialogContext, false),
             child: const Text('Keep Request'),
           ),
           ElevatedButton(
-            onPressed: () =>
-                Navigator.pop(dialogContext, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _primary,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () => Navigator.pop(dialogContext, true),
             child: const Text('Cancel Request'),
           ),
         ],
@@ -215,7 +218,6 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
     if (confirmed != true || !mounted) return;
 
     final viewModel = context.read<AmbulanceViewModel>();
-
     await viewModel.cancelRequest(request.id);
 
     if (!mounted) return;
@@ -234,23 +236,23 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(
-        SnackBar(content: Text(message)),
+        SnackBar(
+          content: Text(message),
+          backgroundColor: _heading,
+          behavior: SnackBarBehavior.floating,
+        ),
       );
   }
 
   String _display(dynamic value, [String fallback = 'Not available']) {
     if (value == null) return fallback;
-
     final text = value.toString().trim();
-
     if (text.isEmpty || text == 'null') return fallback;
-
     return text;
   }
 
   bool _canCancel(String status) {
     final value = status.toLowerCase();
-
     return value != 'cancelled' &&
         value != 'canceled' &&
         value != 'completed' &&
@@ -260,226 +262,413 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
   @override
   Widget build(BuildContext context) {
     final viewModel = context.watch<AmbulanceViewModel>();
-    final colors = Theme.of(context).colorScheme;
 
     return Scaffold(
+      backgroundColor: _background,
       appBar: AppBar(
-        title: const Text('Ambulance Assistance'),
+        backgroundColor: _background,
+        foregroundColor: _heading,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        title: const Text(
+          'Ambulance Assistance',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         actions: [
           IconButton(
             tooltip: 'Refresh requests',
             onPressed: viewModel.isLoading ? null : _refreshRequests,
-            icon: const Icon(Icons.refresh),
+            icon: const Icon(Icons.refresh_rounded),
           ),
+          const SizedBox(width: 6),
         ],
       ),
-      body: ListView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(16),
-        children: [
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: colors.errorContainer,
-              borderRadius: BorderRadius.circular(18),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(
-                  Icons.emergency,
-                  size: 40,
-                  color: colors.onErrorContainer,
+      body: RefreshIndicator(
+        color: _primary,
+        onRefresh: _refreshRequests,
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.fromLTRB(18, 8, 18, 28),
+          children: [
+            // Ambulance header banner
+            Container(
+              padding: const EdgeInsets.all(21),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [
+                    Color(0xFF236D96),
+                    Color(0xFF398FA9),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                 ),
-                const SizedBox(height: 12),
-                Text(
-                  'Request an Ambulance',
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    color: colors.onErrorContainer,
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: [
+                  BoxShadow(
+                    color: _primary.withValues(alpha: 0.20),
+                    blurRadius: 14,
+                    offset: const Offset(0, 7),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    height: 78,
+                    width: 78,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.17),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: const Icon(
+                      Icons.airport_shuttle_rounded,
+                      size: 47,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Ambulance Assistance',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 21,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        SizedBox(height: 8),
+                        Text(
+                          'Request emergency transport and track your request.',
+                          style: TextStyle(
+                            color: Color(0xFFE4F6FF),
+                            height: 1.45,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 24),
+
+            const _SectionHeading(
+              title: 'Request an Ambulance',
+              subtitle: 'Enter your pickup and contact details',
+            ),
+
+            const SizedBox(height: 14),
+
+            Container(
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                color: _cardColor,
+                borderRadius: BorderRadius.circular(22),
+                boxShadow: [
+                  BoxShadow(
+                    color: _heading.withValues(alpha: 0.07),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Column(
+                children: [
+                  TextField(
+                    controller: _addressController,
+                    textCapitalization: TextCapitalization.words,
+                    style: const TextStyle(color: _heading),
+                    decoration: _inputDecoration(
+                      label: 'Pickup Address',
+                      hint: 'Enter your current pickup address',
+                      icon: Icons.location_on_outlined,
+                    ),
+                  ),
+                  const SizedBox(height: 15),
+                  TextField(
+                    controller: _phoneController,
+                    keyboardType: TextInputType.phone,
+                    style: const TextStyle(color: _heading),
+                    decoration: _inputDecoration(
+                      label: 'Contact Phone Number',
+                      hint: 'Enter your phone number',
+                      icon: Icons.phone_outlined,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // GPS location button
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: _isGettingLocation
+                          ? null
+                          : _getCurrentLocation,
+                      icon: _isGettingLocation
+                          ? const SizedBox(
+                              height: 18,
+                              width: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: _primary,
+                              ),
+                            )
+                          : const Icon(Icons.my_location_rounded),
+                      label: Text(
+                        _isGettingLocation
+                            ? 'Getting Current Location...'
+                            : 'Use My Current Location',
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: _primary,
+                        side: const BorderSide(
+                          color: Color(0xFF9ACBD8),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(13),
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  if (_latitude != null && _longitude != null) ...[
+                    const SizedBox(height: 14),
+                    Container(
+                      padding: const EdgeInsets.all(13),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE1F8EE),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Icon(
+                            Icons.location_on_rounded,
+                            color: Color(0xFF299B76),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'GPS Location Detected',
+                                  style: TextStyle(
+                                    color: Color(0xFF26785F),
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 5),
+                                Text(
+                                  'Latitude: ${_latitude!.toStringAsFixed(6)}\n'
+                                  'Longitude: ${_longitude!.toStringAsFixed(6)}',
+                                  style: const TextStyle(
+                                    color: Color(0xFF397C6C),
+                                    fontSize: 12,
+                                    height: 1.5,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          IconButton(
+                            tooltip: 'Update location',
+                            onPressed: _isGettingLocation
+                                ? null
+                                : _getCurrentLocation,
+                            icon: const Icon(
+                              Icons.refresh_rounded,
+                              color: _primary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+
+                  const SizedBox(height: 18),
+
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: viewModel.isRequesting ||
+                              _isGettingLocation
+                          ? null
+                          : _submitRequest,
+                      icon: viewModel.isRequesting
+                          ? const SizedBox(
+                              height: 19,
+                              width: 19,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Icon(Icons.airport_shuttle_rounded),
+                      label: Text(
+                        viewModel.isRequesting
+                            ? 'Submitting Request...'
+                            : 'Request Ambulance',
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _primary,
+                        foregroundColor: Colors.white,
+                        disabledBackgroundColor: _muted,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        elevation: 2,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        textStyle: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 28),
+
+            Row(
+              children: [
+                const Expanded(
+                  child: _SectionHeading(
+                    title: 'My Ambulance Requests',
+                    subtitle: 'View status and estimated arrival',
                   ),
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  'Enter your pickup address and contact number. '
-                  'The app can obtain your GPS coordinates automatically.',
-                  style: TextStyle(
-                    height: 1.5,
-                    color: colors.onErrorContainer,
+                Container(
+                  decoration: BoxDecoration(
+                    color: _cardColor,
+                    borderRadius: BorderRadius.circular(13),
+                  ),
+                  child: IconButton(
+                    tooltip: 'Refresh requests',
+                    onPressed: viewModel.isLoading
+                        ? null
+                        : _refreshRequests,
+                    icon: const Icon(
+                      Icons.refresh_rounded,
+                      color: _primary,
+                    ),
                   ),
                 ),
               ],
             ),
-          ),
 
-          const SizedBox(height: 20),
+            const SizedBox(height: 14),
 
-          TextField(
-            controller: _addressController,
-            textCapitalization: TextCapitalization.words,
-            decoration: const InputDecoration(
-              labelText: 'Pickup Address',
-              hintText: 'Enter your current pickup address',
-              prefixIcon: Icon(Icons.location_on_outlined),
-              border: OutlineInputBorder(),
-            ),
-          ),
-
-          const SizedBox(height: 14),
-
-          TextField(
-            controller: _phoneController,
-            keyboardType: TextInputType.phone,
-            decoration: const InputDecoration(
-              labelText: 'Contact Phone Number',
-              hintText: 'Enter your phone number',
-              prefixIcon: Icon(Icons.phone_outlined),
-              border: OutlineInputBorder(),
-            ),
-          ),
-
-          const SizedBox(height: 16),
-
-          OutlinedButton.icon(
-            onPressed: _isGettingLocation
-                ? null
-                : _getCurrentLocation,
-            icon: _isGettingLocation
-                ? const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                    ),
-                  )
-                : const Icon(Icons.my_location),
-            label: Text(
-              _isGettingLocation
-                  ? 'Getting Current Location...'
-                  : 'Use My Current Location',
-            ),
-          ),
-
-          if (_latitude != null && _longitude != null) ...[
-            const SizedBox(height: 10),
-            Card(
-              child: ListTile(
-                leading: const Icon(
-                  Icons.location_on,
-                  color: Colors.green,
+            if (viewModel.isLoading && viewModel.requests.isEmpty)
+              const Padding(
+                padding: EdgeInsets.all(28),
+                child: Center(
+                  child: CircularProgressIndicator(color: _primary),
                 ),
-                title: const Text('GPS Location Detected'),
-                subtitle: Text(
-                  'Latitude: ${_latitude!.toStringAsFixed(6)}\n'
-                  'Longitude: ${_longitude!.toStringAsFixed(6)}',
-                ),
-                trailing: IconButton(
-                  tooltip: 'Update location',
-                  onPressed: _isGettingLocation
-                      ? null
-                      : _getCurrentLocation,
-                  icon: const Icon(Icons.refresh),
-                ),
-              ),
-            ),
-          ],
-
-          const SizedBox(height: 16),
-
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: viewModel.isRequesting ||
-                      _isGettingLocation
-                  ? null
-                  : _submitRequest,
-              icon: viewModel.isRequesting
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                      ),
-                    )
-                  : const Icon(Icons.emergency),
-              label: Text(
-                viewModel.isRequesting
-                    ? 'Submitting Request...'
-                    : 'Request Ambulance',
-              ),
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 15),
-              ),
-            ),
-          ),
-
-          const SizedBox(height: 28),
-
-          Row(
-            children: [
-              const Expanded(
-                child: Text(
-                  'My Ambulance Requests',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-              IconButton(
+              )
+            else if (viewModel.error != null &&
+                viewModel.requests.isEmpty)
+              _EmptyState(
+                icon: Icons.cloud_off_rounded,
+                title: 'Unable to load requests',
+                message: viewModel.error!,
+                buttonLabel: 'Try Again',
                 onPressed: _refreshRequests,
-                icon: const Icon(Icons.refresh),
+              )
+            else if (viewModel.requests.isEmpty)
+              const _EmptyState(
+                icon: Icons.airport_shuttle_rounded,
+                title: 'No requests yet',
+                message: 'Your ambulance requests will appear here.',
+              )
+            else
+              ...viewModel.requests.map(
+                (request) => _RequestCard(
+                  request: request,
+                  display: _display,
+                  canCancel: _canCancel,
+                  onRefreshEta: () => _refreshEta(request),
+                  onCancel: () => _cancelRequest(request),
+                ),
               ),
-            ],
-          ),
-
-          if (viewModel.isLoading &&
-              viewModel.requests.isEmpty)
-            const Padding(
-              padding: EdgeInsets.all(24),
-              child: Center(
-                child: CircularProgressIndicator(),
-              ),
-            )
-          else if (viewModel.error != null &&
-              viewModel.requests.isEmpty)
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  const Icon(Icons.error_outline, size: 40),
-                  const SizedBox(height: 8),
-                  Text(
-                    viewModel.error!,
-                    textAlign: TextAlign.center,
-                  ),
-                  TextButton(
-                    onPressed: _refreshRequests,
-                    child: const Text('Try Again'),
-                  ),
-                ],
-              ),
-            )
-          else if (viewModel.requests.isEmpty)
-            const Padding(
-              padding: EdgeInsets.all(20),
-              child: Center(
-                child: Text('No ambulance requests yet.'),
-              ),
-            )
-          else
-            ...viewModel.requests.map(
-              (request) => _RequestCard(
-                request: request,
-                display: _display,
-                canCancel: _canCancel,
-                onRefreshEta: () => _refreshEta(request),
-                onCancel: () => _cancelRequest(request),
-              ),
-            ),
-        ],
+          ],
+        ),
       ),
+    );
+  }
+
+  InputDecoration _inputDecoration({
+    required String label,
+    required String hint,
+    required IconData icon,
+  }) {
+    return InputDecoration(
+      labelText: label,
+      hintText: hint,
+      prefixIcon: Icon(icon, color: _primary),
+      labelStyle: const TextStyle(color: _heading),
+      hintStyle: const TextStyle(color: _muted, fontSize: 13),
+      filled: true,
+      fillColor: Colors.white,
+      contentPadding: const EdgeInsets.symmetric(
+        horizontal: 15,
+        vertical: 17,
+      ),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: const BorderSide(color: Color(0xFFD9E9EE)),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: const BorderSide(color: Color(0xFFD9E9EE)),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: const BorderSide(color: _primary, width: 1.5),
+      ),
+    );
+  }
+}
+
+class _SectionHeading extends StatelessWidget {
+  final String title;
+  final String subtitle;
+
+  const _SectionHeading({
+    required this.title,
+    required this.subtitle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: const TextStyle(
+            color: Color(0xFF285C7D),
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 5),
+        Text(
+          subtitle,
+          style: const TextStyle(
+            color: Color(0xFF78A8BB),
+            fontSize: 13,
+          ),
+        ),
+      ],
     );
   }
 }
@@ -501,79 +690,231 @@ class _RequestCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-
     final status = display(request.status, 'Pending');
     final eta = request.estimatedArrivalMinutes;
 
-    return Card(
+    final normalizedStatus = status.toLowerCase();
+    final statusColor = normalizedStatus == 'completed' ||
+            normalizedStatus == 'served'
+        ? const Color(0xFF268566)
+        : normalizedStatus == 'cancelled' ||
+                normalizedStatus == 'canceled'
+            ? const Color(0xFFB94D58)
+            : const Color(0xFF236D96);
+
+    return Container(
       margin: const EdgeInsets.only(bottom: 14),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                CircleAvatar(
-                  backgroundColor: colors.errorContainer,
-                  child: Icon(
-                    Icons.emergency,
-                    color: colors.onErrorContainer,
+      padding: const EdgeInsets.all(17),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF3FAFF),
+        borderRadius: BorderRadius.circular(21),
+        border: Border.all(color: const Color(0xFFD9EDF2)),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF285C7D).withValues(alpha: 0.07),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                height: 49,
+                width: 49,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFD9F0F7),
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                child: const Icon(
+                  Icons.airport_shuttle_rounded,
+                  color: Color(0xFF236D96),
+                  size: 28,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Text(
+                  'Ambulance Request',
+                  style: TextStyle(
+                    color: Color(0xFF285C7D),
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
                   ),
                 ),
-                const SizedBox(width: 12),
-                const Expanded(
+              ),
+              Flexible(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 7,
+                  ),
+                  decoration: BoxDecoration(
+                    color: statusColor.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
                   child: Text(
-                    'Ambulance Request',
+                    status,
+                    textAlign: TextAlign.center,
                     style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
+                      color: statusColor,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 11,
                     ),
                   ),
                 ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 6,
+              ),
+            ],
+          ),
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 16),
+            child: Divider(color: Color(0xFFDCEBF0), height: 1),
+          ),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Icon(
+                Icons.location_on_outlined,
+                color: Color(0xFF398FA9),
+                size: 21,
+              ),
+              const SizedBox(width: 9),
+              Expanded(
+                child: Text(
+                  display(request.pickupAddress),
+                  style: const TextStyle(
+                    color: Color(0xFF53768B),
+                    height: 1.4,
                   ),
-                  decoration: BoxDecoration(
-                    color: colors.primaryContainer,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(status),
                 ),
-              ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 13),
+          Container(
+            padding: const EdgeInsets.all(13),
+            decoration: BoxDecoration(
+              color: const Color(0xFFE5F5F8),
+              borderRadius: BorderRadius.circular(13),
             ),
-            const Divider(height: 24),
-            Text(
-              'Pickup: ${display(request.pickupAddress)}',
-            ),
-            const SizedBox(height: 10),
-            Text(
-              'Estimated arrival: '
-              '${eta == null ? 'Not available yet' : '$eta minutes'}',
-            ),
-            const SizedBox(height: 14),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
+            child: Row(
               children: [
-                OutlinedButton.icon(
-                  onPressed: onRefreshEta,
-                  icon: const Icon(Icons.schedule),
-                  label: const Text('Refresh ETA'),
+                const Icon(
+                  Icons.schedule_rounded,
+                  color: Color(0xFF236D96),
+                  size: 23,
                 ),
-                if (canCancel(status))
-                  TextButton.icon(
-                    onPressed: onCancel,
-                    icon: const Icon(Icons.cancel_outlined),
-                    label: const Text('Cancel Request'),
+                const SizedBox(width: 10),
+                const Expanded(
+                  child: Text(
+                    'Estimated arrival',
+                    style: TextStyle(
+                      color: Color(0xFF53768B),
+                      fontSize: 13,
+                    ),
                   ),
+                ),
+                Text(
+                  eta == null ? 'Pending' : '$eta min',
+                  style: const TextStyle(
+                    color: Color(0xFF285C7D),
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ],
+            ),
+          ),
+          const SizedBox(height: 13),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              OutlinedButton.icon(
+                onPressed: onRefreshEta,
+                icon: const Icon(Icons.schedule_rounded, size: 18),
+                label: const Text('Refresh ETA'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFF236D96),
+                  side: const BorderSide(color: Color(0xFF9ACBD8)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+              if (canCancel(status))
+                TextButton.icon(
+                  onPressed: onCancel,
+                  icon: const Icon(Icons.close_rounded, size: 18),
+                  label: const Text('Cancel Request'),
+                  style: TextButton.styleFrom(
+                    foregroundColor: const Color(0xFFB94D58),
+                  ),
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _EmptyState extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String message;
+  final String? buttonLabel;
+  final VoidCallback? onPressed;
+
+  const _EmptyState({
+    required this.icon,
+    required this.title,
+    required this.message,
+    this.buttonLabel,
+    this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF3FAFF),
+        borderRadius: BorderRadius.circular(21),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, size: 43, color: const Color(0xFF398FA9)),
+          const SizedBox(height: 12),
+          Text(
+            title,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: Color(0xFF285C7D),
+              fontSize: 17,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 7),
+          Text(
+            message,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: Color(0xFF78A8BB),
+              height: 1.45,
+            ),
+          ),
+          if (buttonLabel != null && onPressed != null) ...[
+            const SizedBox(height: 12),
+            TextButton(
+              onPressed: onPressed,
+              child: Text(buttonLabel!),
             ),
           ],
-        ),
+        ],
       ),
     );
   }

@@ -48,15 +48,23 @@ class HospitalQueueApp extends StatelessWidget {
       child: MaterialApp(
         title: 'Smart Hospital',
         debugShowCheckedModeBanner: false,
-        themeMode: ThemeMode.system,
+
+        // Always use the light theme, regardless of phone settings.
+        themeMode: ThemeMode.light,
+
         theme: ThemeData(
           useMaterial3: true,
+          brightness: Brightness.light,
           colorScheme: ColorScheme.fromSeed(
             seedColor: const Color(0xFF1479A4),
+            brightness: Brightness.light,
           ),
           scaffoldBackgroundColor: const Color(0xFFF3F8FB),
           appBarTheme: const AppBarTheme(
             centerTitle: true,
+            backgroundColor: Color(0xFFF3F8FB),
+            foregroundColor: Color(0xFF164E70),
+            surfaceTintColor: Colors.transparent,
           ),
           inputDecorationTheme: InputDecorationTheme(
             filled: true,
@@ -79,13 +87,18 @@ class HospitalQueueApp extends StatelessWidget {
             ),
           ),
         ),
+
+        // Prevent the system dark theme from making the app dark.
         darkTheme: ThemeData(
           useMaterial3: true,
+          brightness: Brightness.light,
           colorScheme: ColorScheme.fromSeed(
             seedColor: const Color(0xFF1479A4),
-            brightness: Brightness.dark,
+            brightness: Brightness.light,
           ),
+          scaffoldBackgroundColor: const Color(0xFFF3F8FB),
         ),
+
         initialRoute: '/',
         routes: {
           '/': (context) => const SplashScreen(),

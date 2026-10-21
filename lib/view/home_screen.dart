@@ -523,7 +523,7 @@ class HomeScreen extends StatelessWidget {
                   ),
                 ),
                 _BottomNavItem(
-                  icon: Icons.notifications_none_rounded,
+                  icon: Icons.airport_shuttle_rounded,
                   label: 'Ambulance',
                   onTap: () => _navigate(
                     context,

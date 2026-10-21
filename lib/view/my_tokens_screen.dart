@@ -166,7 +166,7 @@ class _MyTokensScreenState extends State<MyTokensScreen> {
 
                   const SizedBox(height: 20),
 
-                  // Upcoming / Past selector
+                  
                   Container(
                     height: 58,
                     padding: const EdgeInsets.all(3),
