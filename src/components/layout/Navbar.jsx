@@ -29,8 +29,8 @@ const idleLink = "border-transparent text-slate-600 hover:text-primary/70";
 function NavItem({ link, onClick, mobile = false }) {
   if (link.href) {
     return (
-      <a
-        href={link.href}
+      <Link
+        to={link.href}
         onClick={onClick}
         className={
           mobile
@@ -39,7 +39,7 @@ function NavItem({ link, onClick, mobile = false }) {
         }
       >
         {link.label}
-      </a>
+      </Link>
     );
   }
 
@@ -127,8 +127,8 @@ export default function Navbar() {
   const extra = user && ROLE_LINK[user.role];
   const links = NAV_LINKS.filter(
     (link) =>
-      !isDashboardUser ||
-      !["Home", "About", "Features", "How It Works"].includes(link.label)
+      (user?.role !== "patient" || !["Features", "How It Works"].includes(link.label)) &&
+      (!isDashboardUser || !["Home", "About", "Features", "How It Works"].includes(link.label))
   ).map((link) => {
     if (link.label === "Home") return { ...link, to: homePath };
     if (link.label === "About" && user?.role === "patient") {

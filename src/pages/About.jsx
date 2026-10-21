@@ -39,21 +39,6 @@ const AUDIENCES = [
   },
 ];
 
-const STEPS = [
-  {
-    title: "Book your token",
-    text: "Pick a department and doctor, then choose a time that suits you.",
-  },
-  {
-    title: "Track your turn",
-    text: "Follow your position in the queue and your estimated wait from anywhere.",
-  },
-  {
-    title: "Get called in",
-    text: "Staff call the next patient, and you walk in when it's your turn.",
-  },
-];
-
 const DEPARTMENTS = [
   { icon: Heart, name: "Cardiology", text: "Heart and blood vessel care." },
   { icon: Hand, name: "Dermatology", text: "Skin, hair and nail care." },
@@ -122,24 +107,6 @@ export default function About() {
               </div>
             ))}
           </div>
-        </section>
-
-        {/* How it works */}
-        <section id="how-it-works" className="mx-auto max-w-6xl px-6 pb-16">
-          <h2 className="mb-6 text-2xl font-semibold text-slate-900">How it works</h2>
-          <ol className="grid gap-6 md:grid-cols-3">
-            {STEPS.map((step, i) => (
-              <li key={step.title} className="flex gap-4">
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/70 text-sm font-semibold text-white">
-                  {i + 1}
-                </span>
-                <div>
-                  <h3 className="font-semibold text-slate-800">{step.title}</h3>
-                  <p className="mt-1 text-sm text-slate-600">{step.text}</p>
-                </div>
-              </li>
-            ))}
-          </ol>
         </section>
 
         {/* Departments */}

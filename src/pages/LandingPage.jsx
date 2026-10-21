@@ -1,4 +1,5 @@
-import { Link } from "react-router-dom";
+import { useEffect } from "react";
+import { Link, useLocation } from "react-router-dom";
 import {
   HeartPulse,
   Clock,
@@ -8,6 +9,7 @@ import Navbar from "../components/layout/Navbar";
 import Footer from "../components/layout/Footer";
 import About from "./About";
 import Features from "./Features";
+import { HowItWorksSection } from "./HowItWorks";
 
 // Put your hero photo in the /public folder as hero.jpg
 const HERO_IMAGE = "/hero.jpg";
@@ -95,12 +97,20 @@ function Hero() {
 }
 
 export default function LandingPage() {
+  const { pathname, hash } = useLocation();
+
+  useEffect(() => {
+    if (pathname !== "/" || !hash) return;
+    document.getElementById(hash.slice(1))?.scrollIntoView({ behavior: "smooth" });
+  }, [pathname, hash]);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-secondary/5 via-accent/5 to-white">
       <Navbar />
       <main>
         <Hero />
         <About />
+        <HowItWorksSection />
         <Features />
       </main>
       <Footer />

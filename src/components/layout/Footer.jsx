@@ -8,7 +8,7 @@ const FOOTER_GROUPS = [
       { label: "Home", to: "/" },
       { label: "About", to: "/about" },
       { label: "Departments", to: "/departments" },
-      { label: "How it works", to: "/about#how-it-works" },
+      { label: "How it works", to: "/#how-it-works" },
     ],
   },
   {

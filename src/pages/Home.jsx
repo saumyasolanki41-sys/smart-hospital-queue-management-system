@@ -240,7 +240,7 @@ export default function Home() {
             />
             <ActionTile to="/queue" icon={Ticket} title="My queue" text="All of today's tokens" />
             <ActionTile
-              to="/about#how-it-works"
+              to="/how-it-works"
               icon={Info}
               title="How it works"
               text="Tokens, queues and wait times"

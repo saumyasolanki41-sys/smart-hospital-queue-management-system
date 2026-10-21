@@ -12,6 +12,7 @@ import MyQueue from "./pages/MyQueue";
 import QueueStatus from "./pages/QueueStatus";
 import QueueDashboard from "./pages/QueueDashboard";
 import AmbulanceDashboard from "./pages/AmbulanceDashboard";
+import HowItWorks from "./pages/HowItWorks";
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID ?? "";
 
@@ -26,6 +27,7 @@ export default function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/departments" element={<Departments />} />
+          <Route path="/how-it-works" element={<HowItWorks />} />
 
           {/* Patients only */}
           <Route element={<ProtectedRoute roles={["patient"]} />}>
