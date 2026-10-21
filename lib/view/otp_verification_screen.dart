@@ -1,7 +1,10 @@
+
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+
 import '../viewmodels/auth_viewmodel.dart';
 import 'home_screen.dart';
 import 'login_screen.dart';
@@ -9,11 +12,13 @@ import 'login_screen.dart';
 class OtpVerificationScreen extends StatefulWidget {
   final String email;
   final bool isRegistration;
+  final String? registrationPassword;
 
   const OtpVerificationScreen({
     super.key,
     required this.email,
-    required this.isRegistration,
+    this.isRegistration = false,
+    this.registrationPassword,
   });
 
   @override
@@ -21,27 +26,50 @@ class OtpVerificationScreen extends StatefulWidget {
       _OtpVerificationScreenState();
 }
 
-class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
-  final _formKey = GlobalKey<FormState>();
-  final _otpController = TextEditingController();
-  final _otpFocusNode = FocusNode();
+class _OtpVerificationScreenState
+    extends State<OtpVerificationScreen> {
+  static const Color _navy = Color(0xFF0B477A);
+  static const Color _blue = Color(0xFF17699A);
+  static const Color _cyan = Color(0xFF31CFDF);
+  static const Color _paleCyan = Color(0xFFD9F8FC);
+  static const Color _fieldColor = Color(0xFFF1FBFE);
+
+  final List<TextEditingController> _controllers =
+      List.generate(6, (_) => TextEditingController());
+
+  final List<FocusNode> _focusNodes =
+      List.generate(6, (_) => FocusNode());
 
   Timer? _timer;
-  int _remainingSeconds = 45;
-
-  static const Color _navy = Color(0xFF164C78);
-  static const Color _cyan = Color(0xFF35C4D0);
-  // static const Color _paleBlue = Color(0xFFD7F5FA);
+  int _secondsRemaining = 45;
+  bool _isVerifying = false;
 
   @override
   void initState() {
     super.initState();
-    _startCountdown();
+    _startTimer();
   }
 
-  void _startCountdown() {
+  @override
+  void dispose() {
     _timer?.cancel();
-    _remainingSeconds = 45;
+
+    for (final controller in _controllers) {
+      controller.dispose();
+    }
+
+    for (final node in _focusNodes) {
+      node.dispose();
+    }
+
+    super.dispose();
+  }
+
+  void _startTimer() {
+    _timer?.cancel();
+    setState(() {
+      _secondsRemaining = 45;
+    });
 
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (!mounted) {
@@ -49,165 +77,211 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
         return;
       }
 
-      if (_remainingSeconds > 0) {
-        setState(() {
-          _remainingSeconds--;
-        });
-      } else {
+      if (_secondsRemaining <= 1) {
         timer.cancel();
+        setState(() => _secondsRemaining = 0);
+      } else {
+        setState(() => _secondsRemaining--);
       }
     });
   }
 
-  @override
-  void dispose() {
-    _timer?.cancel();
-    _otpController.dispose();
-    _otpFocusNode.dispose();
-    super.dispose();
+  String get _otp =>
+      _controllers.map((controller) => controller.text).join();
+
+  void _showMessage(String message, {bool isError = true}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: isError ? Colors.red.shade700 : _navy,
+      ),
+    );
   }
 
   Future<void> _verifyOtp() async {
     FocusScope.of(context).unfocus();
 
-    if (!_formKey.currentState!.validate()) return;
-
-    final auth = context.read<AuthViewModel>();
-    final otp = _otpController.text.trim();
-
-    final bool success;
-
-    if (widget.isRegistration) {
-      success = await auth.verifyRegistration(
-        email: widget.email,
-        otp: otp,
-      );
-    } else {
-      success = await auth.verifyLogin(otp: otp);
-    }
-
-    if (!mounted) return;
-
-    if (!success) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            auth.error ?? 'OTP verification failed. Please try again.',
-          ),
-          backgroundColor: Colors.red.shade700,
-        ),
-      );
+    if (_otp.length != 6 || _otp.contains(RegExp(r'[^0-9]'))) {
+      _showMessage('Please enter the complete 6-digit OTP.');
       return;
     }
 
-    if (widget.isRegistration) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Registration successful. Please log in.'),
-          backgroundColor: Colors.green,
-        ),
-      );
+    setState(() => _isVerifying = true);
 
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(
-          builder: (_) => const LoginScreen(),
-        ),
-        (route) => false,
-      );
-    } else {
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(
-          builder: (_) => const HomeScreen(),
-        ),
-        (route) => false,
-      );
+    final auth = context.read<AuthViewModel>();
+
+    try {
+      if (widget.isRegistration) {
+        final registrationSuccess = await auth.verifyRegistration(
+          email: widget.email,
+          otp: _otp,
+        );
+
+        if (!mounted) return;
+
+        if (!registrationSuccess) {
+          _showMessage(
+            auth.error ?? 'Registration OTP verification failed.',
+          );
+          return;
+        }
+
+        final password = widget.registrationPassword;
+
+        if (password == null || password.isEmpty) {
+          _showMessage(
+            'Registration verified. Please log in to continue.',
+          );
+
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(
+              builder: (_) => const LoginScreen(),
+            ),
+            (route) => false,
+          );
+          return;
+        }
+
+        // Request the login OTP using the same credentials.
+        final loginSuccess = await auth.login(
+          email: widget.email,
+          password: password,
+        );
+
+        if (!mounted) return;
+
+        if (!loginSuccess) {
+          _showMessage(
+            auth.error ??
+                'Registration verified, but login could not start. '
+                    'Please log in again.',
+          );
+
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(
+              builder: (_) => const LoginScreen(),
+            ),
+            (route) => false,
+          );
+          return;
+        }
+
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => OtpVerificationScreen(
+              email: widget.email,
+              isRegistration: false,
+            ),
+          ),
+        );
+      } else {
+        final loginSuccess = await auth.verifyLogin(otp: _otp);
+
+        if (!mounted) return;
+
+        if (!loginSuccess) {
+          _showMessage(
+            auth.error ?? 'Invalid OTP. Please try again.',
+          );
+          return;
+        }
+
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const HomeScreen(),
+          ),
+          (route) => false,
+        );
+      }
+    } catch (_) {
+      if (mounted) {
+        _showMessage('Something went wrong. Please try again.');
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isVerifying = false);
+      }
     }
   }
 
-  Widget _buildOtpBoxes() {
-    return GestureDetector(
-      onTap: () {
-        _otpFocusNode.requestFocus();
-      },
+  Widget _buildHeader() {
+    return SizedBox(
+      height: 245,
+      width: double.infinity,
       child: Stack(
-        alignment: Alignment.center,
         children: [
-          Row(
-            children: List.generate(6, (index) {
-              final digits = _otpController.text;
-              final hasDigit = index < digits.length;
-              final isCurrent = index == digits.length && digits.length < 6;
-
-              return Expanded(
-                child: Container(
-                  height: 66,
-                  margin: EdgeInsets.only(
-                    right: index == 5 ? 0 : 7,
-                  ),
+          Container(
+            height: 220,
+            width: double.infinity,
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Color(0xFFE9FCFE),
+                  Color(0xFFB9F0F6),
+                  Color(0xFFDDFBFC),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+          ),
+          Positioned.fill(
+            child: CustomPaint(
+              painter: _OtpHeaderWavePainter(),
+            ),
+          ),
+          Positioned(
+            top: 24,
+            left: 0,
+            right: 0,
+            child: Column(
+              children: [
+                Container(
+                  width: 82,
+                  height: 82,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF8FEFF),
-                    borderRadius: BorderRadius.circular(13),
-                    border: Border.all(
-                      color: isCurrent
-                          ? _cyan
-                          : const Color(0xFFE1F0F4),
-                      width: isCurrent ? 1.8 : 1.2,
-                    ),
+                    shape: BoxShape.circle,
+                    color: Colors.white.withValues(alpha: 0.75),
                     boxShadow: [
                       BoxShadow(
-                        color: _navy.withValues(alpha: 0.05),
-                        blurRadius: 5,
-                        offset: const Offset(0, 2),
+                        color: _blue.withValues(alpha: 0.12),
+                        blurRadius: 15,
+                        offset: const Offset(0, 5),
                       ),
                     ],
                   ),
-                  alignment: Alignment.center,
+                  child: const Icon(
+                    Icons.favorite_rounded,
+                    color: _cyan,
+                    size: 62,
+                  ),
+                ),
+                Transform.translate(
+                  offset: const Offset(0, -47),
+                  child: const Icon(
+                    Icons.add_rounded,
+                    color: _navy,
+                    size: 40,
+                  ),
+                ),
+                Transform.translate(
+                  offset: const Offset(0, -34),
                   child: Text(
-                    hasDigit ? digits[index] : '',
+                    widget.isRegistration
+                        ? 'Verify Email'
+                        : 'Verify OTP',
                     style: const TextStyle(
-                      color: _navy,
-                      fontSize: 25,
-                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF159BB7),
+                      fontSize: 30,
+                      fontWeight: FontWeight.w800,
                     ),
                   ),
                 ),
-              );
-            }),
-          ),
-
-          Positioned.fill(
-            child: Opacity(
-              opacity: 0.015,
-              child: TextField(
-                controller: _otpController,
-                focusNode: _otpFocusNode,
-                keyboardType: TextInputType.number,
-                textInputAction: TextInputAction.done,
-                maxLength: 6,
-                inputFormatters: [
-                  FilteringTextInputFormatter.digitsOnly,
-                  LengthLimitingTextInputFormatter(6),
-                ],
-                onChanged: (_) {
-                  setState(() {});
-                  if (_otpController.text.length == 6) {
-                    FocusScope.of(context).unfocus();
-                  }
-                },
-                onSubmitted: (_) => _verifyOtp(),
-                decoration: const InputDecoration(
-                  counterText: '',
-                  border: InputBorder.none,
-                  contentPadding: EdgeInsets.zero,
-                ),
-                style: const TextStyle(
-                  color: Colors.black,
-                  fontSize: 1,
-                ),
-                cursorColor: Colors.transparent,
-              ),
+              ],
             ),
           ),
         ],
@@ -215,232 +289,252 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
     );
   }
 
+  Widget _buildOtpBox(int index) {
+    return SizedBox(
+      width: 43,
+      height: 54,
+      child: TextField(
+        controller: _controllers[index],
+        focusNode: _focusNodes[index],
+        keyboardType: TextInputType.number,
+        textAlign: TextAlign.center,
+        maxLength: 1,
+        style: const TextStyle(
+          color: _navy,
+          fontSize: 22,
+          fontWeight: FontWeight.bold,
+        ),
+        inputFormatters: [
+          FilteringTextInputFormatter.digitsOnly,
+          LengthLimitingTextInputFormatter(1),
+        ],
+        decoration: InputDecoration(
+          counterText: '',
+          filled: true,
+          fillColor: _fieldColor,
+          contentPadding: EdgeInsets.zero,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(13),
+            borderSide: BorderSide.none,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(13),
+            borderSide: BorderSide.none,
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(13),
+            borderSide: const BorderSide(
+              color: _cyan,
+              width: 2,
+            ),
+          ),
+        ),
+        onChanged: (value) {
+          if (value.isNotEmpty && index < 5) {
+            _focusNodes[index + 1].requestFocus();
+          } else if (value.isEmpty && index > 0) {
+            _focusNodes[index - 1].requestFocus();
+          }
+
+          if (_otp.length == 6) {
+            FocusScope.of(context).unfocus();
+          }
+
+          setState(() {});
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final auth = context.watch<AuthViewModel>();
+    final heading = widget.isRegistration
+        ? 'Verify your email'
+        : 'Enter your login OTP';
+
+    final description = widget.isRegistration
+        ? 'Enter the 6-digit code sent to your email to complete registration.'
+        : 'Enter the 6-digit code sent to your email to continue.';
 
     return Scaffold(
-      backgroundColor: const Color(0xFFB8EDF4),
+      backgroundColor: _navy,
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
-            return Center(
-              child: Container(
-                width: double.infinity,
-                height: constraints.maxHeight,
-                margin: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
+            return SingleChildScrollView(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight: constraints.maxHeight,
                 ),
-                clipBehavior: Clip.antiAlias,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF0FCFE),
-                  borderRadius: BorderRadius.circular(28),
-                  boxShadow: [
-                    BoxShadow(
-                      color: _navy.withValues(alpha: 0.09),
-                      blurRadius: 18,
-                      offset: const Offset(0, 5),
-                    ),
-                  ],
-                ),
-                child: Stack(
+                child: Column(
                   children: [
-                    const Positioned.fill(
-                      child: DecoratedBox(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: [
-                              Color(0xFFF4FEFF),
-                              Color(0xFFE7FAFD),
-                              Color(0xFFF5FEFF),
-                            ],
-                          ),
-                        ),
+                    _buildHeader(),
+                    Container(
+                      width: double.infinity,
+                      constraints: BoxConstraints(
+                        minHeight: constraints.maxHeight - 245,
                       ),
-                    ),
-
-                    Positioned(
-                      top: -35,
-                      left: -80,
-                      right: -60,
-                      height: constraints.maxHeight * 0.23,
-                      child: const CustomPaint(
-                        painter: OtpBackgroundWavePainter(),
-                      ),
-                    ),
-
-                    Positioned(
-                      bottom: -10,
-                      left: -10,
-                      right: -10,
-                      height: constraints.maxHeight * 0.23,
-                      child: const CustomPaint(
-                        painter: OtpBottomWavePainter(),
-                      ),
-                    ),
-
-                    SingleChildScrollView(
                       padding: const EdgeInsets.fromLTRB(
+                        24,
+                        8,
+                        24,
                         28,
-                        28,
-                        28,
-                        35,
                       ),
-                      child: ConstrainedBox(
-                        constraints: BoxConstraints(
-                          minHeight: constraints.maxHeight - 63,
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Color(0xFF17679B),
+                            Color(0xFF0B477A),
+                            Color(0xFF07365D),
+                          ],
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
                         ),
-                        child: Form(
-                          key: _formKey,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              const SizedBox(height: 18),
-
-                              Row(
-                                children: [
-                                  IconButton(
-                                    onPressed: auth.isLoading
-                                        ? null
-                                        : () => Navigator.pop(context),
-                                    icon: const Icon(
-                                      Icons.arrow_back_ios_new_rounded,
-                                      size: 25,
-                                      color: _navy,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 5),
-                                  const Expanded(
-                                    child: Text(
-                                      'OTP Verification',
-                                      style: TextStyle(
-                                        color: _navy,
-                                        fontSize: 27,
-                                        fontWeight: FontWeight.w700,
-                                        letterSpacing: -0.5,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-
-                              const SizedBox(height: 38),
-
-                              Padding(
-                                padding: const EdgeInsets.only(left: 13),
-                                child: Text(
-                                  widget.isRegistration
-                                      ? 'Enter the 6-digit code sent to your email or phone'
-                                      : 'Enter the 6-digit code sent to your email or phone',
-                                  style: const TextStyle(
-                                    color: Color(0xFF477393),
-                                    fontSize: 18,
-                                    height: 1.55,
-                                    fontWeight: FontWeight.w500,
-                                  ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          const SizedBox(height: 8),
+                          Text(
+                            heading,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 27,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          Text(
+                            description,
+                            style: const TextStyle(
+                              color: _paleCyan,
+                              fontSize: 15,
+                              height: 1.5,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 12,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.09),
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(
+                                  Icons.email_outlined,
+                                  color: _cyan,
+                                  size: 22,
                                 ),
-                              ),
-
-                              const SizedBox(height: 46),
-
-                              _buildOtpBoxes(),
-
-                              if (auth.error != null) ...[
-                                const SizedBox(height: 12),
-                                Text(
-                                  auth.error!,
-                                  style: const TextStyle(
-                                    color: Colors.red,
-                                    fontSize: 13,
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Text(
+                                    widget.email,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 14,
+                                    ),
                                   ),
-                                  textAlign: TextAlign.center,
                                 ),
                               ],
-
-                              const SizedBox(height: 60),
-
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  const Icon(
-                                    Icons.access_time_rounded,
-                                    color: Color(0xFF477393),
-                                    size: 25,
-                                  ),
-                                  const SizedBox(width: 10),
-                                  Text(
-                                    _remainingSeconds > 0
-                                        ? 'Resend code in 00:${_remainingSeconds.toString().padLeft(2, '0')}'
-                                        : 'Code timer expired',
-                                    style: const TextStyle(
-                                      color: Color(0xFF7298AD),
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ],
-                              ),
-
-                              const SizedBox(height: 43),
-
-                              TextButton(
-                                onPressed: auth.isLoading
-                                    ? null
-                                    : () => Navigator.pop(context),
-                                style: TextButton.styleFrom(
-                                  foregroundColor: _navy,
-                                ),
-                                child: const Text(
-                                  'Use a different email',
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    fontSize: 17,
-                                    fontWeight: FontWeight.w600,
-                                  ),
+                            ),
+                          ),
+                          const SizedBox(height: 28),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: List.generate(
+                              6,
+                              _buildOtpBox,
+                            ),
+                          ),
+                          const SizedBox(height: 22),
+                          SizedBox(
+                            height: 54,
+                            child: ElevatedButton(
+                              onPressed:
+                                  _isVerifying ? null : _verifyOtp,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: _cyan,
+                                foregroundColor: Colors.white,
+                                disabledBackgroundColor: Colors.blueGrey,
+                                elevation: 3,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(30),
                                 ),
                               ),
-
-                              const SizedBox(height: 25),
-
-                              SizedBox(
-                                height: 54,
-                                child: ElevatedButton(
-                                  onPressed:
-                                      auth.isLoading ? null : _verifyOtp,
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: _cyan,
-                                    foregroundColor: Colors.white,
-                                    disabledBackgroundColor:
-                                        _cyan.withValues(alpha: 0.6),
-                                    elevation: 2,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(14),
+                              child: _isVerifying
+                                  ? const SizedBox(
+                                      height: 23,
+                                      width: 23,
+                                      child: CircularProgressIndicator(
+                                        color: Colors.white,
+                                        strokeWidth: 2.5,
+                                      ),
+                                    )
+                                  : const Text(
+                                      'Verify OTP',
+                                      style: TextStyle(
+                                        fontSize: 17,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
-                                  ),
-                                  child: auth.isLoading
-                                      ? const SizedBox(
-                                          height: 22,
-                                          width: 22,
-                                          child: CircularProgressIndicator(
-                                            color: Colors.white,
-                                            strokeWidth: 2.5,
-                                          ),
-                                        )
-                                      : const Text(
-                                          'Verify OTP',
-                                          style: TextStyle(
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
+                            ),
+                          ),
+                          const SizedBox(height: 22),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Text(
+                                "Didn't receive the code? ",
+                                style: TextStyle(
+                                  color: _paleCyan,
+                                  fontSize: 14,
+                                ),
+                              ),
+                              Text(
+                                _secondsRemaining > 0
+                                    ? '00:${_secondsRemaining.toString().padLeft(2, '0')}'
+                                    : 'Resend unavailable',
+                                style: const TextStyle(
+                                  color: _cyan,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
                                 ),
                               ),
                             ],
                           ),
-                        ),
+                          const SizedBox(height: 22),
+                          TextButton.icon(
+                            onPressed: _isVerifying
+                                ? null
+                                : () {
+                                    Navigator.pushAndRemoveUntil(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) =>
+                                            const LoginScreen(),
+                                      ),
+                                      (route) => false,
+                                    );
+                                  },
+                            icon: const Icon(
+                              Icons.arrow_back_rounded,
+                              color: _cyan,
+                            ),
+                            label: const Text(
+                              'Back to Login',
+                              style: TextStyle(
+                                color: _cyan,
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
@@ -454,85 +548,64 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
   }
 }
 
-class OtpBackgroundWavePainter extends CustomPainter {
-  const OtpBackgroundWavePainter();
-
+class _OtpHeaderWavePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    final path = Path()
-      ..moveTo(0, size.height * 0.25)
+    final cyanWave = Path()
+      ..moveTo(0, size.height * 0.68)
       ..cubicTo(
-        size.width * 0.24,
-        size.height * 0.04,
-        size.width * 0.48,
-        size.height * 0.27,
-        size.width * 0.72,
-        size.height * 0.04,
-      )
-      ..cubicTo(
-        size.width * 0.88,
-        -size.height * 0.04,
-        size.width,
-        size.height * 0.02,
-        size.width,
-        size.height * 0.02,
-      )
-      ..lineTo(size.width, size.height * 0.36)
-      ..cubicTo(
-        size.width * 0.72,
-        size.height * 0.46,
-        size.width * 0.50,
-        size.height * 0.18,
-        size.width * 0.23,
-        size.height * 0.37,
-      )
-      ..close();
-
-    canvas.drawPath(
-      path,
-      Paint()..color = _waveColor,
-    );
-  }
-
-  static const Color _waveColor = Color(0xFFDCF8FB);
-
-  @override
-  bool shouldRepaint(covariant OtpBackgroundWavePainter oldDelegate) => false;
-}
-
-class OtpBottomWavePainter extends CustomPainter {
-  const OtpBottomWavePainter();
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final path = Path()
-      ..moveTo(0, size.height)
-      ..lineTo(0, size.height * 0.78)
-      ..cubicTo(
-        size.width * 0.25,
-        size.height * 0.55,
+        size.width * 0.28,
+        size.height * 0.54,
         size.width * 0.43,
-        size.height * 0.78,
-        size.width * 0.65,
-        size.height * 0.68,
+        size.height * 0.98,
+        size.width * 0.69,
+        size.height * 0.79,
       )
       ..cubicTo(
         size.width * 0.83,
-        size.height * 0.61,
-        size.width * 0.94,
-        size.height * 0.49,
+        size.height * 0.70,
+        size.width * 0.91,
+        size.height * 0.62,
         size.width,
-        size.height * 0.53,
+        size.height * 0.60,
       )
       ..lineTo(size.width, size.height)
+      ..lineTo(0, size.height)
       ..close();
 
     canvas.drawPath(
-      path,
-      Paint()..color = const Color(0xFFDDF8FB),
+      cyanWave,
+      Paint()..color = _OtpVerificationScreenState._cyan,
+    );
+
+    final blueWave = Path()
+      ..moveTo(0, size.height * 0.75)
+      ..cubicTo(
+        size.width * 0.27,
+        size.height * 0.61,
+        size.width * 0.45,
+        size.height * 1.02,
+        size.width * 0.70,
+        size.height * 0.84,
+      )
+      ..cubicTo(
+        size.width * 0.84,
+        size.height * 0.75,
+        size.width * 0.92,
+        size.height * 0.68,
+        size.width,
+        size.height * 0.64,
+      )
+      ..lineTo(size.width, size.height)
+      ..lineTo(0, size.height)
+      ..close();
+
+    canvas.drawPath(
+      blueWave,
+      Paint()..color = _OtpVerificationScreenState._blue,
     );
   }
 
   @override
-  bool shouldRepaint(covariant OtpBottomWavePainter oldDelegate) => false;
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

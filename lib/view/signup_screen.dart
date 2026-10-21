@@ -1,7 +1,9 @@
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../viewmodels/auth_viewmodel.dart';
+import 'login_screen.dart';
 import 'otp_verification_screen.dart';
 
 class SignupScreen extends StatefulWidget {
@@ -22,9 +24,10 @@ class _SignupScreenState extends State<SignupScreen> {
   bool _obscureConfirmPassword = true;
 
   static const Color _navy = Color(0xFF0B477A);
-  static const Color _blue = Color(0xFF246F96);
+  static const Color _blue = Color(0xFF17699A);
   static const Color _cyan = Color(0xFF31CFDF);
-  static const Color _pale = Color(0xFFBDEBF6);
+  static const Color _paleCyan = Color(0xFFD9F8FC);
+  static const Color _fieldColor = Color(0xFFF1FBFE);
 
   @override
   void dispose() {
@@ -35,72 +38,239 @@ class _SignupScreenState extends State<SignupScreen> {
     super.dispose();
   }
 
+  void _showMessage(String message, {bool isError = true}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: isError ? Colors.red.shade700 : _navy,
+      ),
+    );
+  }
+
   Future<void> _signup() async {
     FocusScope.of(context).unfocus();
 
     if (!_formKey.currentState!.validate()) return;
 
     final auth = context.read<AuthViewModel>();
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
 
     final success = await auth.register(
       name: _nameController.text.trim(),
-      email: _emailController.text.trim(),
-      password: _passwordController.text,
+      email: email,
+      password: password,
     );
 
     if (!mounted) return;
 
-    if (success) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => OtpVerificationScreen(
-            email: _emailController.text.trim(),
-            isRegistration: true,
-          ),
-        ),
+    if (!success) {
+      _showMessage(
+        auth.error ?? 'Registration failed. Please try again.',
       );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(auth.error ?? 'Registration failed. Please try again.'),
-          backgroundColor: Colors.red.shade700,
-        ),
-      );
+      return;
     }
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => OtpVerificationScreen(
+          email: email,
+          isRegistration: true,
+          registrationPassword: password,
+        ),
+      ),
+    );
   }
 
-  InputDecoration _inputDecoration({required String hint, Widget? suffixIcon}) {
+  InputDecoration _decoration({
+    required String hint,
+    required IconData icon,
+    Widget? suffixIcon,
+  }) {
     return InputDecoration(
       hintText: hint,
       hintStyle: const TextStyle(
-        color: Color(0xFF7E8C96),
-        fontSize: 17,
-        fontWeight: FontWeight.w400,
+        color: Color(0xFF8297AF),
+        fontSize: 15,
       ),
-      filled: true,
-      fillColor: const Color(0xFFF0F8FF),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 22, vertical: 19),
+      prefixIcon: Icon(icon, color: _blue, size: 22),
       suffixIcon: suffixIcon,
+      filled: true,
+      fillColor: _fieldColor,
+      contentPadding: const EdgeInsets.symmetric(
+        horizontal: 18,
+        vertical: 17,
+      ),
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(15),
+        borderRadius: BorderRadius.circular(30),
         borderSide: BorderSide.none,
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(15),
+        borderRadius: BorderRadius.circular(30),
         borderSide: BorderSide.none,
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(15),
-        borderSide: const BorderSide(color: _cyan, width: 2),
+        borderRadius: BorderRadius.circular(30),
+        borderSide: const BorderSide(
+          color: _cyan,
+          width: 2,
+        ),
       ),
       errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(15),
-        borderSide: const BorderSide(color: Colors.redAccent, width: 1),
+        borderRadius: BorderRadius.circular(18),
+        borderSide: const BorderSide(color: Colors.redAccent),
       ),
       focusedErrorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(15),
-        borderSide: const BorderSide(color: Colors.redAccent, width: 1.5),
+        borderRadius: BorderRadius.circular(18),
+        borderSide: const BorderSide(
+          color: Colors.redAccent,
+          width: 1.5,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeader() {
+    return SizedBox(
+      height: 290,
+      width: double.infinity,
+      child: Stack(
+        children: [
+          Container(
+            width: double.infinity,
+            height: 265,
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Color(0xFFE9FCFE),
+                  Color(0xFFB9F0F6),
+                  Color(0xFFDDFBFC),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+          ),
+          Positioned.fill(
+            child: CustomPaint(
+              painter: _HeaderWavePainter(),
+            ),
+          ),
+          Positioned(
+            top: 24,
+            left: 0,
+            right: 0,
+            child: Column(
+              children: [
+                Container(
+                  width: 92,
+                  height: 92,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.72),
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: _blue.withValues(alpha: 0.10),
+                        blurRadius: 16,
+                        offset: const Offset(0, 5),
+                      ),
+                    ],
+                  ),
+                  child: const Icon(
+                    Icons.favorite_rounded,
+                    color: _cyan,
+                    size: 67,
+                  ),
+                ),
+                Transform.translate(
+                  offset: const Offset(0, -53),
+                  child: const Icon(
+                    Icons.add_rounded,
+                    color: _navy,
+                    size: 45,
+                  ),
+                ),
+                Transform.translate(
+                  offset: const Offset(0, -39),
+                  child: const Text(
+                    'Register',
+                    style: TextStyle(
+                      color: Color(0xFF159BB7),
+                      fontSize: 35,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: -0.8,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildField({
+    required TextEditingController controller,
+    required String hint,
+    required IconData icon,
+    required String? Function(String?) validator,
+    TextInputType keyboardType = TextInputType.text,
+    TextInputAction textInputAction = TextInputAction.next,
+    bool obscureText = false,
+    Widget? suffixIcon,
+    Iterable<String>? autofillHints,
+  }) {
+    return TextFormField(
+      controller: controller,
+      keyboardType: keyboardType,
+      textInputAction: textInputAction,
+      obscureText: obscureText,
+      validator: validator,
+      autofillHints: autofillHints,
+      autocorrect: false,
+      enableSuggestions: !obscureText,
+      style: const TextStyle(
+        color: _navy,
+        fontSize: 15,
+      ),
+      decoration: _decoration(
+        hint: hint,
+        icon: icon,
+        suffixIcon: suffixIcon,
+      ),
+    );
+  }
+
+  Widget _buildPasswordField({
+    required TextEditingController controller,
+    required String hint,
+    required bool obscure,
+    required VoidCallback onToggle,
+    required String? Function(String?) validator,
+    bool isLast = false,
+  }) {
+    return _buildField(
+      controller: controller,
+      hint: hint,
+      icon: Icons.lock_outline_rounded,
+      obscureText: obscure,
+      textInputAction:
+          isLast ? TextInputAction.done : TextInputAction.next,
+      validator: validator,
+      autofillHints: isLast
+          ? const [AutofillHints.newPassword]
+          : const [AutofillHints.newPassword],
+      suffixIcon: IconButton(
+        onPressed: onToggle,
+        icon: Icon(
+          obscure
+              ? Icons.visibility_off_outlined
+              : Icons.visibility_outlined,
+          color: const Color(0xFF8297AF),
+          size: 21,
+        ),
       ),
     );
   }
@@ -110,247 +280,168 @@ class _SignupScreenState extends State<SignupScreen> {
     final auth = context.watch<AuthViewModel>();
 
     return Scaffold(
-      backgroundColor: _pale,
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          return Stack(
-            children: [
-              Positioned.fill(
-                child: const DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: RadialGradient(
-                      center: Alignment(0, -0.75),
-                      radius: 1.35,
-                      colors: [Color(0xFFE6FAFF), Color(0xFFBDEBF6)],
-                    ),
-                  ),
+      backgroundColor: _navy,
+      body: SafeArea(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              keyboardDismissBehavior:
+                  ScrollViewKeyboardDismissBehavior.onDrag,
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight: constraints.maxHeight,
                 ),
-              ),
-
-              Positioned(
-                top: 0,
-                left: 0,
-                right: 0,
-                height: constraints.maxHeight * 0.34,
-                child: CustomPaint(
-                  painter: SignupTopWavePainter(
-                    navy: _navy,
-                    blue: _blue,
-                    cyan: _cyan,
-                  ),
-                ),
-              ),
-
-              Positioned(
-                top: constraints.maxHeight * 0.30,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                child: Container(decoration: const BoxDecoration(color: _blue)),
-              ),
-
-              Positioned(
-                top: constraints.maxHeight * 0.275,
-                left: 0,
-                right: 0,
-                height: constraints.maxHeight * 0.105,
-                child: CustomPaint(
-                  painter: SignupMiddleWavePainter(navy: _blue, cyan: _cyan),
-                ),
-              ),
-
-              SafeArea(
-                child: Center(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.fromLTRB(28, 16, 28, 20),
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 500),
+                child: Column(
+                  children: [
+                    _buildHeader(),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.fromLTRB(25, 5, 25, 25),
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Color(0xFF17679B),
+                            Color(0xFF0B477A),
+                            Color(0xFF07365D),
+                          ],
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                        ),
+                      ),
                       child: Form(
                         key: _formKey,
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            const SizedBox(height: 2),
-
-                            const Center(child: SignupMedicalLogo()),
-
-                            const SizedBox(height: 12),
-
-                            const Text(
-                              'Register',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                color: Color(0xFF35C4D0),
-                                fontSize: 38,
-                                fontWeight: FontWeight.w500,
-                                letterSpacing: -0.5,
-                              ),
-                            ),
-
-                            SizedBox(height: constraints.maxHeight * 0.075),
-
+                            const SizedBox(height: 4),
                             const Text(
                               'Welcome!',
-                              textAlign: TextAlign.center,
                               style: TextStyle(
                                 color: Colors.white,
-                                fontSize: 35,
-                                fontWeight: FontWeight.w400,
+                                fontSize: 32,
+                                fontWeight: FontWeight.w800,
                               ),
                             ),
-
-                            const SizedBox(height: 32),
-
-                            TextFormField(
-                              controller: _nameController,
-                              textCapitalization: TextCapitalization.words,
-                              textInputAction: TextInputAction.next,
-                               style: const TextStyle(
-                                color: Colors.black,
-                                fontSize: 16,
+                            const SizedBox(height: 4),
+                            const Text(
+                              'Create your account to get started',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 15,
                               ),
-                              decoration: _inputDecoration(hint: 'Name'),
+                            ),
+                            const SizedBox(height: 23),
+
+                            _buildField(
+                              controller: _nameController,
+                              hint: 'Full Name',
+                              icon: Icons.person_outline_rounded,
+                              autofillHints: const [
+                                AutofillHints.name,
+                              ],
                               validator: (value) {
-                                if (value == null || value.trim().isEmpty) {
-                                  return 'Please enter your name.';
-                                }
-                                if (value.trim().length < 2) {
-                                  return 'Name must contain at least 2 characters.';
+                                if (value == null ||
+                                    value.trim().isEmpty) {
+                                  return 'Please enter your full name';
                                 }
                                 return null;
                               },
                             ),
+                            const SizedBox(height: 13),
 
-                            const SizedBox(height: 24),
-
-                            TextFormField(
+                            _buildField(
                               controller: _emailController,
+                              hint: 'Email Address',
+                              icon: Icons.email_outlined,
                               keyboardType: TextInputType.emailAddress,
-                              textInputAction: TextInputAction.next,
-                               style: const TextStyle(
-                                color: Colors.black,
-                                fontSize: 16,
-                              ),
-                              autocorrect: false,
-                              decoration: _inputDecoration(hint: 'Email'),
+                              autofillHints: const [
+                                AutofillHints.email,
+                              ],
                               validator: (value) {
                                 final email = value?.trim() ?? '';
 
                                 if (email.isEmpty) {
-                                  return 'Please enter your email.';
+                                  return 'Please enter your email';
                                 }
 
-                                if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
-                                    .hasMatch(email)) {
-                                  return 'Please enter a valid email.';
+                                if (!RegExp(
+                                  r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
+                                ).hasMatch(email)) {
+                                  return 'Enter a valid email address';
                                 }
 
                                 return null;
                               },
                             ),
+                            const SizedBox(height: 13),
 
-                            const SizedBox(height: 24),
-
-                            TextFormField(
+                            _buildPasswordField(
                               controller: _passwordController,
-                              obscureText: _obscurePassword,
-                              textInputAction: TextInputAction.next,
-                              style: const TextStyle(
-                                color: Colors.black,
-                                fontSize: 16,
-                              ),
-                              decoration: _inputDecoration(
-                                hint: 'Password',
-                                suffixIcon: IconButton(
-                                  onPressed: () {
-                                    setState(() {
-                                      _obscurePassword = !_obscurePassword;
-                                    });
-                                  },
-                                  icon: Icon(
-                                    _obscurePassword
-                                        ? Icons.visibility_outlined
-                                        : Icons.visibility_off_outlined,
-                                    color: const Color(0xFF71818A),
-                                    size: 24,
-                                  ),
-                                ),
-                              ),
+                              hint: 'Password',
+                              obscure: _obscurePassword,
+                              onToggle: () {
+                                setState(() {
+                                  _obscurePassword = !_obscurePassword;
+                                });
+                              },
                               validator: (value) {
                                 if (value == null || value.isEmpty) {
-                                  return 'Please create a password.';
+                                  return 'Please enter a password';
                                 }
+
                                 if (value.length < 8) {
-                                  return 'Password must contain at least 8 characters.';
+                                  return 'Use at least 8 characters';
                                 }
+
                                 return null;
                               },
                             ),
+                            const SizedBox(height: 13),
 
-                            const SizedBox(height: 24),
-
-                            TextFormField(
+                            _buildPasswordField(
                               controller: _confirmPasswordController,
-                              obscureText: _obscureConfirmPassword,
-                              textInputAction: TextInputAction.done,
-                               style: const TextStyle(
-                                color: Colors.black,
-                                fontSize: 16,
-                              ),
-                              onFieldSubmitted: (_) => _signup(),
-                              decoration: _inputDecoration(
-                                hint: 'Confirm Password',
-                                suffixIcon: IconButton(
-                                  onPressed: () {
-                                    setState(() {
-                                      _obscureConfirmPassword =
-                                          !_obscureConfirmPassword;
-                                    });
-                                  },
-                                  icon: Icon(
-                                    _obscureConfirmPassword
-                                        ? Icons.visibility_outlined
-                                        : Icons.visibility_off_outlined,
-                                    color: const Color(0xFF71818A),
-                                    size: 24,
-                                  ),
-                                ),
-                              ),
+                              hint: 'Confirm Password',
+                              obscure: _obscureConfirmPassword,
+                              onToggle: () {
+                                setState(() {
+                                  _obscureConfirmPassword =
+                                      !_obscureConfirmPassword;
+                                });
+                              },
+                              isLast: true,
                               validator: (value) {
                                 if (value == null || value.isEmpty) {
-                                  return 'Please confirm your password.';
+                                  return 'Please confirm your password';
                                 }
+
                                 if (value != _passwordController.text) {
-                                  return 'Passwords do not match.';
+                                  return 'Passwords do not match';
                                 }
+
                                 return null;
                               },
                             ),
-
-                            const SizedBox(height: 30),
+                            const SizedBox(height: 20),
 
                             SizedBox(
-                              height: 64,
+                              height: 54,
                               child: ElevatedButton(
-                                onPressed: auth.isLoading ? null : _signup,
+                                onPressed:
+                                    auth.isLoading ? null : _signup,
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: _cyan,
-                                  disabledBackgroundColor: _cyan.withValues(
-                                    alpha: 0.7,
-                                  ),
                                   foregroundColor: Colors.white,
-                                  elevation: 4,
-                                  shadowColor: Colors.black.withValues(
-                                    alpha: 0.22,
-                                  ),
+                                  disabledBackgroundColor:
+                                      Colors.blueGrey,
+                                  elevation: 3,
                                   shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(15),
+                                    borderRadius: BorderRadius.circular(30),
                                   ),
                                 ),
                                 child: auth.isLoading
                                     ? const SizedBox(
-                                        height: 24,
-                                        width: 24,
+                                        width: 23,
+                                        height: 23,
                                         child: CircularProgressIndicator(
                                           color: Colors.white,
                                           strokeWidth: 2.5,
@@ -359,113 +450,114 @@ class _SignupScreenState extends State<SignupScreen> {
                                     : const Text(
                                         'Register',
                                         style: TextStyle(
-                                          fontSize: 25,
-                                          fontWeight: FontWeight.w500,
+                                          fontSize: 17,
+                                          fontWeight: FontWeight.bold,
                                         ),
                                       ),
                               ),
                             ),
+                            const SizedBox(height: 18),
 
-                            const SizedBox(height: 50),
-
-                            const Row(
+                            Row(
                               children: [
                                 Expanded(
-                                  child: Divider(
-                                    color: Color(0xFFD0EAF1),
-                                    thickness: 1.4,
+                                  child: Container(
+                                    height: 1,
+                                    color: Colors.white38,
                                   ),
                                 ),
-                                Padding(
-                                  padding: EdgeInsets.symmetric(horizontal: 8),
+                                const Padding(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 14,
+                                  ),
                                   child: Text(
-                                    'Or continue with',
+                                    'or',
                                     style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 17,
+                                      color: _paleCyan,
+                                      fontSize: 14,
                                     ),
                                   ),
                                 ),
                                 Expanded(
-                                  child: Divider(
-                                    color: Color(0xFFD0EAF1),
-                                    thickness: 1.4,
+                                  child: Container(
+                                    height: 1,
+                                    color: Colors.white38,
                                   ),
                                 ),
                               ],
                             ),
-
-                            const SizedBox(height: 40),
+                            const SizedBox(height: 17),
 
                             SizedBox(
-                              height: 64,
+                              height: 52,
                               child: OutlinedButton(
                                 onPressed: auth.isLoading
                                     ? null
                                     : () {
-                                        ScaffoldMessenger.of(context)
-                                            .showSnackBar(
-                                              const SnackBar(
-                                                content: Text(
-                                                  'Google sign-in is not connected on this registration screen yet.',
-                                                ),
-                                              ),
-                                            );
+                                        _showMessage(
+                                          'Google sign-in must be '
+                                          'connected to your login flow.',
+                                        );
                                       },
                                 style: OutlinedButton.styleFrom(
-                                  backgroundColor: const Color(0xFFF0F8FF),
-                                  foregroundColor: const Color(0xFF81D8DC),
-                                  side: const BorderSide(
-                                    color: _cyan,
-                                    width: 1.5,
-                                  ),
-                                  elevation: 3,
-                                  shadowColor: Colors.black.withValues(
-                                    alpha: 0.18,
-                                  ),
+                                  backgroundColor: Colors.white,
+                                  foregroundColor: _navy,
+                                  side: BorderSide.none,
                                   shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(15),
+                                    borderRadius:
+                                        BorderRadius.circular(30),
                                   ),
                                 ),
-                                child: const Text(
-                                  'Login with Google',
-                                  style: TextStyle(
-                                    fontSize: 21,
-                                    fontWeight: FontWeight.w500,
-                                  ),
+                                child: const Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.g_mobiledata_rounded,
+                                      color: Color(0xFF4285F4),
+                                      size: 32,
+                                    ),
+                                    SizedBox(width: 8),
+                                    Text(
+                                      'Login with Google',
+                                      style: TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
                             ),
+                            const SizedBox(height: 18),
 
-                            const SizedBox(height: 65),
-
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
+                            Wrap(
+                              alignment: WrapAlignment.center,
                               children: [
-                                const Flexible(
-                                  child: Text(
-                                    'Already have an account? ',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 16,
-                                    ),
+                                const Text(
+                                  'Already have an account? ',
+                                  style: TextStyle(
+                                    color: _paleCyan,
+                                    fontSize: 14,
                                   ),
                                 ),
-                                TextButton(
-                                  onPressed: auth.isLoading
+                                GestureDetector(
+                                  onTap: auth.isLoading
                                       ? null
-                                      : () => Navigator.pop(context),
-                                  style: TextButton.styleFrom(
-                                    foregroundColor: Colors.white,
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 4,
-                                    ),
-                                  ),
+                                      : () {
+                                          Navigator.pushReplacement(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (_) =>
+                                                  const LoginScreen(),
+                                            ),
+                                          );
+                                        },
                                   child: const Text(
                                     'Login',
                                     style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 17,
+                                      color: _cyan,
+                                      fontSize: 14,
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
@@ -476,253 +568,75 @@ class _SignupScreenState extends State<SignupScreen> {
                         ),
                       ),
                     ),
-                  ),
+                  ],
                 ),
               ),
-            ],
-          );
-        },
+            );
+          },
+        ),
       ),
     );
   }
 }
 
-class SignupMedicalLogo extends StatelessWidget {
-  const SignupMedicalLogo({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 150,
-      height: 145,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          ShaderMask(
-            shaderCallback: (bounds) {
-              return const LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Color(0xFF31CBD3),
-                  Color(0xFF078BB0),
-                  Color(0xFF07558C),
-                  Color(0xFF062E67),
-                ],
-              ).createShader(bounds);
-            },
-            child: const Icon(
-              Icons.favorite_rounded,
-              size: 145,
-              color: Colors.white,
-            ),
-          ),
-          const Positioned(
-            top: 39,
-            child: Icon(Icons.add_rounded, size: 70, color: Colors.white),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class SignupTopWavePainter extends CustomPainter {
-  final Color navy;
-  final Color blue;
-  final Color cyan;
-
-  SignupTopWavePainter({
-    required this.navy,
-    required this.blue,
-    required this.cyan,
-  });
-
+class _HeaderWavePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    final path = Path()
-      ..moveTo(0, 0)
-      ..lineTo(size.width, 0)
-      ..lineTo(size.width, size.height * 0.50)
+    final cyanWave = Path()
+      ..moveTo(0, size.height * 0.69)
       ..cubicTo(
-        size.width * 0.80,
-        size.height * 0.57,
-        size.width * 0.66,
-        size.height * 0.98,
-        size.width * 0.48,
-        size.height * 0.74,
-      )
-      ..cubicTo(
-        size.width * 0.27,
-        size.height * 0.39,
-        size.width * 0.13,
-        size.height * 0.32,
-        0,
-        size.height * 0.52,
-      )
-      ..close();
-
-    canvas.drawPath(path, Paint()..color = const Color(0xFF70C8D3));
-
-    final darkPath = Path()
-      ..moveTo(0, 0)
-      ..lineTo(size.width, 0)
-      ..lineTo(size.width, size.height * 0.40)
-      ..cubicTo(
-        size.width * 0.75,
-        size.height * 0.52,
-        size.width * 0.58,
-        size.height * 0.86,
+        size.width * 0.28,
+        size.height * 0.55,
         size.width * 0.43,
-        size.height * 0.66,
+        size.height * 0.98,
+        size.width * 0.69,
+        size.height * 0.79,
       )
       ..cubicTo(
-        size.width * 0.25,
-        size.height * 0.32,
-        size.width * 0.13,
-        size.height * 0.27,
-        0,
-        size.height * 0.43,
-      )
-      ..close();
-
-    canvas.drawPath(
-      darkPath,
-      Paint()
-        ..shader = LinearGradient(
-          colors: [blue, navy],
-          begin: Alignment.topRight,
-          end: Alignment.bottomLeft,
-        ).createShader(Offset.zero & size),
-    );
-
-    final line = Path()
-      ..moveTo(0, size.height * 0.43)
-      ..cubicTo(
-        size.width * 0.25,
-        size.height * 0.48,
-        size.width * 0.30,
-        size.height * 0.38,
-        size.width * 0.46,
-        size.height * 0.68,
-      )
-      ..cubicTo(
-        size.width * 0.62,
-        size.height * 0.92,
-        size.width * 0.79,
-        size.height * 0.45,
+        size.width * 0.83,
+        size.height * 0.70,
+        size.width * 0.91,
+        size.height * 0.62,
         size.width,
-        size.height * 0.40,
-      );
-
-    canvas.drawPath(
-      line,
-      Paint()
-        ..color = const Color(0xFF45D4DF)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.5,
-    );
-
-    canvas.drawCircle(
-      Offset(size.width * 0.49, size.height * 0.68),
-      5.5,
-      Paint()..color = const Color(0xFF45D4DF),
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant SignupTopWavePainter oldDelegate) => false;
-}
-
-class SignupMiddleWavePainter extends CustomPainter {
-  final Color navy;
-  final Color cyan;
-
-  SignupMiddleWavePainter({required this.navy, required this.cyan});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final wave = Path()
-      ..moveTo(0, size.height * 0.24)
-      ..cubicTo(
-        size.width * 0.23,
-        -size.height * 0.20,
-        size.width * 0.40,
-        size.height * 0.50,
-        size.width * 0.63,
-        size.height * 0.52,
-      )
-      ..cubicTo(
-        size.width * 0.80,
-        size.height * 0.58,
-        size.width * 0.89,
-        size.height * 0.30,
-        size.width,
-        size.height * 0.05,
+        size.height * 0.60,
       )
       ..lineTo(size.width, size.height)
       ..lineTo(0, size.height)
       ..close();
 
-    canvas.drawPath(wave, Paint()..color = navy);
-
-    final rightWave = Path()
-      ..moveTo(size.width * 0.60, size.height * 0.52)
-      ..cubicTo(
-        size.width * 0.77,
-        size.height * 0.15,
-        size.width * 0.91,
-        size.height * 0.03,
-        size.width,
-        0,
-      )
-      ..lineTo(size.width, size.height * 0.45)
-      ..cubicTo(
-        size.width * 0.83,
-        size.height * 0.76,
-        size.width * 0.71,
-        size.height * 0.68,
-        size.width * 0.60,
-        size.height * 0.52,
-      )
-      ..close();
-
-    canvas.drawPath(rightWave, Paint()..color = cyan.withValues(alpha: 0.55));
-
-    final line = Path()
-      ..moveTo(0, size.height * 0.24)
-      ..cubicTo(
-        size.width * 0.20,
-        size.height * 0.35,
-        size.width * 0.36,
-        size.height * 0.05,
-        size.width * 0.52,
-        size.height * 0.45,
-      )
-      ..cubicTo(
-        size.width * 0.74,
-        size.height * 0.88,
-        size.width * 0.89,
-        size.height * 0.40,
-        size.width,
-        size.height * 0.05,
-      );
-
     canvas.drawPath(
-      line,
-      Paint()
-        ..color = const Color(0xFF45D4DF)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.5,
+      cyanWave,
+      Paint()..color = _SignupScreenState._cyan,
     );
 
-    canvas.drawCircle(
-      Offset(size.width * 0.50, size.height * 0.45),
-      5.5,
-      Paint()..color = const Color(0xFF45D4DF),
+    final blueWave = Path()
+      ..moveTo(0, size.height * 0.76)
+      ..cubicTo(
+        size.width * 0.27,
+        size.height * 0.61,
+        size.width * 0.45,
+        size.height * 1.03,
+        size.width * 0.70,
+        size.height * 0.84,
+      )
+      ..cubicTo(
+        size.width * 0.84,
+        size.height * 0.75,
+        size.width * 0.92,
+        size.height * 0.68,
+        size.width,
+        size.height * 0.64,
+      )
+      ..lineTo(size.width, size.height)
+      ..lineTo(0, size.height)
+      ..close();
+
+    canvas.drawPath(
+      blueWave,
+      Paint()..color = _SignupScreenState._blue,
     );
   }
 
   @override
-  bool shouldRepaint(covariant SignupMiddleWavePainter oldDelegate) => false;
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

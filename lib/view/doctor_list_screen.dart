@@ -96,6 +96,10 @@ class _DoctorListScreenState extends State<DoctorListScreen> {
               .contains(query);
     }).toList();
 
+    final departmentName = widget.departmentName?.trim();
+    final hasDepartmentName =
+        departmentName != null && departmentName.isNotEmpty;
+
     return Scaffold(
       backgroundColor: isDark ? colors.surface : _background,
       body: SafeArea(
@@ -139,7 +143,30 @@ class _DoctorListScreenState extends State<DoctorListScreen> {
                 ],
               ),
 
-              const SizedBox(height: 12),
+              // Selected department heading
+              if (hasDepartmentName) ...[
+                const SizedBox(height: 8),
+                Text(
+                  'Doctors in $departmentName Department',
+                  style: TextStyle(
+                    color: isDark ? colors.onSurface : _primary,
+                    fontSize: 21,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'Choose a doctor to view their details.',
+                  style: TextStyle(
+                    color: isDark
+                        ? colors.onSurfaceVariant
+                        : _secondaryText,
+                    fontSize: 13,
+                  ),
+                ),
+              ],
+
+              const SizedBox(height: 18),
 
               // Search doctors
               Container(
@@ -227,19 +254,7 @@ class _DoctorListScreenState extends State<DoctorListScreen> {
                         }
                       : null,
                 )
-              else ...[
-                if (widget.departmentName != null &&
-                    widget.departmentName!.isNotEmpty) ...[
-                  Text(
-                    widget.departmentName!,
-                    style: const TextStyle(
-                      color: _primary,
-                      fontSize: 17,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-                ],
+              else
                 ...doctors.map(
                   (doctor) => _DoctorListCard(
                     doctor: doctor,
@@ -247,7 +262,6 @@ class _DoctorListScreenState extends State<DoctorListScreen> {
                     onTap: () => _openDoctorDetails(doctor),
                   ),
                 ),
-              ],
             ],
           ),
         ),

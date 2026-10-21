@@ -68,6 +68,20 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
+  void _openDepartment(
+    BuildContext context,
+    String departmentName,
+  ) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => DepartmentScreen(
+          selectedDepartmentName: departmentName,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
@@ -345,9 +359,9 @@ class HomeScreen extends StatelessWidget {
                         icon: Icons.medication_rounded,
                         color: const Color(0xFF55BFA4),
                         background: const Color(0xFFE1F8EE),
-                        onTap: () => _navigate(
+                        onTap: () => _openDepartment(
                           context,
-                          const DepartmentScreen(),
+                          'General Medicine',
                         ),
                       ),
                       _DepartmentTile(
@@ -355,9 +369,9 @@ class HomeScreen extends StatelessWidget {
                         icon: Icons.favorite_rounded,
                         color: const Color(0xFF57B8C6),
                         background: const Color(0xFFE0F8FC),
-                        onTap: () => _navigate(
+                        onTap: () => _openDepartment(
                           context,
-                          const DepartmentScreen(),
+                          'Cardiology',
                         ),
                       ),
                       _DepartmentTile(
@@ -365,9 +379,9 @@ class HomeScreen extends StatelessWidget {
                         icon: Icons.child_care_rounded,
                         color: const Color(0xFFC98796),
                         background: const Color(0xFFFFE9EF),
-                        onTap: () => _navigate(
+                        onTap: () => _openDepartment(
                           context,
-                          const DepartmentScreen(),
+                          'Pediatrics',
                         ),
                       ),
                       _DepartmentTile(
@@ -375,9 +389,9 @@ class HomeScreen extends StatelessWidget {
                         icon: Icons.accessibility_new_rounded,
                         color: const Color(0xFFB69C38),
                         background: const Color(0xFFFFF4C9),
-                        onTap: () => _navigate(
+                        onTap: () => _openDepartment(
                           context,
-                          const DepartmentScreen(),
+                          'Orthopedics',
                         ),
                       ),
                       _DepartmentTile(
@@ -385,9 +399,9 @@ class HomeScreen extends StatelessWidget {
                         icon: Icons.female_rounded,
                         color: const Color(0xFFA28BD8),
                         background: const Color(0xFFEFE5FF),
-                        onTap: () => _navigate(
+                        onTap: () => _openDepartment(
                           context,
-                          const DepartmentScreen(),
+                          'Gynecology',
                         ),
                       ),
                       _DepartmentTile(
@@ -395,9 +409,9 @@ class HomeScreen extends StatelessWidget {
                         icon: Icons.face_rounded,
                         color: const Color(0xFFD18D9D),
                         background: const Color(0xFFFFE6ED),
-                        onTap: () => _navigate(
+                        onTap: () => _openDepartment(
                           context,
-                          const DepartmentScreen(),
+                          'Dermatology',
                         ),
                       ),
                     ],

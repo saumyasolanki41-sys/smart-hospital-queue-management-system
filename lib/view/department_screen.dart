@@ -8,7 +8,12 @@ import '../viewmodels/doctor_viewmodel.dart';
 import 'doctor_list_screen.dart';
 
 class DepartmentScreen extends StatefulWidget {
-  const DepartmentScreen({super.key});
+  final String? selectedDepartmentName;
+
+  const DepartmentScreen({
+    super.key,
+    this.selectedDepartmentName,
+  });
 
   @override
   State<DepartmentScreen> createState() => _DepartmentScreenState();
@@ -47,10 +52,54 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
   void initState() {
     super.initState();
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
-      context.read<DepartmentViewModel>().fetchDepartments();
+
+      final departmentViewModel =
+          context.read<DepartmentViewModel>();
+
+      await departmentViewModel.fetchDepartments();
+
+      if (!mounted || widget.selectedDepartmentName == null) {
+        return;
+      }
+
+      final selectedName = _normalizeDepartmentName(
+        widget.selectedDepartmentName!,
+      );
+
+      DepartmentModel? selectedDepartment;
+
+      for (final department in departmentViewModel.departments) {
+        if (_normalizeDepartmentName(department.name) ==
+            selectedName) {
+          selectedDepartment = department;
+          break;
+        }
+      }
+
+      if (!mounted) return;
+
+      if (selectedDepartment != null) {
+        await _selectDepartment(selectedDepartment);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Department "${widget.selectedDepartmentName}" '
+              'was not found.',
+            ),
+          ),
+        );
+      }
     });
+  }
+
+  String _normalizeDepartmentName(String name) {
+    return name
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim()
+        .toLowerCase();
   }
 
   @override
@@ -71,8 +120,6 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
     try {
       final doctorViewModel = context.read<DoctorViewModel>();
 
-      // Fetch doctors for this department.
-      // The Doctor List screen will display any loading or error state.
       await doctorViewModel.fetchDoctors(
         departmentId: department.id,
         refresh: true,
@@ -179,7 +226,6 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
               ),
               const SizedBox(height: 14),
 
-              // Search departments.
               Container(
                 height: 48,
                 decoration: BoxDecoration(

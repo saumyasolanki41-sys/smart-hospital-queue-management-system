@@ -1,4 +1,6 @@
+
 import 'package:flutter/foundation.dart';
+
 import '../models/user_model.dart';
 import '../services/api_service.dart';
 import '../services/auth_service.dart';
@@ -40,7 +42,7 @@ class AuthViewModel extends ChangeNotifier {
     try {
       _user = await _authService.getCurrentUser();
     } catch (error) {
-      _error = error.toString();
+      _error = _messageFrom(error);
     } finally {
       _isInitialized = true;
       _isLoading = false;
@@ -119,7 +121,6 @@ class AuthViewModel extends ChangeNotifier {
     }
   }
 
-  
   Future<bool> verifyLogin({
     required String otp,
   }) async {
@@ -149,6 +150,7 @@ class AuthViewModel extends ChangeNotifier {
         idToken: idToken,
       );
 
+      _isOtpPending = false;
       return true;
     } catch (error) {
       _setError(_messageFrom(error));
