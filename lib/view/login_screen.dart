@@ -1,8 +1,12 @@
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+
 import '../viewmodels/auth_viewmodel.dart';
 import 'otp_verification_screen.dart';
 import 'signup_screen.dart';
+import 'home_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -17,8 +21,12 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordController = TextEditingController();
 
   bool _obscurePassword = true;
+  bool _googleInitialized = false;
 
-  // static const Color _navy = Color(0xFF0B477A);
+  // Replace with your Web application OAuth client ID.
+  static const String _webClientId =
+      'YOUR_WEB_CLIENT_ID.apps.googleusercontent.com';
+
   static const Color _blue = Color(0xFF246F96);
   static const Color _cyan = Color(0xFF31CFDF);
   static const Color _pale = Color(0xFFBDEBF6);
@@ -28,6 +36,18 @@ class _LoginScreenState extends State<LoginScreen> {
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  void _showMessage(String message, {bool isError = true}) {
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor:
+            isError ? Colors.red.shade700 : Colors.green.shade700,
+      ),
+    );
   }
 
   Future<void> _login() async {
@@ -55,23 +75,86 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
       );
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            auth.error ?? 'Login failed. Please try again.',
+      _showMessage(
+        auth.error ?? 'Login failed. Please try again.',
+      );
+    }
+  }
+
+  Future<void> _loginWithGoogle() async {
+    final auth = context.read<AuthViewModel>();
+
+    FocusScope.of(context).unfocus();
+    auth.clearError();
+
+    try {
+      final googleSignIn = GoogleSignIn.instance;
+
+      if (!_googleInitialized) {
+        if (_webClientId.startsWith('YOUR_')) {
+          _showMessage(
+            'Google OAuth is not configured. Add your Web '
+            'application client ID in login_screen.dart.',
+          );
+          return;
+        }
+
+        await googleSignIn.initialize(
+          serverClientId: _webClientId,
+        );
+
+        _googleInitialized = true;
+      }
+
+      final account = await googleSignIn.authenticate();
+
+      final idToken = account.authentication.idToken;
+
+      if (idToken == null || idToken.isEmpty) {
+        throw Exception(
+          'Google did not return an ID token. Check your OAuth configuration.',
+        );
+      }
+
+      if (!mounted) return;
+
+      final success = await auth.loginWithGoogle(
+        idToken: idToken,
+      );
+
+      if (!mounted) return;
+
+      if (success) {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const HomeScreen(),
           ),
-          backgroundColor: Colors.red.shade700,
-        ),
+          (route) => false,
+        );
+      } else {
+        _showMessage(
+          auth.error ?? 'Google login failed. Please try again.',
+        );
+      }
+    } on GoogleSignInException catch (error) {
+      if (error.code == GoogleSignInExceptionCode.canceled) {
+        return;
+      }
+
+      _showMessage(
+        'Google sign-in failed: ${error.description ?? error.code.name}. '
+        'Check your OAuth client ID and Android SHA-1 configuration.',
+      );
+    } catch (error) {
+      _showMessage(
+        'Google login failed: ${error.toString()}',
       );
     }
   }
 
   void _showNotConnectedMessage(String feature) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('$feature is not connected yet.'),
-      ),
-    );
+    _showMessage('$feature is not connected yet.');
   }
 
   InputDecoration _inputDecoration({
@@ -147,7 +230,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
               ),
-
               Positioned(
                 top: 0,
                 left: 0,
@@ -157,7 +239,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   painter: LoginTopWavePainter(),
                 ),
               ),
-
               Positioned(
                 top: constraints.maxHeight * 0.31,
                 left: 0,
@@ -165,7 +246,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 bottom: 0,
                 child: const ColoredBox(color: _blue),
               ),
-
               Positioned(
                 top: constraints.maxHeight * 0.275,
                 left: 0,
@@ -175,7 +255,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   painter: LoginMiddleWavePainter(),
                 ),
               ),
-
               SafeArea(
                 child: Center(
                   child: SingleChildScrollView(
@@ -188,13 +267,10 @@ class _LoginScreenState extends State<LoginScreen> {
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
                             const SizedBox(height: 2),
-
                             const Center(
                               child: LoginMedicalLogo(),
                             ),
-
                             const SizedBox(height: 8),
-
                             const Text(
                               'Login',
                               textAlign: TextAlign.center,
@@ -205,11 +281,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                 letterSpacing: -0.4,
                               ),
                             ),
-
                             SizedBox(
                               height: constraints.maxHeight * 0.075,
                             ),
-
                             const Text(
                               'Welcome back!',
                               textAlign: TextAlign.center,
@@ -219,9 +293,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 fontWeight: FontWeight.w400,
                               ),
                             ),
-
                             const SizedBox(height: 6),
-
                             const Text(
                               'Login to your account',
                               textAlign: TextAlign.center,
@@ -231,21 +303,17 @@ class _LoginScreenState extends State<LoginScreen> {
                                 fontWeight: FontWeight.w400,
                               ),
                             ),
-
                             const SizedBox(height: 25),
-
                             TextFormField(
                               controller: _emailController,
                               keyboardType: TextInputType.emailAddress,
                               textInputAction: TextInputAction.next,
                               autocorrect: false,
-                               style: const TextStyle(
+                              style: const TextStyle(
                                 color: Colors.black,
                                 fontSize: 16,
                               ),
-                              decoration: _inputDecoration(
-                                hint: 'Email',
-                              ),
+                              decoration: _inputDecoration(hint: 'Email'),
                               validator: (value) {
                                 final email = value?.trim() ?? '';
 
@@ -262,14 +330,12 @@ class _LoginScreenState extends State<LoginScreen> {
                                 return null;
                               },
                             ),
-
                             const SizedBox(height: 24),
-
                             TextFormField(
                               controller: _passwordController,
                               obscureText: _obscurePassword,
                               textInputAction: TextInputAction.done,
-                               style: const TextStyle(
+                              style: const TextStyle(
                                 color: Colors.black,
                                 fontSize: 16,
                               ),
@@ -299,9 +365,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 return null;
                               },
                             ),
-
                             const SizedBox(height: 9),
-
                             Align(
                               alignment: Alignment.centerRight,
                               child: TextButton(
@@ -326,9 +390,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ),
                               ),
                             ),
-
                             const SizedBox(height: 56),
-
                             SizedBox(
                               height: 64,
                               child: ElevatedButton(
@@ -339,9 +401,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                       _cyan.withValues(alpha: 0.7),
                                   foregroundColor: Colors.white,
                                   elevation: 4,
-                                  shadowColor: Colors.black.withValues(
-                                    alpha: 0.22,
-                                  ),
+                                  shadowColor:
+                                      Colors.black.withValues(alpha: 0.22),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(15),
                                   ),
@@ -364,9 +425,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                       ),
                               ),
                             ),
-
                             const SizedBox(height: 58),
-
                             const Row(
                               children: [
                                 Expanded(
@@ -393,17 +452,13 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ),
                               ],
                             ),
-
                             const SizedBox(height: 40),
-
                             SizedBox(
                               height: 64,
                               child: OutlinedButton(
                                 onPressed: auth.isLoading
                                     ? null
-                                    : () => _showNotConnectedMessage(
-                                          'Google sign-in',
-                                        ),
+                                    : _loginWithGoogle,
                                 style: OutlinedButton.styleFrom(
                                   backgroundColor: const Color(0xFFF0F8FF),
                                   foregroundColor: const Color(0xFF81D8DC),
@@ -412,25 +467,42 @@ class _LoginScreenState extends State<LoginScreen> {
                                     width: 1.5,
                                   ),
                                   elevation: 3,
-                                  shadowColor: Colors.black.withValues(
-                                    alpha: 0.18,
-                                  ),
+                                  shadowColor:
+                                      Colors.black.withValues(alpha: 0.18),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(15),
                                   ),
                                 ),
-                                child: const Text(
-                                  'Login with Google',
-                                  style: TextStyle(
-                                    fontSize: 21,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
+                                child: auth.isLoading
+                                    ? const SizedBox(
+                                        height: 24,
+                                        width: 24,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2.5,
+                                        ),
+                                      )
+                                    : const Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          Icon(
+                                            Icons.g_mobiledata,
+                                            size: 34,
+                                            color: Color(0xFF4285F4),
+                                          ),
+                                          SizedBox(width: 8),
+                                          Text(
+                                            'Login with Google',
+                                            style: TextStyle(
+                                              fontSize: 21,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
                               ),
                             ),
-
                             const SizedBox(height: 65),
-
                             Wrap(
                               alignment: WrapAlignment.center,
                               crossAxisAlignment: WrapCrossAlignment.center,
@@ -538,37 +610,25 @@ class LoginTopWavePainter extends CustomPainter {
     final lightWave = Path()
       ..moveTo(0, size.height * 0.75)
       ..cubicTo(
-        size.width * 0.25,
-        size.height * 0.45,
-        size.width * 0.38,
-        size.height * 0.88,
-        size.width * 0.60,
-        size.height * 0.75,
+        size.width * 0.25, size.height * 0.45,
+        size.width * 0.38, size.height * 0.88,
+        size.width * 0.60, size.height * 0.75,
       )
       ..cubicTo(
-        size.width * 0.77,
-        size.height * 0.63,
-        size.width * 0.87,
-        size.height * 0.40,
-        size.width,
-        size.height * 0.37,
+        size.width * 0.77, size.height * 0.63,
+        size.width * 0.87, size.height * 0.40,
+        size.width, size.height * 0.37,
       )
       ..lineTo(size.width, size.height * 0.65)
       ..cubicTo(
-        size.width * 0.77,
-        size.height * 0.90,
-        size.width * 0.60,
-        size.height,
-        size.width * 0.43,
-        size.height * 0.81,
+        size.width * 0.77, size.height * 0.90,
+        size.width * 0.60, size.height,
+        size.width * 0.43, size.height * 0.81,
       )
       ..cubicTo(
-        size.width * 0.22,
-        size.height * 0.59,
-        size.width * 0.11,
-        size.height * 0.61,
-        0,
-        size.height * 0.83,
+        size.width * 0.22, size.height * 0.59,
+        size.width * 0.11, size.height * 0.61,
+        0, size.height * 0.83,
       )
       ..close();
 
@@ -580,20 +640,14 @@ class LoginTopWavePainter extends CustomPainter {
     final darkWave = Path()
       ..moveTo(0, size.height * 0.75)
       ..cubicTo(
-        size.width * 0.23,
-        size.height * 0.45,
-        size.width * 0.38,
-        size.height * 0.78,
-        size.width * 0.58,
-        size.height * 0.82,
+        size.width * 0.23, size.height * 0.45,
+        size.width * 0.38, size.height * 0.78,
+        size.width * 0.58, size.height * 0.82,
       )
       ..cubicTo(
-        size.width * 0.76,
-        size.height * 0.91,
-        size.width * 0.90,
-        size.height * 0.61,
-        size.width,
-        size.height * 0.55,
+        size.width * 0.76, size.height * 0.91,
+        size.width * 0.90, size.height * 0.61,
+        size.width, size.height * 0.55,
       )
       ..lineTo(size.width, size.height)
       ..lineTo(0, size.height)
@@ -603,10 +657,7 @@ class LoginTopWavePainter extends CustomPainter {
       darkWave,
       Paint()
         ..shader = const LinearGradient(
-          colors: [
-            Color(0xFF246F96),
-            Color(0xFF0B477A),
-          ],
+          colors: [Color(0xFF246F96), Color(0xFF0B477A)],
           begin: Alignment.topRight,
           end: Alignment.bottomLeft,
         ).createShader(Offset.zero & size),
@@ -615,20 +666,14 @@ class LoginTopWavePainter extends CustomPainter {
     final line = Path()
       ..moveTo(0, size.height * 0.77)
       ..cubicTo(
-        size.width * 0.23,
-        size.height * 0.82,
-        size.width * 0.28,
-        size.height * 0.69,
-        size.width * 0.48,
-        size.height * 0.84,
+        size.width * 0.23, size.height * 0.82,
+        size.width * 0.28, size.height * 0.69,
+        size.width * 0.48, size.height * 0.84,
       )
       ..cubicTo(
-        size.width * 0.71,
-        size.height,
-        size.width * 0.86,
-        size.height * 0.75,
-        size.width,
-        size.height * 0.57,
+        size.width * 0.71, size.height,
+        size.width * 0.86, size.height * 0.75,
+        size.width, size.height * 0.57,
       );
 
     canvas.drawPath(
@@ -658,20 +703,14 @@ class LoginMiddleWavePainter extends CustomPainter {
     final wave = Path()
       ..moveTo(0, size.height * 0.15)
       ..cubicTo(
-        size.width * 0.22,
-        -size.height * 0.30,
-        size.width * 0.39,
-        size.height * 0.42,
-        size.width * 0.62,
-        size.height * 0.50,
+        size.width * 0.22, -size.height * 0.30,
+        size.width * 0.39, size.height * 0.42,
+        size.width * 0.62, size.height * 0.50,
       )
       ..cubicTo(
-        size.width * 0.80,
-        size.height * 0.58,
-        size.width * 0.90,
-        size.height * 0.25,
-        size.width,
-        0,
+        size.width * 0.80, size.height * 0.58,
+        size.width * 0.90, size.height * 0.25,
+        size.width, 0,
       )
       ..lineTo(size.width, size.height)
       ..lineTo(0, size.height)
@@ -685,21 +724,15 @@ class LoginMiddleWavePainter extends CustomPainter {
     final rightWave = Path()
       ..moveTo(size.width * 0.59, size.height * 0.50)
       ..cubicTo(
-        size.width * 0.76,
-        size.height * 0.12,
-        size.width * 0.91,
-        size.height * 0.03,
-        size.width,
-        0,
+        size.width * 0.76, size.height * 0.12,
+        size.width * 0.91, size.height * 0.03,
+        size.width, 0,
       )
       ..lineTo(size.width, size.height * 0.45)
       ..cubicTo(
-        size.width * 0.83,
-        size.height * 0.76,
-        size.width * 0.70,
-        size.height * 0.67,
-        size.width * 0.59,
-        size.height * 0.50,
+        size.width * 0.83, size.height * 0.76,
+        size.width * 0.70, size.height * 0.67,
+        size.width * 0.59, size.height * 0.50,
       )
       ..close();
 
@@ -711,20 +744,14 @@ class LoginMiddleWavePainter extends CustomPainter {
     final line = Path()
       ..moveTo(0, size.height * 0.15)
       ..cubicTo(
-        size.width * 0.20,
-        size.height * 0.26,
-        size.width * 0.35,
-        -size.height * 0.04,
-        size.width * 0.51,
-        size.height * 0.44,
+        size.width * 0.20, size.height * 0.26,
+        size.width * 0.35, -size.height * 0.04,
+        size.width * 0.51, size.height * 0.44,
       )
       ..cubicTo(
-        size.width * 0.74,
-        size.height * 0.85,
-        size.width * 0.90,
-        size.height * 0.37,
-        size.width,
-        0,
+        size.width * 0.74, size.height * 0.85,
+        size.width * 0.90, size.height * 0.37,
+        size.width, 0,
       );
 
     canvas.drawPath(

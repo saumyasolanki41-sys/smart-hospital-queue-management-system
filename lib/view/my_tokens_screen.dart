@@ -144,7 +144,7 @@ class _MyTokensScreenState extends State<MyTokensScreen> {
                       const SizedBox(width: 3),
                       Expanded(
                         child: Text(
-                          'Appointment History',
+                          'My Tokens',
                           style: TextStyle(
                             color: isDark ? colors.onSurface : _textColor,
                             fontSize: 24,
