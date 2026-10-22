@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { Link, NavLink, useNavigate } from "react-router-dom";
-import { HeartPulse, Menu, X, User, LogOut } from "lucide-react";
-import { useAuth, ROLE_HOME } from "../context/AuthContext";
+import { Link, NavLink } from "react-router-dom";
+import { HeartPulse, Menu, X } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
 
 const NAV_LINKS = [
   { label: "Home", to: "/" },
@@ -10,17 +10,6 @@ const NAV_LINKS = [
   { label: "Features", href: "/#features" },
   { label: "How It Works", href: "/#how-it-works" },
 ];
-
-const ROLE_LINK = {
-  patient: { label: "My Queue", to: "/queue" },
-  doctor: { label: "Dashboard", to: "/doctor" },
-  receptionist: { label: "Dashboard", to: "/staff" },
-  admin: { label: "Dashboard", to: "/staff" },
-};
-
-const STAFF_ROLES = ["receptionist", "admin"];
-const DASHBOARD_ROLES = [...STAFF_ROLES, "doctor"];
-const AMBULANCE_LINK = { label: "Ambulance Tracking", to: "/ambulance" };
 
 const baseLink = "border-b-2 pb-1 text-sm font-medium transition-colors";
 const activeLink = "border-primary/60 text-primary/70";
@@ -62,41 +51,8 @@ function NavItem({ link, onClick, mobile = false }) {
 }
 
 function AuthActions({ onNavigate, mobile = false }) {
-  const { user, signOut } = useAuth();
-  const navigate = useNavigate();
-
-  function handleLogout() {
-    signOut();
-    onNavigate?.();
-    navigate("/");
-  }
-
   const wrapper = mobile ? "mt-3 flex gap-3" : "flex items-center gap-3";
   const fill = mobile ? "flex-1" : "";
-
-  if (user) {
-    return (
-      <div className={wrapper}>
-        <Link
-          to={ROLE_HOME[user.role] ?? "/"}
-          onClick={onNavigate}
-          title={`${user.name} (${user.role})`}
-          className={`${fill} inline-flex items-center justify-center gap-2 rounded-lg bg-primary/5 px-4 py-2 text-sm font-medium text-primary/80 transition-colors hover:bg-primary/10`}
-        >
-          <User className="h-4 w-4" />
-          <span className="max-w-[9rem] truncate">{user.name.split(" ")[0]}</span>
-        </Link>
-        <button
-          type="button"
-          onClick={handleLogout}
-          className={`${fill} inline-flex items-center justify-center gap-2 rounded-lg border border-primary/60 px-4 py-2 text-sm font-medium text-primary/70 transition-colors hover:bg-primary/5`}
-        >
-          <LogOut className="h-4 w-4" />
-          Log out
-        </button>
-      </div>
-    );
-  }
 
   return (
     <div className={wrapper}>
@@ -121,29 +77,14 @@ function AuthActions({ onNavigate, mobile = false }) {
 export default function Navbar() {
   const [open, setOpen] = useState(false);
   const { user } = useAuth();
-  const homePath = user ? ROLE_HOME[user.role] ?? "/" : "/";
-  const isStaff = STAFF_ROLES.includes(user?.role);
-  const isDashboardUser = DASHBOARD_ROLES.includes(user?.role);
-  const extra = user && ROLE_LINK[user.role];
-  const links = NAV_LINKS.filter(
-    (link) =>
-      (user?.role !== "patient" || !["Features", "How It Works"].includes(link.label)) &&
-      (!isDashboardUser || !["Home", "About", "Features", "How It Works"].includes(link.label))
-  ).map((link) => {
-    if (link.label === "Home") return { ...link, to: homePath };
-    if (link.label === "About" && user?.role === "patient") {
-      return { label: link.label, to: "/about" };
-    }
-    return link;
-  });
-  if (isStaff) links.push(AMBULANCE_LINK);
-  if (extra) links.push(extra);
+
+  if (user) return null;
 
   return (
     <header className="relative z-20">
       <nav className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
         {/* Logo */}
-        <Link to={homePath} className="flex items-center gap-2">
+        <Link to="/" className="flex items-center gap-2">
           <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/60 text-white">
             <HeartPulse className="h-5 w-5" />
           </span>
@@ -152,7 +93,7 @@ export default function Navbar() {
 
         {/* Desktop links */}
         <ul className="hidden items-center gap-8 md:flex">
-          {links.map((link) => (
+          {NAV_LINKS.map((link) => (
             <li key={link.label}>
               <NavItem link={link} />
             </li>
@@ -180,7 +121,7 @@ export default function Navbar() {
       {open && (
         <div className="mx-6 rounded-2xl bg-white p-4 shadow-lg md:hidden">
           <ul className="flex flex-col gap-1">
-            {links.map((link) => (
+            {NAV_LINKS.map((link) => (
               <li key={link.label}>
                 <NavItem link={link} mobile onClick={() => setOpen(false)} />
               </li>
