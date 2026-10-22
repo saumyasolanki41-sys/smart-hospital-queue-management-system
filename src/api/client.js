@@ -1,4 +1,3 @@
-
 import axios from "axios";
 
 const BASE_URL = (
@@ -6,7 +5,7 @@ const BASE_URL = (
   "https://smart-hospital-queue-management-system-production.up.railway.app"
 ).replace(/\/+$/, "");
 
-const client = axios.create({ baseURL: BASE_URL });
+const TIMEOUT_MS = 15000;
 
 export class ApiError extends Error {
   constructor(message, { status, code } = {}) {
@@ -17,39 +16,53 @@ export class ApiError extends Error {
   }
 }
 
-export async function request(path, { method = "GET", body, token } = {}) {
-  let response;
-  try {
-    response = await client.request({
-      url: path,
-      method,
-      data: body,
-      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-    });
-  } catch (error) {
-    if (!axios.isAxiosError(error)) throw error;
+let onUnauthorized = null;
+export function setUnauthorizedHandler(handler) {
+  onUnauthorized = handler;
+}
 
-    if (!error.response) {
-      throw new ApiError("Can't reach the server. Check your connection and try again.", {
-        code: "NETWORK_ERROR",
+const http = axios.create({ baseURL: BASE_URL, timeout: TIMEOUT_MS });
+
+http.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (axios.isCancel(error)) return Promise.reject(error); 
+
+    if (error.response) {
+      
+      const failure = error.response.data?.error;
+      const apiError = new ApiError(failure?.message || "Something went wrong. Please try again.", {
+        status: error.response.status,
+        code: failure?.code,
       });
+      if (apiError.code === "UNAUTHORIZED") onUnauthorized?.();
+      return Promise.reject(apiError);
     }
 
-    throw new ApiError(
-      error.response.data?.error?.message || "Something went wrong. Please try again.",
-      {
-        status: error.response.status,
-        code: error.response.data?.error?.code,
-      }
+    if (error.code === "ECONNABORTED" || error.code === "ETIMEDOUT") {
+      return Promise.reject(
+        new ApiError("The server took too long to respond. Please try again.", { code: "TIMEOUT" })
+      );
+    }
+
+    return Promise.reject(
+      new ApiError("Can't reach the server. Check your connection and try again.", { code: "NETWORK_ERROR" })
     );
   }
+);
+
+export async function request(path, { method = "GET", body, token, signal } = {}) {
+  const response = await http.request({
+    url: path,
+    method,
+    data: body,
+    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+    signal,
+  });
 
   const json = response.data;
   if (!json?.success) {
-    throw new ApiError(json?.error?.message || "Something went wrong. Please try again.", {
-      status: response.status,
-      code: json?.error?.code,
-    });
+    throw new ApiError("Unexpected response from the server.", { status: response.status });
   }
   return json.data;
 }
