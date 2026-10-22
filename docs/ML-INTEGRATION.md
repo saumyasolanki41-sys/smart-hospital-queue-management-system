@@ -10,7 +10,7 @@ or a guarantee of ambulance arrival. The frontend calls this backend, not ML dir
 Add these variables privately in backend/.env and Railway Variables:
 
 ```text
-ML_SERVICE_URL=https://smart-hospital-queue-management-system-1-1ahd.onrender.com
+ML_SERVICE_URL=https://smart-hospital-queue-management-sys-ten.vercel.app
 OPENROUTESERVICE_API_KEY=YOUR_PRIVATE_ROUTING_KEY
 ```
 
