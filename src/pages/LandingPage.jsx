@@ -11,7 +11,6 @@ import About from "./About";
 import Features from "./Features";
 import { HowItWorksSection } from "./HowItWorks";
 
-// Put your hero photo in the /public folder as hero.jpg
 const HERO_IMAGE = "/hero.jpg";
 
 function TokenCard() {
@@ -67,13 +66,13 @@ function Hero() {
           >
             Get Started
           </Link>
-          <button
+          {/* <button
             type="button"
             className="inline-flex items-center gap-2 rounded-xl border border-primary/20 bg-white/60 px-6 py-3 font-medium text-primary/80 transition-colors hover:bg-white"
           >
             <Play className="h-4 w-4" />
             Watch Demo
-          </button>
+          </button> */}
         </div>
       </div>
 
@@ -85,7 +84,7 @@ function Hero() {
             alt="Doctor speaking with a patient at the hospital reception"
             className="h-full w-full object-cover"
             onError={(e) => {
-              // Hide the broken image icon until /public/hero.jpg exists
+              
               e.currentTarget.style.display = "none";
             }}
           />
