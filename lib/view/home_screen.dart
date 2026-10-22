@@ -1,11 +1,8 @@
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
 import '../models/token_model.dart';
 import '../viewmodels/auth_viewmodel.dart';
 import '../viewmodels/token_viewmodel.dart';
-
 import 'ambulance_screen.dart';
 import 'department_screen.dart';
 import 'live_queue_screen.dart';
@@ -24,15 +21,17 @@ class _HomeScreenState extends State<HomeScreen> {
   static const Color _background = Color(0xFFC2E9EC);
   static const Color _textColor = Color(0xFF285C7D);
 
-  @override
-  void initState() {
-    super.initState();
+@override
+void initState() {
+  super.initState();
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      context.read<TokenViewModel>().fetchMyTokens(refresh: true);
-    });
-  }
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    if (!mounted) return;
+
+    final tokenViewModel = context.read<TokenViewModel>();
+    tokenViewModel.fetchMyTokens(refresh: true);
+  });
+}
 
   Future<void> _logout(BuildContext context) async {
     final shouldLogout = await showDialog<bool>(
@@ -76,29 +75,32 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _refreshBackend(BuildContext context) async {
-    await context.read<TokenViewModel>().fetchMyTokens(refresh: true);
-  }
+  final tokenViewModel = context.read<TokenViewModel>();
+  await tokenViewModel.fetchMyTokens(refresh: true);
+}
 
-  Future<void> _navigate(BuildContext context, Widget screen) async {
-    await Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => screen),
-    );
+Future<void> _navigate(BuildContext context, Widget screen) async {
+  final tokenViewModel = context.read<TokenViewModel>();
 
-    if (!mounted) return;
+  await Navigator.push(
+    context,
+    MaterialPageRoute(builder: (_) => screen),
+  );
 
-    await context.read<TokenViewModel>().fetchMyTokens(refresh: true);
-  }
+  if (!mounted) return;
 
-  void _openDepartment(
-    BuildContext context,
-    String departmentName,
-  ) {
-    _navigate(
-      context,
-      DepartmentScreen(selectedDepartmentName: departmentName),
-    );
-  }
+  await tokenViewModel.fetchMyTokens(refresh: true);
+}
+
+void _openDepartment(
+  BuildContext context,
+  String departmentName,
+) {
+  _navigate(
+    context,
+    DepartmentScreen(selectedDepartmentName: departmentName),
+  );
+}
 
   bool _isActiveToken(TokenModel token) {
     final status = token.status.trim().toLowerCase();

@@ -1,3 +1,4 @@
+
 import '../models/token_model.dart';
 import 'api_service.dart';
 
@@ -76,8 +77,11 @@ class QueueService {
       throw const ApiException('Token ID is required.');
     }
 
+    final encodedTokenId =
+        Uri.encodeComponent(tokenId.trim());
+
     final response = await _apiService.get(
-      '/api/queue/tokens/${Uri.encodeComponent(tokenId.trim())}',
+      '/api/queue/tokens/$encodedTokenId',
       authenticated: true,
     );
 
@@ -107,8 +111,11 @@ class QueueService {
       throw const ApiException('Token ID is required.');
     }
 
-    await _apiService.post(
-      '/api/queue/tokens/${Uri.encodeComponent(tokenId.trim())}/cancel',
+    final encodedTokenId =
+        Uri.encodeComponent(tokenId.trim());
+
+    await _apiService.patch(
+      '/api/queue/tokens/$encodedTokenId/cancel',
       authenticated: true,
     );
   }

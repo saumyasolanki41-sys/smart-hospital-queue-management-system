@@ -1,7 +1,5 @@
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
 import '../models/doctor_model.dart';
 import '../viewmodels/doctor_viewmodel.dart';
 import 'doctor_details_screen.dart';

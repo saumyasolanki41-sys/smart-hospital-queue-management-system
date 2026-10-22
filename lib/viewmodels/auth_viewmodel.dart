@@ -1,3 +1,4 @@
+
 import 'package:flutter/foundation.dart';
 
 import '../models/user_model.dart';
@@ -38,6 +39,47 @@ class AuthViewModel extends ChangeNotifier {
   void _setError(String? message) {
     _error = message;
     notifyListeners();
+  }
+
+  // Update profile using one Full Name field.
+  bool updateProfile({
+    required String fullName,
+    required String age,
+    required String gender,
+  }) {
+    if (_user == null) {
+      _setError('Please log in before editing your profile.');
+      return false;
+    }
+
+    final trimmedFullName = fullName.trim();
+    final parsedAge = int.tryParse(age.trim());
+    final trimmedGender = gender.trim();
+
+    if (trimmedFullName.isEmpty) {
+      _setError('Please enter your full name.');
+      return false;
+    }
+
+    if (parsedAge == null || parsedAge < 1 || parsedAge > 120) {
+      _setError('Please enter a valid age between 1 and 120.');
+      return false;
+    }
+
+    if (trimmedGender.isEmpty) {
+      _setError('Please select your gender.');
+      return false;
+    }
+
+    _user = _user!.copyWith(
+      name: trimmedFullName,
+      age: parsedAge,
+      gender: trimmedGender,
+    );
+
+    _error = null;
+    notifyListeners();
+    return true;
   }
 
   Future<void> initialize() async {

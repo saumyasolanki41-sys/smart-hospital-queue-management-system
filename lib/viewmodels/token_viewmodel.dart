@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+
 import '../models/token_model.dart';
 import '../services/api_service.dart';
 import '../services/queue_service.dart';
@@ -6,9 +7,8 @@ import '../services/queue_service.dart';
 class TokenViewModel extends ChangeNotifier {
   final QueueService _queueService;
 
-  TokenViewModel({
-    QueueService? queueService,
-  }) : _queueService = queueService ?? QueueService();
+  TokenViewModel({QueueService? queueService})
+      : _queueService = queueService ?? QueueService();
 
   List<TokenModel> _tokens = [];
   TokenModel? _selectedToken;
@@ -16,20 +16,17 @@ class TokenViewModel extends ChangeNotifier {
   bool _isLoading = false;
   bool _isBooking = false;
   bool _isCancelling = false;
+
   String? _error;
 
   List<TokenModel> get tokens => List.unmodifiable(_tokens);
-
   TokenModel? get selectedToken => _selectedToken;
 
   bool get isLoading => _isLoading;
-
   bool get isBooking => _isBooking;
-
   bool get isCancelling => _isCancelling;
 
   String? get error => _error;
-
   bool get hasTokens => _tokens.isNotEmpty;
 
   Future<TokenModel?> bookToken({
@@ -48,8 +45,9 @@ class TokenViewModel extends ChangeNotifier {
 
       _selectedToken = token;
 
-      await fetchMyTokens();
+      await fetchMyTokens(refresh: true);
 
+      // Keep the newly booked token selected.
       _selectedToken = token;
 
       return token;
@@ -65,9 +63,7 @@ class TokenViewModel extends ChangeNotifier {
     }
   }
 
-  Future<void> fetchMyTokens({
-    bool refresh = false,
-  }) async {
+  Future<void> fetchMyTokens({bool refresh = false}) async {
     if (_isLoading) return;
 
     _isLoading = true;
@@ -78,20 +74,24 @@ class TokenViewModel extends ChangeNotifier {
       _tokens = await _queueService.getMyTokens();
 
       if (_selectedToken != null) {
-        for (final token in _tokens) {
-          if (token.id == _selectedToken!.id) {
-            _selectedToken = token;
-            break;
-          }
-        }
+        final selectedId = _selectedToken!.id;
+
+        final matchingTokens = _tokens.where(
+          (token) => token.id == selectedId,
+        );
+
+        _selectedToken =
+            matchingTokens.isNotEmpty ? matchingTokens.first : null;
       }
     } on ApiException catch (exception) {
       _error = exception.message;
+
       if (!refresh) {
         _tokens = [];
       }
     } catch (_) {
       _error = 'Unable to load your tokens. Please try again.';
+
       if (!refresh) {
         _tokens = [];
       }
@@ -101,9 +101,7 @@ class TokenViewModel extends ChangeNotifier {
     }
   }
 
-  Future<TokenModel?> fetchTokenStatus(
-    String tokenId,
-  ) async {
+  Future<TokenModel?> fetchTokenStatus(String tokenId) async {
     _error = null;
 
     try {
@@ -133,20 +131,38 @@ class TokenViewModel extends ChangeNotifier {
     return null;
   }
 
-  Future<bool> cancelToken(
-    String tokenId,
-  ) async {
+  Future<bool> cancelToken(String tokenId) async {
     if (_isCancelling) return false;
+
+    final normalizedId = tokenId.trim();
+
+    if (normalizedId.isEmpty) {
+      _error = 'Token ID is missing.';
+      notifyListeners();
+      return false;
+    }
 
     _isCancelling = true;
     _error = null;
     notifyListeners();
 
     try {
-      await _queueService.cancelToken(tokenId);
+      // Ask the backend to cancel the token.
+      await _queueService.cancelToken(normalizedId);
 
-      _selectedToken = null;
+      // Remove the cancelled token from the local list.
+      _tokens = _tokens
+          .where((token) => token.id.trim() != normalizedId)
+          .toList();
 
+      // Clear the selected token if it was cancelled.
+      if (_selectedToken?.id.trim() == normalizedId) {
+        _selectedToken = null;
+      }
+
+      notifyListeners();
+
+      // Refresh from the backend to synchronize the list.
       await fetchMyTokens(refresh: true);
 
       return true;
