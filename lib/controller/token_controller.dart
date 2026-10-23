@@ -4,10 +4,10 @@ import '../models/token_model.dart';
 import '../services/api_service.dart';
 import '../services/queue_service.dart';
 
-class TokenViewModel extends ChangeNotifier {
+class TokenController extends ChangeNotifier {
   final QueueService _queueService;
 
-  TokenViewModel({QueueService? queueService})
+  TokenController({QueueService? queueService})
       : _queueService = queueService ?? QueueService();
 
   List<TokenModel> _tokens = [];

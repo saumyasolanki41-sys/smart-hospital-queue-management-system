@@ -1,10 +1,8 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-
-import '../viewmodels/auth_viewmodel.dart';
+import '../controller/auth_controller.dart';
 import 'home_screen.dart';
 import 'login_screen.dart';
 
@@ -110,7 +108,7 @@ class _OtpVerificationScreenState
 
     setState(() => _isResending = true);
 
-    final auth = context.read<AuthViewModel>();
+    final auth = context.read<AuthController>();
 
     try {
       final success = await auth.resendOtp(
@@ -126,7 +124,7 @@ class _OtpVerificationScreenState
         return;
       }
 
-      // Clear the old code because a new OTP has been requested.
+
       for (final controller in _controllers) {
         controller.clear();
       }
@@ -160,7 +158,7 @@ class _OtpVerificationScreenState
 
     setState(() => _isVerifying = true);
 
-    final auth = context.read<AuthViewModel>();
+    final auth = context.read<AuthController>();
 
     try {
       if (widget.isRegistration) {

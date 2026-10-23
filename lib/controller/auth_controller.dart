@@ -5,10 +5,10 @@ import '../models/user_model.dart';
 import '../services/api_service.dart';
 import '../services/auth_service.dart';
 
-class AuthViewModel extends ChangeNotifier {
+class AuthController extends ChangeNotifier {
   final AuthService _authService;
 
-  AuthViewModel({AuthService? authService})
+  AuthController({AuthService? authService})
       : _authService = authService ?? AuthService();
 
   UserModel? _user;

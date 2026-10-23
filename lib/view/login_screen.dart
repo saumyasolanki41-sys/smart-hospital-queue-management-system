@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
-import '../viewmodels/auth_viewmodel.dart';
+import '../controller/auth_controller.dart';
 import 'otp_verification_screen.dart';
 import 'signup_screen.dart';
 import 'home_screen.dart';
@@ -25,7 +25,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   // Replace with your Web application OAuth client ID.
   static const String _webClientId =
-      'YOUR_WEB_CLIENT_ID.apps.googleusercontent.com';
+      '575895479049-o8m7g8o39db8013ctntip67uh96rit64.apps.googleusercontent.com';
 
   static const Color _blue = Color(0xFF246F96);
   static const Color _cyan = Color(0xFF31CFDF);
@@ -55,7 +55,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
     if (!_formKey.currentState!.validate()) return;
 
-    final auth = context.read<AuthViewModel>();
+    final auth = context.read<AuthController>();
 
     final success = await auth.login(
       email: _emailController.text.trim(),
@@ -82,7 +82,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _loginWithGoogle() async {
-    final auth = context.read<AuthViewModel>();
+    final auth = context.read<AuthController>();
 
     FocusScope.of(context).unfocus();
     auth.clearError();
@@ -208,7 +208,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final auth = context.watch<AuthViewModel>();
+    final auth = context.watch<AuthController>();
 
     return Scaffold(
       backgroundColor: _pale,

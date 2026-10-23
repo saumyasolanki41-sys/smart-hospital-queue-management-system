@@ -3,10 +3,10 @@ import '../models/department_model.dart';
 import '../services/api_service.dart';
 import '../services/department_service.dart';
 
-class DepartmentViewModel extends ChangeNotifier {
+class DepartmentController extends ChangeNotifier {
   final DepartmentService _departmentService;
 
-  DepartmentViewModel({
+  DepartmentController({
     DepartmentService? departmentService,
   }) : _departmentService =
             departmentService ?? DepartmentService();

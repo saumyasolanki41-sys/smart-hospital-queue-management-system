@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../models/token_model.dart';
-import '../viewmodels/token_viewmodel.dart';
+import '../controller/token_controller.dart';
 
 class TokenDetailsScreen extends StatefulWidget {
   final TokenModel token;
@@ -96,9 +96,9 @@ class _TokenDetailsScreenState extends State<TokenDetailsScreen> {
 
     setState(() => _isCancelling = true);
 
-    final viewModel = context.read<TokenViewModel>();
+    final tokenController = context.read<TokenController>();
 
-    final success = await viewModel.cancelToken(widget.token.id);
+    final success = await tokenController.cancelToken(widget.token.id);
 
     if (!mounted) return;
 
@@ -117,7 +117,7 @@ class _TokenDetailsScreenState extends State<TokenDetailsScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            viewModel.error ?? 'Unable to cancel your token. Please try again.',
+            tokenController.error ?? 'Unable to cancel your token. Please try again.',
           ),
           backgroundColor: Colors.red,
         ),
@@ -129,7 +129,7 @@ class _TokenDetailsScreenState extends State<TokenDetailsScreen> {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
 
-    final viewModel = context.watch<TokenViewModel>();
+    final tokenController = context.watch<TokenController>();
     final status = _displayValue(widget.token.status, 'Pending');
     final statusColor = _statusColor(context, status);
     final canCancel = _canCancel(status);
@@ -233,10 +233,10 @@ class _TokenDetailsScreenState extends State<TokenDetailsScreen> {
             SizedBox(
               width: double.infinity,
               child: FilledButton.icon(
-                onPressed: (_isCancelling || viewModel.isCancelling)
+                onPressed: (_isCancelling || tokenController.isCancelling)
                     ? null
                     : _confirmCancellation,
-                icon: (_isCancelling || viewModel.isCancelling)
+                icon: (_isCancelling || tokenController.isCancelling)
                     ? const SizedBox(
                         height: 20,
                         width: 20,
@@ -247,7 +247,7 @@ class _TokenDetailsScreenState extends State<TokenDetailsScreen> {
                       )
                     : const Icon(Icons.cancel_outlined),
                 label: Text(
-                  (_isCancelling || viewModel.isCancelling)
+                  (_isCancelling || tokenController.isCancelling)
                       ? 'Cancelling...'
                       : 'Cancel Token',
                 ),

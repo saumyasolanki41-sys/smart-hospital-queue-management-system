@@ -3,10 +3,10 @@ import '../models/doctor_model.dart';
 import '../services/api_service.dart';
 import '../services/doctor_service.dart';
 
-class DoctorViewModel extends ChangeNotifier {
+class DoctorController extends ChangeNotifier {
   final DoctorService _doctorService;
 
-  DoctorViewModel({
+  DoctorController({
     DoctorService? doctorService,
   }) : _doctorService = doctorService ?? DoctorService();
 

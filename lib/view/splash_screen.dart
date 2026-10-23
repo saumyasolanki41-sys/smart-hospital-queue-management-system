@@ -2,7 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../viewmodels/auth_viewmodel.dart';
+import '../controller/auth_controller.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -28,7 +28,7 @@ class _SplashScreenState extends State<SplashScreen> {
 
   Future<void> _initializeApp() async {
     try {
-      final auth = context.read<AuthViewModel>();
+      final auth = context.read<AuthController>();
       await auth.initialize();
 
       if (!mounted) return;

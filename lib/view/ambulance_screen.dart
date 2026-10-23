@@ -1,10 +1,8 @@
-
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:provider/provider.dart';
-
 import '../models/ambulance_request_model.dart';
-import '../viewmodels/ambulance_viewmodel.dart';
+import '../controller/ambulance_controller.dart';
 
 class AmbulanceScreen extends StatefulWidget {
   const AmbulanceScreen({super.key});
@@ -33,7 +31,7 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      context.read<AmbulanceViewModel>().fetchMyRequests(refresh: true);
+      context.read<AmbulanceController>().fetchMyRequests(refresh: true);
     });
   }
 
@@ -144,9 +142,9 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
       return;
     }
 
-    final viewModel = context.read<AmbulanceViewModel>();
+    final controller = context.read<AmbulanceController>();
 
-    await viewModel.requestAmbulance(
+    await controller.requestAmbulance(
       pickupAddress: address,
       latitude: latitude,
       longitude: longitude,
@@ -155,32 +153,32 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
 
     if (!mounted) return;
 
-    if (viewModel.error == null &&
-        viewModel.selectedRequest != null) {
+    if (controller.error == null &&
+        controller.selectedRequest != null) {
       _addressController.clear();
       _phoneController.clear();
       _showMessage('Ambulance request submitted successfully.');
     } else {
       _showMessage(
-        viewModel.error ?? 'Unable to submit ambulance request.',
+        controller.error ?? 'Unable to submit ambulance request.',
       );
     }
   }
 
   Future<void> _refreshRequests() async {
     await context
-        .read<AmbulanceViewModel>()
+        .read<AmbulanceController>()
         .fetchMyRequests(refresh: true);
   }
 
   Future<void> _refreshEta(AmbulanceRequestModel request) async {
-    final viewModel = context.read<AmbulanceViewModel>();
-    await viewModel.refreshEta(request.id);
+    final controller = context.read<AmbulanceController>();
+    await controller.refreshEta(request.id);
 
     if (!mounted) return;
 
-    if (viewModel.error != null) {
-      _showMessage(viewModel.error!);
+    if (controller.error != null) {
+      _showMessage(controller.error!);
     } else {
       _showMessage('ETA refreshed.');
     }
@@ -217,16 +215,16 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
 
     if (confirmed != true || !mounted) return;
 
-    final viewModel = context.read<AmbulanceViewModel>();
-    await viewModel.cancelRequest(request.id);
+    final controller = context.read<AmbulanceController>();
+    await controller.cancelRequest(request.id);
 
     if (!mounted) return;
 
-    if (viewModel.error == null) {
+    if (controller.error == null) {
       _showMessage('Cancellation request processed.');
       await _refreshRequests();
     } else {
-      _showMessage(viewModel.error!);
+      _showMessage(controller.error!);
     }
   }
 
@@ -261,7 +259,7 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final viewModel = context.watch<AmbulanceViewModel>();
+    final controller = context.watch<AmbulanceController>();
 
     return Scaffold(
       backgroundColor: _background,
@@ -277,7 +275,7 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
         actions: [
           IconButton(
             tooltip: 'Refresh requests',
-            onPressed: viewModel.isLoading ? null : _refreshRequests,
+            onPressed: controller.isLoading ? null : _refreshRequests,
             icon: const Icon(Icons.refresh_rounded),
           ),
           const SizedBox(width: 6),
@@ -497,11 +495,11 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton.icon(
-                      onPressed: viewModel.isRequesting ||
+                      onPressed: controller.isRequesting ||
                               _isGettingLocation
                           ? null
                           : _submitRequest,
-                      icon: viewModel.isRequesting
+                      icon: controller.isRequesting
                           ? const SizedBox(
                               height: 19,
                               width: 19,
@@ -512,7 +510,7 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
                             )
                           : const Icon(Icons.airport_shuttle_rounded),
                       label: Text(
-                        viewModel.isRequesting
+                        controller.isRequesting
                             ? 'Submitting Request...'
                             : 'Request Ambulance',
                       ),
@@ -553,7 +551,7 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
                   ),
                   child: IconButton(
                     tooltip: 'Refresh requests',
-                    onPressed: viewModel.isLoading
+                    onPressed: controller.isLoading
                         ? null
                         : _refreshRequests,
                     icon: const Icon(
@@ -567,30 +565,30 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
 
             const SizedBox(height: 14),
 
-            if (viewModel.isLoading && viewModel.requests.isEmpty)
+            if (controller.isLoading && controller.requests.isEmpty)
               const Padding(
                 padding: EdgeInsets.all(28),
                 child: Center(
                   child: CircularProgressIndicator(color: _primary),
                 ),
               )
-            else if (viewModel.error != null &&
-                viewModel.requests.isEmpty)
+            else if (controller.error != null &&
+                controller.requests.isEmpty)
               _EmptyState(
                 icon: Icons.cloud_off_rounded,
                 title: 'Unable to load requests',
-                message: viewModel.error!,
+                message: controller.error!,
                 buttonLabel: 'Try Again',
                 onPressed: _refreshRequests,
               )
-            else if (viewModel.requests.isEmpty)
+            else if (controller.requests.isEmpty)
               const _EmptyState(
                 icon: Icons.airport_shuttle_rounded,
                 title: 'No requests yet',
                 message: 'Your ambulance requests will appear here.',
               )
             else
-              ...viewModel.requests.map(
+              ...controller.requests.map(
                 (request) => _RequestCard(
                   request: request,
                   display: _display,

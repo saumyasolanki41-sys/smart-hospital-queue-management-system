@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/token_model.dart';
-import '../viewmodels/auth_viewmodel.dart';
-import '../viewmodels/token_viewmodel.dart';
+import '../controller/auth_controller.dart';
+import '../controller/token_controller.dart';
 import 'ambulance_screen.dart';
 import 'department_screen.dart';
 import 'live_queue_screen.dart';
@@ -28,8 +28,8 @@ void initState() {
   WidgetsBinding.instance.addPostFrameCallback((_) {
     if (!mounted) return;
 
-    final tokenViewModel = context.read<TokenViewModel>();
-    tokenViewModel.fetchMyTokens(refresh: true);
+    final tokenController = context.read<TokenController>();
+    tokenController.fetchMyTokens(refresh: true);
   });
 }
 
@@ -61,11 +61,11 @@ void initState() {
 
     if (shouldLogout != true || !context.mounted) return;
 
-    await context.read<AuthViewModel>().logout();
+    await context.read<AuthController>().logout();
 
     if (!context.mounted) return;
 
-    context.read<TokenViewModel>().clearTokens();
+    context.read<TokenController>().clearTokens();
 
     Navigator.pushNamedAndRemoveUntil(
       context,
@@ -75,12 +75,12 @@ void initState() {
   }
 
   Future<void> _refreshBackend(BuildContext context) async {
-  final tokenViewModel = context.read<TokenViewModel>();
-  await tokenViewModel.fetchMyTokens(refresh: true);
+  final tokenController = context.read<TokenController>();
+  await tokenController.fetchMyTokens(refresh: true);
 }
 
 Future<void> _navigate(BuildContext context, Widget screen) async {
-  final tokenViewModel = context.read<TokenViewModel>();
+  final tokenController = context.read<TokenController>();
 
   await Navigator.push(
     context,
@@ -89,7 +89,7 @@ Future<void> _navigate(BuildContext context, Widget screen) async {
 
   if (!mounted) return;
 
-  await tokenViewModel.fetchMyTokens(refresh: true);
+  await tokenController.fetchMyTokens(refresh: true);
 }
 
 void _openDepartment(
@@ -196,17 +196,17 @@ void _openDepartment(
 
   Widget _buildAppointmentCard(
     BuildContext context, {
-    required TokenViewModel tokenViewModel,
+    required TokenController tokenController,
     required bool isDark,
     required ColorScheme colors,
   }) {
     final token = _getUpcomingAppointment(
-      tokenViewModel.tokens,
-      tokenViewModel.selectedToken,
+      tokenController.tokens,
+      tokenController.selectedToken,
     );
 
-    final isLoading = tokenViewModel.isLoading;
-    final hasError = tokenViewModel.error != null;
+    final isLoading = tokenController.isLoading;
+    final hasError = tokenController.error != null;
 
     final appointmentTime = token?.appointmentTime;
     final doctorName = token?.doctorName?.trim();
@@ -260,8 +260,8 @@ void _openDepartment(
                 const SizedBox(height: 9),
 
                 if (isLoading &&
-                    tokenViewModel.tokens.isEmpty &&
-                    tokenViewModel.selectedToken == null) ...[
+                    tokenController.tokens.isEmpty &&
+                    tokenController.selectedToken == null) ...[
                   const Row(
                     children: [
                       SizedBox(
@@ -410,10 +410,10 @@ void _openDepartment(
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    final authViewModel = context.watch<AuthViewModel>();
-    final tokenViewModel = context.watch<TokenViewModel>();
+    final authController = context.watch<AuthController>();
+    final tokenController = context.watch<TokenController>();
 
-    final rawName = authViewModel.user?.name;
+    final rawName = authController.user?.name;
     final name = rawName == null || rawName.trim().isEmpty
         ? 'Patient'
         : rawName.trim();
@@ -511,7 +511,7 @@ void _openDepartment(
 
                   _buildAppointmentCard(
                     context,
-                    tokenViewModel: tokenViewModel,
+                    tokenController: tokenController,
                     isDark: isDark,
                     colors: colors,
                   ),

@@ -2,7 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../viewmodels/auth_viewmodel.dart';
+import '../controller/auth_controller.dart';
 import 'login_screen.dart';
 import 'otp_verification_screen.dart';
 
@@ -52,7 +52,7 @@ class _SignupScreenState extends State<SignupScreen> {
 
     if (!_formKey.currentState!.validate()) return;
 
-    final auth = context.read<AuthViewModel>();
+    final auth = context.read<AuthController>();
     final email = _emailController.text.trim();
     final password = _passwordController.text;
 
@@ -277,7 +277,7 @@ class _SignupScreenState extends State<SignupScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final auth = context.watch<AuthViewModel>();
+    final auth = context.watch<AuthController>();
 
     return Scaffold(
       backgroundColor: _navy,

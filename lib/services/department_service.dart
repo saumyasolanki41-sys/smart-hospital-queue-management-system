@@ -1,4 +1,3 @@
-
 import '../models/department_model.dart';
 import 'api_service.dart';
 

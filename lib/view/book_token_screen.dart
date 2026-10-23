@@ -3,9 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../models/doctor_model.dart';
-import '../viewmodels/department_viewmodel.dart';
-import '../viewmodels/doctor_viewmodel.dart';
-import '../viewmodels/token_viewmodel.dart';
+import '../controller/department_controller.dart';
+import '../controller/doctor_controller.dart';
+import '../controller/token_controller.dart';
 
 class BookTokenScreen extends StatefulWidget {
   const BookTokenScreen({super.key});
@@ -25,7 +25,7 @@ class _BookTokenScreenState extends State<BookTokenScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
 
-      context.read<DepartmentViewModel>().fetchDepartments();
+      context.read<DepartmentController>().fetchDepartments();
     });
   }
 
@@ -35,9 +35,9 @@ class _BookTokenScreenState extends State<BookTokenScreen> {
       _selectedDoctor = null;
     });
 
-    final doctorViewModel = context.read<DoctorViewModel>();
+    final doctorController = context.read<DoctorController>();
 
-    await doctorViewModel.fetchDoctors(
+    await doctorController.fetchDoctors(
       departmentId: departmentId,
       isAvailable: true,
       refresh: true,
@@ -56,11 +56,11 @@ class _BookTokenScreenState extends State<BookTokenScreen> {
       return;
     }
 
-    final tokenViewModel = context.read<TokenViewModel>();
+    final tokenController = context.read<TokenController>();
     final messenger = ScaffoldMessenger.of(context);
     final navigator = Navigator.of(context);
 
-    final token = await tokenViewModel.bookToken(
+    final token = await tokenController.bookToken(
       doctorId: doctor.id,
     );
 
@@ -80,7 +80,7 @@ class _BookTokenScreenState extends State<BookTokenScreen> {
       messenger.showSnackBar(
         SnackBar(
           content: Text(
-            tokenViewModel.error ?? 'Unable to book token.',
+            tokenController.error ?? 'Unable to book token.',
           ),
         ),
       );
@@ -89,11 +89,11 @@ class _BookTokenScreenState extends State<BookTokenScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final departmentViewModel = context.watch<DepartmentViewModel>();
-    final doctorViewModel = context.watch<DoctorViewModel>();
-    final tokenViewModel = context.watch<TokenViewModel>();
+    final departmentController = context.watch<DepartmentController>();
+    final doctorController = context.watch<DoctorController>();
+    final tokenController = context.watch<TokenController>();
 
-    final selectedDoctorId = doctorViewModel.doctors.any(
+    final selectedDoctorId = doctorController.doctors.any(
       (doctor) => doctor.id == _selectedDoctor?.id,
     )
         ? _selectedDoctor!.id
@@ -133,30 +133,30 @@ class _BookTokenScreenState extends State<BookTokenScreen> {
           ),
           const SizedBox(height: 8),
 
-          if (departmentViewModel.isLoading &&
-              departmentViewModel.departments.isEmpty)
+          if (departmentController.isLoading &&
+              departmentController.departments.isEmpty)
             const Center(
               child: CircularProgressIndicator(),
             )
-          else if (departmentViewModel.error != null &&
-              departmentViewModel.departments.isEmpty)
+          else if (departmentController.error != null &&
+              departmentController.departments.isEmpty)
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(departmentViewModel.error!),
+                Text(departmentController.error!),
                 TextButton(
                   onPressed: () {
-                    departmentViewModel.refreshDepartments();
+                    departmentController.refreshDepartments();
                   },
                   child: const Text('Retry'),
                 ),
               ],
             )
-          else if (departmentViewModel.departments.isEmpty)
+          else if (departmentController.departments.isEmpty)
             const Text('No departments are available.')
           else
             DropdownButtonFormField<String>(
-              initialValue: departmentViewModel.departments.any(
+              initialValue: departmentController.departments.any(
                 (department) => department.id == _selectedDepartmentId,
               )
                   ? _selectedDepartmentId
@@ -166,7 +166,7 @@ class _BookTokenScreenState extends State<BookTokenScreen> {
                 hintText: 'Choose department',
                 prefixIcon: Icon(Icons.local_hospital_outlined),
               ),
-              items: departmentViewModel.departments.map((department) {
+              items: departmentController.departments.map((department) {
                 return DropdownMenuItem<String>(
                   value: department.id,
                   child: Text(
@@ -188,19 +188,19 @@ class _BookTokenScreenState extends State<BookTokenScreen> {
 
           if (_selectedDepartmentId == null)
             const Text('Select a department first.')
-          else if (doctorViewModel.isLoading)
+          else if (doctorController.isLoading)
             const Center(
               child: CircularProgressIndicator(),
             )
-          else if (doctorViewModel.error != null &&
-              doctorViewModel.doctors.isEmpty)
+          else if (doctorController.error != null &&
+              doctorController.doctors.isEmpty)
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(doctorViewModel.error!),
+                Text(doctorController.error!),
                 TextButton(
                   onPressed: () {
-                    doctorViewModel.fetchDoctors(
+                    doctorController.fetchDoctors(
                       departmentId: _selectedDepartmentId,
                       isAvailable: true,
                       refresh: true,
@@ -210,7 +210,7 @@ class _BookTokenScreenState extends State<BookTokenScreen> {
                 ),
               ],
             )
-          else if (doctorViewModel.doctors.isEmpty)
+          else if (doctorController.doctors.isEmpty)
             const Text(
               'No available doctors found in this department.',
             )
@@ -222,7 +222,7 @@ class _BookTokenScreenState extends State<BookTokenScreen> {
                 hintText: 'Choose doctor',
                 prefixIcon: Icon(Icons.person_outline),
               ),
-              items: doctorViewModel.doctors.map((doctor) {
+              items: doctorController.doctors.map((doctor) {
                 return DropdownMenuItem<String>(
                   value: doctor.id,
                   child: Text(
@@ -233,7 +233,7 @@ class _BookTokenScreenState extends State<BookTokenScreen> {
               }).toList(),
               onChanged: (doctorId) {
                 setState(() {
-                  _selectedDoctor = doctorViewModel.doctors
+                  _selectedDoctor = doctorController.doctors
                       .where((doctor) => doctor.id == doctorId)
                       .firstOrNull;
                 });
@@ -264,11 +264,11 @@ class _BookTokenScreenState extends State<BookTokenScreen> {
           SizedBox(
             height: 52,
             child: FilledButton.icon(
-              onPressed: tokenViewModel.isBooking ||
+              onPressed: tokenController.isBooking ||
                       _selectedDoctor == null
                   ? null
                   : _bookToken,
-              icon: tokenViewModel.isBooking
+              icon: tokenController.isBooking
                   ? const SizedBox(
                       width: 20,
                       height: 20,
@@ -278,7 +278,7 @@ class _BookTokenScreenState extends State<BookTokenScreen> {
                     )
                   : const Icon(Icons.confirmation_number_outlined),
               label: Text(
-                tokenViewModel.isBooking
+                tokenController.isBooking
                     ? 'Booking Token...'
                     : 'Confirm Booking',
               ),

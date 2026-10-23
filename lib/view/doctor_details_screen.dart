@@ -1,9 +1,8 @@
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../models/doctor_model.dart';
-import '../viewmodels/token_viewmodel.dart';
+import '../controller/token_controller.dart';
 import 'booking_confirmation_screen.dart';
 import 'doctor_slots_screen.dart';
 
@@ -27,7 +26,7 @@ class _DoctorDetailsScreenState extends State<DoctorDetailsScreen> {
   static const Color _muted = Color(0xFF80A5B8);
 
   Future<void> _bookToken() async {
-    final tokenViewModel = context.read<TokenViewModel>();
+    final tokenController = context.read<TokenController>();
 
     if (!widget.doctor.isAvailable) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -40,7 +39,7 @@ class _DoctorDetailsScreenState extends State<DoctorDetailsScreen> {
       return;
     }
 
-    final token = await tokenViewModel.bookToken(
+    final token = await tokenController.bookToken(
       doctorId: widget.doctor.id,
     );
 
@@ -50,7 +49,7 @@ class _DoctorDetailsScreenState extends State<DoctorDetailsScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            tokenViewModel.error ??
+            tokenController.error ??
                 'Unable to book your token. Please try again.',
           ),
         ),
@@ -82,7 +81,7 @@ class _DoctorDetailsScreenState extends State<DoctorDetailsScreen> {
   @override
   Widget build(BuildContext context) {
     final doctor = widget.doctor;
-    final tokenViewModel = context.watch<TokenViewModel>();
+    final tokenController = context.watch<TokenController>();
     final isDark =
         Theme.of(context).brightness == Brightness.dark;
     final colors = Theme.of(context).colorScheme;
@@ -105,7 +104,10 @@ class _DoctorDetailsScreenState extends State<DoctorDetailsScreen> {
             Expanded(
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(
-                  20, 12, 20, 24,
+                  20,
+                  12,
+                  20,
+                  24,
                 ),
                 children: [
                   Row(
@@ -132,9 +134,7 @@ class _DoctorDetailsScreenState extends State<DoctorDetailsScreen> {
                       ),
                     ],
                   ),
-
                   const SizedBox(height: 14),
-
                   Container(
                     height: 52,
                     padding: const EdgeInsets.symmetric(
@@ -172,9 +172,7 @@ class _DoctorDetailsScreenState extends State<DoctorDetailsScreen> {
                       ],
                     ),
                   ),
-
                   const SizedBox(height: 28),
-
                   Container(
                     padding: const EdgeInsets.all(22),
                     decoration: BoxDecoration(
@@ -259,9 +257,7 @@ class _DoctorDetailsScreenState extends State<DoctorDetailsScreen> {
                       ],
                     ),
                   ),
-
                   const SizedBox(height: 24),
-
                   Container(
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
@@ -312,9 +308,7 @@ class _DoctorDetailsScreenState extends State<DoctorDetailsScreen> {
             Container(
               padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
               decoration: BoxDecoration(
-                color: isDark
-                    ? colors.surface
-                    : _lightBlue,
+                color: isDark ? colors.surface : _lightBlue,
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withValues(alpha: 0.06),
@@ -361,7 +355,7 @@ class _DoctorDetailsScreenState extends State<DoctorDetailsScreen> {
                       height: 56,
                       child: ElevatedButton(
                         onPressed: !doctor.isAvailable ||
-                                tokenViewModel.isBooking
+                                tokenController.isBooking
                             ? null
                             : _bookToken,
                         style: ElevatedButton.styleFrom(
@@ -374,7 +368,7 @@ class _DoctorDetailsScreenState extends State<DoctorDetailsScreen> {
                             borderRadius: BorderRadius.circular(15),
                           ),
                         ),
-                        child: tokenViewModel.isBooking
+                        child: tokenController.isBooking
                             ? const SizedBox(
                                 height: 24,
                                 width: 24,

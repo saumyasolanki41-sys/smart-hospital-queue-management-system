@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/doctor_model.dart';
-import '../viewmodels/doctor_viewmodel.dart';
+import '../controller/doctor_controller.dart';
 import 'doctor_details_screen.dart';
 
 class DoctorListScreen extends StatefulWidget {
@@ -36,7 +36,7 @@ class _DoctorListScreenState extends State<DoctorListScreen> {
       if (!mounted) return;
 
       if (widget.departmentId != null) {
-        context.read<DoctorViewModel>().fetchDoctors(
+        context.read<DoctorController>().fetchDoctors(
               departmentId: widget.departmentId,
               refresh: true,
             );
@@ -51,7 +51,7 @@ class _DoctorListScreenState extends State<DoctorListScreen> {
   }
 
   Future<void> _refreshDoctors() async {
-    await context.read<DoctorViewModel>().fetchDoctors(
+    await context.read<DoctorController>().fetchDoctors(
           departmentId: widget.departmentId,
           refresh: true,
         );
@@ -77,12 +77,12 @@ class _DoctorListScreenState extends State<DoctorListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final viewModel = context.watch<DoctorViewModel>();
+    final controller = context.watch<DoctorController>();
     final isDark =
         Theme.of(context).brightness == Brightness.dark;
     final colors = Theme.of(context).colorScheme;
 
-    final doctors = viewModel.doctors.where((doctor) {
+    final doctors = controller.doctors.where((doctor) {
       final query = _searchQuery.toLowerCase();
 
       return doctor.name.toLowerCase().contains(query) ||
@@ -132,7 +132,7 @@ class _DoctorListScreenState extends State<DoctorListScreen> {
                   IconButton(
                     tooltip: 'Refresh doctors',
                     onPressed:
-                        viewModel.isLoading ? null : _refreshDoctors,
+                        controller.isLoading ? null : _refreshDoctors,
                     icon: const Icon(
                       Icons.refresh_rounded,
                       color: _primary,
@@ -220,7 +220,7 @@ class _DoctorListScreenState extends State<DoctorListScreen> {
 
               const SizedBox(height: 30),
 
-              if (viewModel.isLoading && viewModel.doctors.isEmpty)
+              if (controller.isLoading && controller.doctors.isEmpty)
                 const Padding(
                   padding: EdgeInsets.all(32),
                   child: Center(
@@ -229,11 +229,11 @@ class _DoctorListScreenState extends State<DoctorListScreen> {
                     ),
                   ),
                 )
-              else if (viewModel.error != null &&
-                  viewModel.doctors.isEmpty)
+              else if (controller.error != null &&
+                  controller.doctors.isEmpty)
                 _DoctorMessage(
                   icon: Icons.cloud_off_rounded,
-                  message: viewModel.error!,
+                  message: controller.error!,
                   actionLabel: 'Try Again',
                   onAction: _refreshDoctors,
                 )

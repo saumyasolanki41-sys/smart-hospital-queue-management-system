@@ -3,10 +3,10 @@ import '../models/ambulance_request_model.dart';
 import '../services/ambulance_service.dart';
 import '../services/api_service.dart';
 
-class AmbulanceViewModel extends ChangeNotifier {
+class AmbulanceController extends ChangeNotifier {
   final AmbulanceService _ambulanceService;
 
-  AmbulanceViewModel({
+  AmbulanceController({
     AmbulanceService? ambulanceService,
   }) : _ambulanceService =
             ambulanceService ?? AmbulanceService();

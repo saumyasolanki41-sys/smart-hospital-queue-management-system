@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../models/department_model.dart';
-import '../viewmodels/department_viewmodel.dart';
-import '../viewmodels/doctor_viewmodel.dart';
+import '../controller/department_controller.dart';
+import '../controller/doctor_controller.dart';
 import 'doctor_list_screen.dart';
 
 class DepartmentScreen extends StatefulWidget {
@@ -55,10 +55,10 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
 
-      final departmentViewModel =
-          context.read<DepartmentViewModel>();
+      final departmentController =
+          context.read<DepartmentController>();
 
-      await departmentViewModel.fetchDepartments();
+      await departmentController.fetchDepartments();
 
       if (!mounted || widget.selectedDepartmentName == null) {
         return;
@@ -70,7 +70,7 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
 
       DepartmentModel? selectedDepartment;
 
-      for (final department in departmentViewModel.departments) {
+      for (final department in departmentController.departments) {
         if (_normalizeDepartmentName(department.name) ==
             selectedName) {
           selectedDepartment = department;
@@ -86,8 +86,7 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'Department "${widget.selectedDepartmentName}" '
-              'was not found.',
+              'Department "${widget.selectedDepartmentName}" was not found.',
             ),
           ),
         );
@@ -118,9 +117,9 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
     });
 
     try {
-      final doctorViewModel = context.read<DoctorViewModel>();
+      final doctorController = context.read<DoctorController>();
 
-      await doctorViewModel.fetchDoctors(
+      await doctorController.fetchDoctors(
         departmentId: department.id,
         refresh: true,
       );
@@ -155,19 +154,19 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
   }
 
   Future<void> _refreshData() async {
-    await context.read<DepartmentViewModel>().refreshDepartments();
+    await context.read<DepartmentController>().refreshDepartments();
   }
 
   @override
   Widget build(BuildContext context) {
-    final departmentViewModel =
-        context.watch<DepartmentViewModel>();
+    final departmentController =
+        context.watch<DepartmentController>();
 
     final isDark =
         Theme.of(context).brightness == Brightness.dark;
     final colors = Theme.of(context).colorScheme;
 
-    final departments = departmentViewModel.departments
+    final departments = departmentController.departments
         .where(
           (department) => department.name
               .toLowerCase()
@@ -214,7 +213,7 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
                   ),
                   IconButton(
                     tooltip: 'Refresh departments',
-                    onPressed: departmentViewModel.isLoading
+                    onPressed: departmentController.isLoading
                         ? null
                         : _refreshData,
                     icon: const Icon(
@@ -280,8 +279,8 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
 
               const SizedBox(height: 30),
 
-              if (departmentViewModel.isLoading &&
-                  departmentViewModel.departments.isEmpty)
+              if (departmentController.isLoading &&
+                  departmentController.departments.isEmpty)
                 const Padding(
                   padding: EdgeInsets.all(35),
                   child: Center(
@@ -290,14 +289,14 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
                     ),
                   ),
                 )
-              else if (departmentViewModel.error != null &&
-                  departmentViewModel.departments.isEmpty)
+              else if (departmentController.error != null &&
+                  departmentController.departments.isEmpty)
                 _StatusMessage(
                   icon: Icons.cloud_off_rounded,
-                  message: departmentViewModel.error!,
+                  message: departmentController.error!,
                   actionLabel: 'Try Again',
                   onAction: () {
-                    departmentViewModel.refreshDepartments();
+                    departmentController.refreshDepartments();
                   },
                 )
               else if (departments.isEmpty)

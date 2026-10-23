@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../models/token_model.dart';
-import '../viewmodels/token_viewmodel.dart';
+import '../controller/token_controller.dart';
 
 const Color pageColor = Color(0xFFBDE7EA);
 const Color blue = Color(0xFF246D91);
@@ -24,12 +24,12 @@ class _LiveQueueScreenState extends State<LiveQueueScreen> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      context.read<TokenViewModel>().fetchMyTokens();
+      context.read<TokenController>().fetchMyTokens();
     });
   }
 
   Future<void> _refreshQueue() async {
-    await context.read<TokenViewModel>().fetchMyTokens(refresh: true);
+    await context.read<TokenController>().fetchMyTokens(refresh: true);
   }
 
   Future<void> _cancelToken(TokenModel token) async {
@@ -65,7 +65,7 @@ class _LiveQueueScreenState extends State<LiveQueueScreen> {
 
     if (confirmed != true || !mounted) return;
 
-    final viewModel = context.read<TokenViewModel>();
+    final viewModel = context.read<TokenController>();
     final messenger = ScaffoldMessenger.of(context);
 
     try {
@@ -155,7 +155,7 @@ class _LiveQueueScreenState extends State<LiveQueueScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final viewModel = context.watch<TokenViewModel>();
+    final viewModel = context.watch<TokenController>();
 
     final waitingCount = viewModel.tokens.where((token) {
       final status = token.status.toLowerCase().trim();

@@ -1,8 +1,6 @@
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
-import '../viewmodels/auth_viewmodel.dart';
+import '../controller/auth_controller.dart';
 import 'ambulance_screen.dart';
 import 'my_tokens_screen.dart';
 
@@ -22,7 +20,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String? _gender;
 
   Future<void> _editProfile() async {
-    final auth = context.read<AuthViewModel>();
+    final auth = context.read<AuthController>();
     final user = auth.user;
 
     if (user == null) return;
@@ -95,7 +93,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     if (confirm != true || !mounted) return;
 
-    await context.read<AuthViewModel>().logout();
+    await context.read<AuthController>().logout();
 
     if (!mounted) return;
 
@@ -148,7 +146,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final auth = context.watch<AuthViewModel>();
+    final auth = context.watch<AuthController>();
     final user = auth.user;
 
     final fullName = user?.name.trim().isNotEmpty == true

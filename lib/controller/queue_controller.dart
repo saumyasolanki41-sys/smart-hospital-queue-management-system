@@ -1,10 +1,10 @@
 import 'package:flutter/foundation.dart';
 import '../services/api_service.dart';
 
-class QueueViewModel extends ChangeNotifier {
+class QueueController extends ChangeNotifier {
   final ApiService _apiService;
 
-  QueueViewModel({ApiService? apiService})
+  QueueController({ApiService? apiService})
       : _apiService = apiService ?? ApiService();
 
   bool _isLoading = false;

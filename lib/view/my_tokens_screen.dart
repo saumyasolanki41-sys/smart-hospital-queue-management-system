@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../models/token_model.dart';
-import '../viewmodels/token_viewmodel.dart';
+import '../controller/token_controller.dart';
 import 'token_details_screen.dart';
 import 'ambulance_screen.dart';
 import 'profile_screen.dart';
@@ -28,12 +28,12 @@ class _MyTokensScreenState extends State<MyTokensScreen> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      context.read<TokenViewModel>().fetchMyTokens(refresh: true);
+      context.read<TokenController>().fetchMyTokens(refresh: true);
     });
   }
 
   Future<void> _refreshTokens() async {
-    await context.read<TokenViewModel>().fetchMyTokens(refresh: true);
+    await context.read<TokenController>().fetchMyTokens(refresh: true);
   }
 
   String _safeText(dynamic value, [String fallback = 'Not available']) {
@@ -82,11 +82,11 @@ class _MyTokensScreenState extends State<MyTokensScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final viewModel = context.watch<TokenViewModel>();
+    final tokenController = context.watch<TokenController>();
     final colors = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    final filteredTokens = viewModel.tokens.where((token) {
+    final filteredTokens = tokenController.tokens.where((token) {
       return _selectedTab == 0 ? !_isPast(token) : _isPast(token);
     }).toList();
 
@@ -155,7 +155,7 @@ class _MyTokensScreenState extends State<MyTokensScreen> {
                       IconButton(
                         tooltip: 'Refresh appointments',
                         onPressed:
-                            viewModel.isLoading ? null : _refreshTokens,
+                            tokenController.isLoading ? null : _refreshTokens,
                         icon: const Icon(
                           Icons.refresh_rounded,
                           color: _primary,
@@ -209,7 +209,7 @@ class _MyTokensScreenState extends State<MyTokensScreen> {
 
                   const SizedBox(height: 28),
 
-                  if (viewModel.isLoading && viewModel.tokens.isEmpty)
+                  if (tokenController.isLoading && tokenController.tokens.isEmpty)
                     const Padding(
                       padding: EdgeInsets.only(top: 80),
                       child: Center(
@@ -218,11 +218,11 @@ class _MyTokensScreenState extends State<MyTokensScreen> {
                         ),
                       ),
                     )
-                  else if (viewModel.error != null &&
-                      viewModel.tokens.isEmpty)
+                  else if (tokenController.error != null &&
+                      tokenController.tokens.isEmpty)
                     _HistoryMessage(
                       icon: Icons.error_outline_rounded,
-                      message: viewModel.error.toString(),
+                      message: tokenController.error.toString(),
                       subtitle: 'Please check your connection and try again.',
                       buttonText: 'Try Again',
                       onPressed: _refreshTokens,

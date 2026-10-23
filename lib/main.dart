@@ -2,12 +2,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import 'viewmodels/auth_viewmodel.dart';
-import 'viewmodels/queue_viewmodel.dart';
-import 'viewmodels/department_viewmodel.dart';
-import 'viewmodels/doctor_viewmodel.dart';
-import 'viewmodels/token_viewmodel.dart';
-import 'viewmodels/ambulance_viewmodel.dart';
+import 'controller/auth_controller.dart';
+import 'controller/queue_controller.dart';
+import 'controller/department_controller.dart';
+import 'controller/doctor_controller.dart';
+import 'controller/token_controller.dart';
+import 'controller/ambulance_controller.dart';
 
 import 'view/intro_splash_screen.dart';
 import 'view/splash_screen.dart';
@@ -28,22 +28,22 @@ class HospitalQueueApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(
-          create: (_) => AuthViewModel(),
+          create: (_) => AuthController(),
         ),
         ChangeNotifierProvider(
-          create: (_) => QueueViewModel(),
+          create: (_) => QueueController(),
         ),
         ChangeNotifierProvider(
-          create: (_) => DepartmentViewModel(),
+          create: (_) => DepartmentController(),
         ),
         ChangeNotifierProvider(
-          create: (_) => DoctorViewModel(),
+          create: (_) => DoctorController(),
         ),
         ChangeNotifierProvider(
-          create: (_) => TokenViewModel(),
+          create: (_) => TokenController(),
         ),
         ChangeNotifierProvider(
-          create: (_) => AmbulanceViewModel(),
+          create: (_) => AmbulanceController(),
         ),
       ],
       child: MaterialApp(
