@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/token_model.dart';
@@ -21,17 +22,17 @@ class _HomeScreenState extends State<HomeScreen> {
   static const Color _background = Color(0xFFC2E9EC);
   static const Color _textColor = Color(0xFF285C7D);
 
-@override
-void initState() {
-  super.initState();
+  @override
+  void initState() {
+    super.initState();
 
-  WidgetsBinding.instance.addPostFrameCallback((_) {
-    if (!mounted) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
 
-    final tokenController = context.read<TokenController>();
-    tokenController.fetchMyTokens(refresh: true);
-  });
-}
+      final tokenController = context.read<TokenController>();
+      tokenController.fetchMyTokens(refresh: true);
+    });
+  }
 
   Future<void> _logout(BuildContext context) async {
     final shouldLogout = await showDialog<bool>(
@@ -75,32 +76,32 @@ void initState() {
   }
 
   Future<void> _refreshBackend(BuildContext context) async {
-  final tokenController = context.read<TokenController>();
-  await tokenController.fetchMyTokens(refresh: true);
-}
+    final tokenController = context.read<TokenController>();
+    await tokenController.fetchMyTokens(refresh: true);
+  }
 
-Future<void> _navigate(BuildContext context, Widget screen) async {
-  final tokenController = context.read<TokenController>();
+  Future<void> _navigate(BuildContext context, Widget screen) async {
+    final tokenController = context.read<TokenController>();
 
-  await Navigator.push(
-    context,
-    MaterialPageRoute(builder: (_) => screen),
-  );
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => screen),
+    );
 
-  if (!mounted) return;
+    if (!mounted) return;
 
-  await tokenController.fetchMyTokens(refresh: true);
-}
+    await tokenController.fetchMyTokens(refresh: true);
+  }
 
-void _openDepartment(
-  BuildContext context,
-  String departmentName,
-) {
-  _navigate(
-    context,
-    DepartmentScreen(selectedDepartmentName: departmentName),
-  );
-}
+  void _openDepartment(
+    BuildContext context,
+    String departmentName,
+  ) {
+    _navigate(
+      context,
+      DepartmentScreen(selectedDepartmentName: departmentName),
+    );
+  }
 
   bool _isActiveToken(TokenModel token) {
     final status = token.status.trim().toLowerCase();
@@ -209,8 +210,30 @@ void _openDepartment(
     final hasError = tokenController.error != null;
 
     final appointmentTime = token?.appointmentTime;
-    final doctorName = token?.doctorName?.trim();
-    final departmentName = token?.departmentName?.trim();
+
+    final rawDoctorName = token?.doctorName?.trim();
+
+    final doctorName =
+        rawDoctorName == null || rawDoctorName.isEmpty
+            ? null
+            : rawDoctorName
+                .replaceFirst(
+                  RegExp(r'^(dr\.?\s*)+', caseSensitive: false),
+                  '',
+                )
+                .trim();
+
+    final rawDepartmentName = token?.departmentName?.trim();
+
+    final departmentName =
+        rawDepartmentName == null ||
+                rawDepartmentName.isEmpty ||
+                rawDepartmentName.toLowerCase() ==
+                    'department not available' ||
+                rawDepartmentName.toLowerCase() == 'null'
+            ? null
+            : rawDepartmentName;
+
     final tokenNumber = token?.tokenNumber.trim();
 
     return Container(
@@ -306,9 +329,7 @@ void _openDepartment(
 
                   Text(
                     doctorName != null && doctorName.isNotEmpty
-                        ? (doctorName.toLowerCase().startsWith('dr.')
-                            ? doctorName
-                            : 'Dr. $doctorName')
+                        ? 'Dr. $doctorName'
                         : 'Doctor details unavailable',
                     style: TextStyle(
                       color: isDark
@@ -319,17 +340,16 @@ void _openDepartment(
                     ),
                   ),
 
-                  const SizedBox(height: 4),
-
-                  Text(
-                    departmentName != null && departmentName.isNotEmpty
-                        ? departmentName
-                        : 'Department details unavailable',
-                    style: const TextStyle(
-                      color: Color(0xFF82A5B8),
-                      fontSize: 12,
+                  if (departmentName != null) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      departmentName,
+                      style: const TextStyle(
+                        color: Color(0xFF82A5B8),
+                        fontSize: 12,
+                      ),
                     ),
-                  ),
+                  ],
 
                   if (tokenNumber != null && tokenNumber.isNotEmpty) ...[
                     const SizedBox(height: 5),

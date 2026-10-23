@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -25,15 +26,64 @@ class _DoctorDetailsScreenState extends State<DoctorDetailsScreen> {
   static const Color _lightBlue = Color(0xFFF1F9FF);
   static const Color _muted = Color(0xFF80A5B8);
 
+  String? _selectedSlot;
+  bool _isSelectingSlot = false;
+
+  Future<void> _checkSlots() async {
+    if (_isSelectingSlot) return;
+
+    setState(() {
+      _isSelectingSlot = true;
+    });
+
+    try {
+      final selectedSlot = await Navigator.push<String>(
+        context,
+        MaterialPageRoute(
+          builder: (_) => DoctorSlotsScreen(
+            doctor: widget.doctor,
+          ),
+        ),
+      );
+
+      if (!mounted) return;
+
+      if (selectedSlot != null && selectedSlot.trim().isNotEmpty) {
+        setState(() {
+          _selectedSlot = selectedSlot;
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Selected time: $selectedSlot'),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSelectingSlot = false;
+        });
+      }
+    }
+  }
+
   Future<void> _bookToken() async {
     final tokenController = context.read<TokenController>();
 
     if (!widget.doctor.isAvailable) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text(
-            'This doctor is currently unavailable.',
-          ),
+          content: Text('This doctor is currently unavailable.'),
+        ),
+      );
+      return;
+    }
+
+    if (_selectedSlot == null || _selectedSlot!.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please select an available time slot first.'),
         ),
       );
       return;
@@ -41,6 +91,7 @@ class _DoctorDetailsScreenState extends State<DoctorDetailsScreen> {
 
     final token = await tokenController.bookToken(
       doctorId: widget.doctor.id,
+      selectedSlot: _selectedSlot!,
     );
 
     if (!mounted) return;
@@ -62,17 +113,6 @@ class _DoctorDetailsScreenState extends State<DoctorDetailsScreen> {
       MaterialPageRoute(
         builder: (_) => BookingConfirmationScreen(
           token: token,
-        ),
-      ),
-    );
-  }
-
-  void _checkSlots() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => DoctorSlotsScreen(
-          doctor: widget.doctor,
         ),
       ),
     );
@@ -103,12 +143,7 @@ class _DoctorDetailsScreenState extends State<DoctorDetailsScreen> {
           children: [
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.fromLTRB(
-                  20,
-                  12,
-                  20,
-                  24,
-                ),
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
                 children: [
                   Row(
                     children: [
@@ -124,9 +159,7 @@ class _DoctorDetailsScreenState extends State<DoctorDetailsScreen> {
                         child: Text(
                           'Doctor Details',
                           style: TextStyle(
-                            color: isDark
-                                ? colors.onSurface
-                                : _primary,
+                            color: isDark ? colors.onSurface : _primary,
                             fontSize: 25,
                             fontWeight: FontWeight.w600,
                           ),
@@ -137,9 +170,7 @@ class _DoctorDetailsScreenState extends State<DoctorDetailsScreen> {
                   const SizedBox(height: 14),
                   Container(
                     height: 52,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
                     alignment: Alignment.centerLeft,
                     decoration: BoxDecoration(
                       color: isDark
@@ -204,9 +235,7 @@ class _DoctorDetailsScreenState extends State<DoctorDetailsScreen> {
                           doctor.name,
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            color: isDark
-                                ? colors.onSurface
-                                : _primary,
+                            color: isDark ? colors.onSurface : _primary,
                             fontSize: 23,
                             fontWeight: FontWeight.bold,
                           ),
@@ -272,9 +301,7 @@ class _DoctorDetailsScreenState extends State<DoctorDetailsScreen> {
                         Text(
                           'Doctor Information',
                           style: TextStyle(
-                            color: isDark
-                                ? colors.onSurface
-                                : _primary,
+                            color: isDark ? colors.onSurface : _primary,
                             fontSize: 21,
                             fontWeight: FontWeight.bold,
                           ),
@@ -297,14 +324,20 @@ class _DoctorDetailsScreenState extends State<DoctorDetailsScreen> {
                           label: 'Qualification',
                           value: qualification,
                         ),
+                        if (_selectedSlot != null) ...[
+                          const SizedBox(height: 18),
+                          _InfoRow(
+                            icon: Icons.access_time_rounded,
+                            label: 'Selected Slot',
+                            value: _selectedSlot!,
+                          ),
+                        ],
                       ],
                     ),
                   ),
                 ],
               ),
             ),
-
-            // Both actions stay at the bottom.
             Container(
               padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
               decoration: BoxDecoration(
@@ -326,13 +359,24 @@ class _DoctorDetailsScreenState extends State<DoctorDetailsScreen> {
                       width: double.infinity,
                       height: 54,
                       child: OutlinedButton.icon(
-                        onPressed: _checkSlots,
-                        icon: const Icon(
-                          Icons.calendar_month_rounded,
-                        ),
-                        label: const Text(
-                          'Available Slots',
-                          style: TextStyle(
+                        onPressed: _isSelectingSlot ||
+                                tokenController.isBooking
+                            ? null
+                            : _checkSlots,
+                        icon: _isSelectingSlot
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Icon(Icons.calendar_month_rounded),
+                        label: Text(
+                          _selectedSlot == null
+                              ? 'Available Slots'
+                              : 'Change Time Slot',
+                          style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
                           ),
@@ -355,14 +399,14 @@ class _DoctorDetailsScreenState extends State<DoctorDetailsScreen> {
                       height: 56,
                       child: ElevatedButton(
                         onPressed: !doctor.isAvailable ||
-                                tokenController.isBooking
+                                tokenController.isBooking ||
+                                _isSelectingSlot
                             ? null
                             : _bookToken,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: _primary,
                           foregroundColor: Colors.white,
-                          disabledBackgroundColor:
-                              Colors.grey.shade400,
+                          disabledBackgroundColor: Colors.grey.shade400,
                           elevation: 3,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(15),
@@ -378,8 +422,7 @@ class _DoctorDetailsScreenState extends State<DoctorDetailsScreen> {
                                 ),
                               )
                             : const Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.center,
+                                mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Icon(
                                     Icons.confirmation_number_outlined,
@@ -446,9 +489,7 @@ class _InfoRow extends StatelessWidget {
           child: Text(
             value,
             style: TextStyle(
-              color: isDark
-                  ? colors.onSurfaceVariant
-                  : _muted,
+              color: isDark ? colors.onSurfaceVariant : _muted,
             ),
           ),
         ),

@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import '../models/token_model.dart';
 import 'home_screen.dart';
@@ -70,7 +71,7 @@ class BookingConfirmationScreen extends StatelessWidget {
     final appointmentTime = token.appointmentTime;
 
     return PopScope(
-      canPop: false,
+      canPop: true,
       child: Scaffold(
         backgroundColor: isDark ? colors.surface : _background,
         body: SafeArea(
@@ -151,7 +152,7 @@ class BookingConfirmationScreen extends StatelessWidget {
                     const SizedBox(height: 12),
 
                     Text(
-                     token.tokenNumber.toString(),
+                      token.tokenNumber.toString(),
                       textAlign: TextAlign.center,
                       style: const TextStyle(
                         color: _primary,

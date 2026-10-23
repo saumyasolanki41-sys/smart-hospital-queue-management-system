@@ -1,13 +1,13 @@
 
-import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-
 import 'controller/auth_controller.dart';
 import 'controller/queue_controller.dart';
 import 'controller/department_controller.dart';
 import 'controller/doctor_controller.dart';
 import 'controller/token_controller.dart';
 import 'controller/ambulance_controller.dart';
+
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import 'view/intro_splash_screen.dart';
 import 'view/splash_screen.dart';
@@ -27,31 +27,21 @@ class HospitalQueueApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(
-          create: (_) => AuthController(),
-        ),
-        ChangeNotifierProvider(
-          create: (_) => QueueController(),
-        ),
-        ChangeNotifierProvider(
-          create: (_) => DepartmentController(),
-        ),
-        ChangeNotifierProvider(
-          create: (_) => DoctorController(),
-        ),
-        ChangeNotifierProvider(
-          create: (_) => TokenController(),
-        ),
-        ChangeNotifierProvider(
-          create: (_) => AmbulanceController(),
-        ),
+        ChangeNotifierProvider(create: (_) => AuthController()),
+        ChangeNotifierProvider(create: (_) => QueueController()),
+        ChangeNotifierProvider(create: (_) => DepartmentController()),
+        ChangeNotifierProvider(create: (_) => DoctorController()),
+        ChangeNotifierProvider(create: (_) => TokenController()),
+        ChangeNotifierProvider(create: (_) => AmbulanceController()),
       ],
       child: MaterialApp(
         title: 'Smart Hospital',
         debugShowCheckedModeBanner: false,
 
+        // Start with the heart logo intro screen
         initialRoute: '/',
 
+        // App navigation routes
         routes: {
           '/': (context) => const IntroSplashScreen(),
           '/get-started': (context) => const SplashScreen(),
@@ -62,6 +52,7 @@ class HospitalQueueApp extends StatelessWidget {
 
         themeMode: ThemeMode.light,
 
+        // Light theme
         theme: ThemeData(
           useMaterial3: true,
           brightness: Brightness.light,
@@ -98,7 +89,7 @@ class HospitalQueueApp extends StatelessWidget {
           ),
         ),
 
-        
+        // Keep your existing darkTheme configuration
         darkTheme: ThemeData(
           useMaterial3: true,
           brightness: Brightness.light,

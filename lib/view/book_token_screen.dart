@@ -2,86 +2,99 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../models/doctor_model.dart';
-import '../controller/department_controller.dart';
-import '../controller/doctor_controller.dart';
 import '../controller/token_controller.dart';
+import '../models/doctor_model.dart';
+import 'doctor_slots_screen.dart';
 
 class BookTokenScreen extends StatefulWidget {
-  const BookTokenScreen({super.key});
+  final DoctorModel doctor;
+
+  const BookTokenScreen({
+    super.key,
+    required this.doctor,
+  });
 
   @override
   State<BookTokenScreen> createState() => _BookTokenScreenState();
 }
 
 class _BookTokenScreenState extends State<BookTokenScreen> {
-  String? _selectedDepartmentId;
-  DoctorModel? _selectedDoctor;
+  static const Color _primary = Color(0xFF236D96);
+  static const Color _background = Color(0xFFC2E9EC);
 
-  @override
-  void initState() {
-    super.initState();
+  String? _selectedSlot;
+  bool _isOpeningSlots = false;
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+  Future<void> _selectSlot() async {
+    if (_isOpeningSlots) return;
+
+    setState(() {
+      _isOpeningSlots = true;
+    });
+
+    try {
+      final slot = await Navigator.push<String>(
+        context,
+        MaterialPageRoute(
+          builder: (_) => DoctorSlotsScreen(
+            doctor: widget.doctor,
+          ),
+        ),
+      );
+
       if (!mounted) return;
 
-      context.read<DepartmentController>().fetchDepartments();
-    });
-  }
-
-  Future<void> _selectDepartment(String? departmentId) async {
-    setState(() {
-      _selectedDepartmentId = departmentId;
-      _selectedDoctor = null;
-    });
-
-    final doctorController = context.read<DoctorController>();
-
-    await doctorController.fetchDoctors(
-      departmentId: departmentId,
-      isAvailable: true,
-      refresh: true,
-    );
+      if (slot != null && slot.trim().isNotEmpty) {
+        setState(() {
+          _selectedSlot = slot;
+        });
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isOpeningSlots = false;
+        });
+      }
+    }
   }
 
   Future<void> _bookToken() async {
-    final doctor = _selectedDoctor;
-
-    if (doctor == null) {
+    if (_selectedSlot == null || _selectedSlot!.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please select a doctor first.'),
+          content: Text('Please select a time slot first.'),
         ),
       );
       return;
     }
 
-    final tokenController = context.read<TokenController>();
-    final messenger = ScaffoldMessenger.of(context);
-    final navigator = Navigator.of(context);
+    final controller = context.read<TokenController>();
 
-    final token = await tokenController.bookToken(
-      doctorId: doctor.id,
+    final token = await controller.bookToken(
+      doctorId: widget.doctor.id,
+      selectedSlot: _selectedSlot!,
     );
 
     if (!mounted) return;
 
     if (token != null) {
-      messenger.showSnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Token booked successfully: ${token.tokenNumber}',
+            'Token booked successfully for ${_selectedSlot!}.',
           ),
+          backgroundColor: Colors.green,
         ),
       );
 
-      navigator.pop();
+      Navigator.pop(context, token);
     } else {
-      messenger.showSnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            tokenController.error ?? 'Unable to book token.',
+            controller.error ?? 'Unable to book your token.',
           ),
+          backgroundColor: Colors.red,
         ),
       );
     }
@@ -89,202 +102,180 @@ class _BookTokenScreenState extends State<BookTokenScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final departmentController = context.watch<DepartmentController>();
-    final doctorController = context.watch<DoctorController>();
     final tokenController = context.watch<TokenController>();
 
-    final selectedDoctorId = doctorController.doctors.any(
-      (doctor) => doctor.id == _selectedDoctor?.id,
-    )
-        ? _selectedDoctor!.id
-        : null;
-
     return Scaffold(
+      backgroundColor: _background,
       appBar: AppBar(
-        title: const Text('Book a Token'),
+        title: const Text('Book Token'),
+        backgroundColor: _primary,
+        foregroundColor: Colors.white,
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(20),
-        children: [
-          const Icon(
-            Icons.confirmation_number_outlined,
-            size: 64,
-            color: Color(0xFF1479A4),
-          ),
-          const SizedBox(height: 12),
-          const Text(
-            'Book Your Hospital Token',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 23,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            'Choose a department and an available doctor.',
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 28),
-
-          const Text(
-            'Select Department',
-            style: TextStyle(fontWeight: FontWeight.w600),
-          ),
-          const SizedBox(height: 8),
-
-          if (departmentController.isLoading &&
-              departmentController.departments.isEmpty)
-            const Center(
-              child: CircularProgressIndicator(),
-            )
-          else if (departmentController.error != null &&
-              departmentController.departments.isEmpty)
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(departmentController.error!),
-                TextButton(
-                  onPressed: () {
-                    departmentController.refreshDepartments();
-                  },
-                  child: const Text('Retry'),
-                ),
-              ],
-            )
-          else if (departmentController.departments.isEmpty)
-            const Text('No departments are available.')
-          else
-            DropdownButtonFormField<String>(
-              initialValue: departmentController.departments.any(
-                (department) => department.id == _selectedDepartmentId,
-              )
-                  ? _selectedDepartmentId
-                  : null,
-              isExpanded: true,
-              decoration: const InputDecoration(
-                hintText: 'Choose department',
-                prefixIcon: Icon(Icons.local_hospital_outlined),
-              ),
-              items: departmentController.departments.map((department) {
-                return DropdownMenuItem<String>(
-                  value: department.id,
-                  child: Text(
-                    department.name,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                );
-              }).toList(),
-              onChanged: _selectDepartment,
-            ),
-
-          const SizedBox(height: 24),
-
-          const Text(
-            'Select Doctor',
-            style: TextStyle(fontWeight: FontWeight.w600),
-          ),
-          const SizedBox(height: 8),
-
-          if (_selectedDepartmentId == null)
-            const Text('Select a department first.')
-          else if (doctorController.isLoading)
-            const Center(
-              child: CircularProgressIndicator(),
-            )
-          else if (doctorController.error != null &&
-              doctorController.doctors.isEmpty)
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(doctorController.error!),
-                TextButton(
-                  onPressed: () {
-                    doctorController.fetchDoctors(
-                      departmentId: _selectedDepartmentId,
-                      isAvailable: true,
-                      refresh: true,
-                    );
-                  },
-                  child: const Text('Retry'),
-                ),
-              ],
-            )
-          else if (doctorController.doctors.isEmpty)
-            const Text(
-              'No available doctors found in this department.',
-            )
-          else
-            DropdownButtonFormField<String>(
-              initialValue: selectedDoctorId,
-              isExpanded: true,
-              decoration: const InputDecoration(
-                hintText: 'Choose doctor',
-                prefixIcon: Icon(Icons.person_outline),
-              ),
-              items: doctorController.doctors.map((doctor) {
-                return DropdownMenuItem<String>(
-                  value: doctor.id,
-                  child: Text(
-                    doctor.name,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                );
-              }).toList(),
-              onChanged: (doctorId) {
-                setState(() {
-                  _selectedDoctor = doctorController.doctors
-                      .where((doctor) => doctor.id == doctorId)
-                      .firstOrNull;
-                });
-              },
-            ),
-
-          if (_selectedDoctor != null) ...[
-            const SizedBox(height: 16),
-            Card(
-              child: ListTile(
-                leading: const CircleAvatar(
-                  child: Icon(Icons.medical_services_outlined),
-                ),
-                title: Text(_selectedDoctor!.name),
-                subtitle: Text(
-                  _selectedDoctor!.specialization ?? 'Doctor',
-                ),
-                trailing: const Icon(
-                  Icons.check_circle,
-                  color: Colors.green,
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Confirm Your Appointment',
+                style: TextStyle(
+                  fontSize: 23,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF285C7D),
                 ),
               ),
-            ),
-          ],
-
-          const SizedBox(height: 28),
-
-          SizedBox(
-            height: 52,
-            child: FilledButton.icon(
-              onPressed: tokenController.isBooking ||
-                      _selectedDoctor == null
-                  ? null
-                  : _bookToken,
-              icon: tokenController.isBooking
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
+              const SizedBox(height: 8),
+              const Text(
+                'Select a time slot before booking your token.',
+                style: TextStyle(fontSize: 15),
+              ),
+              const SizedBox(height: 24),
+              Card(
+                color: Colors.white,
+                elevation: 2,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(18),
+                  child: Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 28,
+                        backgroundColor: _primary.withValues(alpha: 0.12),
+                        child: const Icon(
+                          Icons.medical_services,
+                          color: _primary,
+                          size: 30,
+                        ),
                       ),
-                    )
-                  : const Icon(Icons.confirmation_number_outlined),
-              label: Text(
-                tokenController.isBooking
-                    ? 'Booking Token...'
-                    : 'Confirm Booking',
+                      const SizedBox(width: 14),
+                      const Expanded(
+                        child: Text(
+                          'Selected Doctor',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.black54,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
-            ),
+              const SizedBox(height: 16),
+              Card(
+                color: Colors.white,
+                elevation: 2,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(18),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Appointment Time',
+                        style: TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: _background.withValues(alpha: 0.45),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.access_time,
+                              color: _primary,
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                _selectedSlot ?? 'No time slot selected',
+                                style: const TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          onPressed:
+                              _isOpeningSlots || tokenController.isBooking
+                                  ? null
+                                  : _selectSlot,
+                          icon: _isOpeningSlots
+                              ? const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Icon(Icons.calendar_month),
+                          label: Text(
+                            _selectedSlot == null
+                                ? 'Select Time Slot'
+                                : 'Change Time Slot',
+                          ),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: _primary,
+                            side: const BorderSide(color: _primary),
+                            padding: const EdgeInsets.symmetric(
+                              vertical: 14,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const Spacer(),
+              SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: ElevatedButton(
+                  onPressed: tokenController.isBooking
+                      ? null
+                      : _bookToken,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _primary,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: tokenController.isBooking
+                      ? const CircularProgressIndicator(
+                          color: Colors.white,
+                        )
+                      : const Text(
+                          'Confirm Booking',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

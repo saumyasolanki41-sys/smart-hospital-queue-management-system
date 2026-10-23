@@ -64,15 +64,16 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
         return;
       }
 
-      final selectedName = _normalizeDepartmentName(
-        widget.selectedDepartmentName!,
-      );
+      final selectedName =
+          _normalizeDepartmentName(widget.selectedDepartmentName!);
 
       DepartmentModel? selectedDepartment;
 
       for (final department in departmentController.departments) {
-        if (_normalizeDepartmentName(department.name) ==
-            selectedName) {
+        final departmentName =
+            _normalizeDepartmentName(department.name);
+
+        if (departmentName == selectedName) {
           selectedDepartment = department;
           break;
         }
@@ -95,10 +96,24 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
   }
 
   String _normalizeDepartmentName(String name) {
-    return name
-        .replaceAll(RegExp(r'\s+'), ' ')
+    final normalized = name
         .trim()
-        .toLowerCase();
+        .toLowerCase()
+        .replaceAll(RegExp(r'[^a-z0-9]'), '');
+
+    const aliases = {
+      'gynaceology': 'gynecology',
+      'gynaecology': 'gynecology',
+      'gynecology': 'gynecology',
+      'obstetricsandgynecology': 'gynecology',
+      'obstetricsgynecology': 'gynecology',
+      'obstetricsandgynaecology': 'gynecology',
+      'obstetricsgynaecology': 'gynecology',
+      'obgyn': 'gynecology',
+      'obgynae': 'gynecology',
+    };
+
+    return aliases[normalized] ?? normalized;
   }
 
   @override
@@ -224,7 +239,6 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
                 ],
               ),
               const SizedBox(height: 14),
-
               Container(
                 height: 48,
                 decoration: BoxDecoration(
@@ -276,9 +290,7 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
                   ),
                 ),
               ),
-
               const SizedBox(height: 30),
-
               if (departmentController.isLoading &&
                   departmentController.departments.isEmpty)
                 const Padding(

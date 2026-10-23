@@ -1,3 +1,4 @@
+
 import 'package:flutter/foundation.dart';
 
 import '../models/token_model.dart';
@@ -31,8 +32,15 @@ class TokenController extends ChangeNotifier {
 
   Future<TokenModel?> bookToken({
     required String doctorId,
+    required String selectedSlot,
   }) async {
     if (_isBooking) return null;
+
+    if (selectedSlot.trim().isEmpty) {
+      _error = 'Please select a time slot before booking.';
+      notifyListeners();
+      return null;
+    }
 
     _isBooking = true;
     _error = null;
@@ -147,22 +155,18 @@ class TokenController extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // Ask the backend to cancel the token.
       await _queueService.cancelToken(normalizedId);
 
-      // Remove the cancelled token from the local list.
       _tokens = _tokens
           .where((token) => token.id.trim() != normalizedId)
           .toList();
 
-      // Clear the selected token if it was cancelled.
       if (_selectedToken?.id.trim() == normalizedId) {
         _selectedToken = null;
       }
 
       notifyListeners();
 
-      // Refresh from the backend to synchronize the list.
       await fetchMyTokens(refresh: true);
 
       return true;
