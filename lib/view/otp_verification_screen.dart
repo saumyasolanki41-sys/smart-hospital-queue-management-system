@@ -1,3 +1,4 @@
+
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -25,11 +26,9 @@ class OtpVerificationScreen extends StatefulWidget {
 
 class _OtpVerificationScreenState
     extends State<OtpVerificationScreen> {
-  static const Color _navy = Color(0xFF0B477A);
-  static const Color _blue = Color(0xFF17699A);
-  static const Color _cyan = Color(0xFF31CFDF);
-  static const Color _paleCyan = Color(0xFFD9F8FC);
-  static const Color _fieldColor = Color(0xFFF1FBFE);
+  static const Color _blue = Color(0xFF246F96);
+  static const Color _navy = Color(0xFF173B5E);
+  static const Color _darkButton = Color.fromARGB(255, 14, 18, 33);
 
   static const int _resendCooldown = 60;
 
@@ -72,19 +71,22 @@ class _OtpVerificationScreenState
       _secondsRemaining = _resendCooldown;
     });
 
-    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (!mounted) {
-        timer.cancel();
-        return;
-      }
+    _timer = Timer.periodic(
+      const Duration(seconds: 1),
+      (timer) {
+        if (!mounted) {
+          timer.cancel();
+          return;
+        }
 
-      if (_secondsRemaining <= 1) {
-        timer.cancel();
-        setState(() => _secondsRemaining = 0);
-      } else {
-        setState(() => _secondsRemaining--);
-      }
-    });
+        if (_secondsRemaining <= 1) {
+          timer.cancel();
+          setState(() => _secondsRemaining = 0);
+        } else {
+          setState(() => _secondsRemaining--);
+        }
+      },
+    );
   }
 
   String get _otp =>
@@ -96,13 +98,16 @@ class _OtpVerificationScreenState
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: isError ? Colors.red.shade700 : _navy,
+        backgroundColor:
+            isError ? Colors.red.shade700 : _blue,
       ),
     );
   }
 
   Future<void> _resendOtp() async {
-    if (_secondsRemaining > 0 || _isResending || _isVerifying) {
+    if (_secondsRemaining > 0 ||
+        _isResending ||
+        _isVerifying) {
       return;
     }
 
@@ -123,7 +128,6 @@ class _OtpVerificationScreenState
         );
         return;
       }
-
 
       for (final controller in _controllers) {
         controller.clear();
@@ -151,7 +155,8 @@ class _OtpVerificationScreenState
   Future<void> _verifyOtp() async {
     FocusScope.of(context).unfocus();
 
-    if (_otp.length != 6 || _otp.contains(RegExp(r'[^0-9]'))) {
+    if (_otp.length != 6 ||
+        _otp.contains(RegExp(r'[^0-9]'))) {
       _showMessage('Please enter the complete 6-digit OTP.');
       return;
     }
@@ -162,7 +167,8 @@ class _OtpVerificationScreenState
 
     try {
       if (widget.isRegistration) {
-        final registrationSuccess = await auth.verifyRegistration(
+        final registrationSuccess =
+            await auth.verifyRegistration(
           email: widget.email,
           otp: _otp,
         );
@@ -258,202 +264,116 @@ class _OtpVerificationScreenState
     }
   }
 
-  Widget _buildHeader() {
-    return SizedBox(
-      height: 245,
-      width: double.infinity,
-      child: Stack(
-        children: [
-          Container(
-            height: 220,
-            width: double.infinity,
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  Color(0xFFE9FCFE),
-                  Color(0xFFB9F0F6),
-                  Color(0xFFDDFBFC),
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-            ),
-          ),
-          Positioned.fill(
-            child: CustomPaint(
-              painter: _OtpHeaderWavePainter(),
-            ),
-          ),
-          Positioned(
-            top: 24,
-            left: 0,
-            right: 0,
-            child: Column(
-              children: [
-                Container(
-                  width: 82,
-                  height: 82,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.white.withValues(alpha: 0.75),
-                    boxShadow: [
-                      BoxShadow(
-                        color: _blue.withValues(alpha: 0.12),
-                        blurRadius: 15,
-                        offset: const Offset(0, 5),
-                      ),
-                    ],
-                  ),
-                  child: const Icon(
-                    Icons.favorite_rounded,
-                    color: _cyan,
-                    size: 62,
-                  ),
-                ),
-                Transform.translate(
-                  offset: const Offset(0, -47),
-                  child: const Icon(
-                    Icons.add_rounded,
-                    color: _navy,
-                    size: 40,
-                  ),
-                ),
-                Transform.translate(
-                  offset: const Offset(0, -34),
-                  child: Text(
-                    widget.isRegistration
-                        ? 'Verify Email'
-                        : 'Verify OTP',
-                    style: const TextStyle(
-                      color: Color(0xFF159BB7),
-                      fontSize: 30,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
+  Widget _buildLogo() {
+    return const MedicalLogo();
   }
 
   Widget _buildOtpBox(int index) {
-    return SizedBox(
-      width: 43,
-      height: 54,
-      child: TextField(
-        controller: _controllers[index],
-        focusNode: _focusNodes[index],
-        keyboardType: TextInputType.number,
-        textAlign: TextAlign.center,
-        maxLength: 1,
-        style: const TextStyle(
-          color: _navy,
-          fontSize: 22,
-          fontWeight: FontWeight.bold,
-        ),
-        inputFormatters: [
-          FilteringTextInputFormatter.digitsOnly,
-          LengthLimitingTextInputFormatter(1),
-        ],
-        decoration: InputDecoration(
-          counterText: '',
-          filled: true,
-          fillColor: _fieldColor,
-          contentPadding: EdgeInsets.zero,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(13),
-            borderSide: BorderSide.none,
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(13),
-            borderSide: BorderSide.none,
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(13),
-            borderSide: const BorderSide(
-              color: _cyan,
-              width: 2,
+    return Expanded(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4),
+        child: AspectRatio(
+          aspectRatio: 0.8,
+          child: TextField(
+            controller: _controllers[index],
+            focusNode: _focusNodes[index],
+            keyboardType: TextInputType.number,
+            textAlign: TextAlign.center,
+            maxLength: 1,
+            style: const TextStyle(
+              color: _navy,
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
             ),
+            inputFormatters: [
+              FilteringTextInputFormatter.digitsOnly,
+              LengthLimitingTextInputFormatter(1),
+            ],
+            decoration: const InputDecoration(
+              counterText: '',
+              filled: true,
+              fillColor: Color(0xFFF8FAFD),
+              contentPadding: EdgeInsets.zero,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.zero,
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.zero,
+                borderSide: BorderSide(
+                  color: Color(0xFFD0D7E2),
+                ),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.zero,
+                borderSide: BorderSide(
+                  color: _blue,
+                  width: 1.5,
+                ),
+              ),
+            ),
+            onChanged: (value) {
+              if (value.isNotEmpty && index < 5) {
+                _focusNodes[index + 1].requestFocus();
+              } else if (value.isEmpty && index > 0) {
+                _focusNodes[index - 1].requestFocus();
+              }
+
+              if (_otp.length == 6) {
+                FocusScope.of(context).unfocus();
+              }
+
+              setState(() {});
+            },
           ),
         ),
-        onChanged: (value) {
-          if (value.isNotEmpty && index < 5) {
-            _focusNodes[index + 1].requestFocus();
-          } else if (value.isEmpty && index > 0) {
-            _focusNodes[index - 1].requestFocus();
-          }
-
-          if (_otp.length == 6) {
-            FocusScope.of(context).unfocus();
-          }
-
-          setState(() {});
-        },
       ),
     );
   }
 
   Widget _buildResendControl() {
-    if (_secondsRemaining > 0) {
-      return Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Text(
-            "Didn't receive the code? ",
-            style: TextStyle(
-              color: _paleCyan,
-              fontSize: 14,
-            ),
-          ),
-          Text(
-            '00:${_secondsRemaining.toString().padLeft(2, '0')}',
-            style: const TextStyle(
-              color: _cyan,
-              fontWeight: FontWeight.bold,
-              fontSize: 14,
-            ),
-          ),
-        ],
-      );
-    }
-
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
+    return Wrap(
+      alignment: WrapAlignment.center,
+      crossAxisAlignment: WrapCrossAlignment.center,
       children: [
         const Text(
           "Didn't receive the code? ",
           style: TextStyle(
-            color: _paleCyan,
-            fontSize: 14,
+            color: Color.fromARGB(255, 1, 16, 27),
+            fontSize: 13,
           ),
         ),
-        TextButton(
-          onPressed: _isResending || _isVerifying ? null : _resendOtp,
-          style: TextButton.styleFrom(
-            foregroundColor: _cyan,
-            padding: const EdgeInsets.symmetric(horizontal: 4),
+        if (_secondsRemaining > 0)
+          Text(
+            '00:${_secondsRemaining.toString().padLeft(2, '0')}',
+            style: const TextStyle(
+              color: _blue,
+              fontWeight: FontWeight.bold,
+            ),
+          )
+        else
+          TextButton(
+            onPressed:
+                _isResending || _isVerifying ? null : _resendOtp,
+            style: TextButton.styleFrom(
+              foregroundColor: _blue,
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+            ),
+            child: _isResending
+                ? const SizedBox(
+                    height: 16,
+                    width: 16,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Color.fromARGB(255, 12, 25, 39),
+                    ),
+                  )
+                : const Text(
+                    'Resend OTP',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
           ),
-          child: _isResending
-              ? const SizedBox(
-                  height: 16,
-                  width: 16,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: _cyan,
-                  ),
-                )
-              : const Text(
-                  'Resend OTP',
-                  style: TextStyle(
-                    color: _cyan,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                  ),
-                ),
-        ),
       ],
     );
   }
@@ -461,163 +381,103 @@ class _OtpVerificationScreenState
   @override
   Widget build(BuildContext context) {
     final heading = widget.isRegistration
-        ? 'Verify your email'
-        : 'Enter your login OTP';
+        ? 'Verify Your Email'
+        : 'Verify Your Login';
 
     final description = widget.isRegistration
-        ? 'Enter the 6-digit code sent to your email to complete registration.'
-        : 'Enter the 6-digit code sent to your email to continue.';
+        ? 'Enter the 6-digit code sent to your email to complete your registration.'
+        : 'Enter the 6-digit code sent to your email to securely continue.';
 
     return Scaffold(
-      backgroundColor: _navy,
-      body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            return SingleChildScrollView(
-              child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  minHeight: constraints.maxHeight,
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color(0xFF8DB8F5),
+              Color(0xFFB7D2F8),
+              Color(0xFFE6EFFF),
+              Colors.white,
+              Color(0xFFE8F0FF),
+              Color(0xFF9DBDF2),
+            ],
+            stops: [0.0, 0.16, 0.32, 0.55, 0.78, 1.0],
+          ),
+        ),
+        child: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: Container(
+                width: double.infinity,
+                constraints: const BoxConstraints(maxWidth: 450),
+                padding: const EdgeInsets.all(28),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.zero,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.08),
+                      blurRadius: 20,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
                 ),
                 child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    _buildHeader(),
+                    Center(child: _buildLogo()),
+
+                    const SizedBox(height: 8),
+
+                    Text(
+                      heading,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: _navy,
+                        fontSize: 25,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    Text(
+                      description,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: Colors.black54,
+                        fontSize: 14,
+                        height: 1.5,
+                      ),
+                    ),
+
+                    const SizedBox(height: 24),
+
                     Container(
-                      width: double.infinity,
-                      constraints: BoxConstraints(
-                        minHeight: constraints.maxHeight - 245,
-                      ),
-                      padding: const EdgeInsets.fromLTRB(
-                        24,
-                        8,
-                        24,
-                        28,
-                      ),
+                      padding: const EdgeInsets.all(12),
                       decoration: const BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            Color(0xFF17679B),
-                            Color(0xFF0B477A),
-                            Color(0xFF07365D),
-                          ],
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                        ),
+                        color: Color(0xFFF3F6FA),
+                        borderRadius: BorderRadius.zero,
                       ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                      child: Row(
                         children: [
-                          const SizedBox(height: 8),
-                          Text(
-                            heading,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 27,
-                              fontWeight: FontWeight.w800,
-                            ),
+                          const Icon(
+                            Icons.email_outlined,
+                            color: _blue,
+                            size: 22,
                           ),
-                          const SizedBox(height: 10),
-                          Text(
-                            description,
-                            style: const TextStyle(
-                              color: _paleCyan,
-                              fontSize: 15,
-                              height: 1.5,
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 14,
-                              vertical: 12,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.09),
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                            child: Row(
-                              children: [
-                                const Icon(
-                                  Icons.email_outlined,
-                                  color: _cyan,
-                                  size: 22,
-                                ),
-                                const SizedBox(width: 10),
-                                Expanded(
-                                  child: Text(
-                                    widget.email,
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(height: 28),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: List.generate(6, _buildOtpBox),
-                          ),
-                          const SizedBox(height: 22),
-                          SizedBox(
-                            height: 54,
-                            child: ElevatedButton(
-                              onPressed: _isVerifying || _isResending
-                                  ? null
-                                  : _verifyOtp,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: _cyan,
-                                foregroundColor: Colors.white,
-                                disabledBackgroundColor: Colors.blueGrey,
-                                elevation: 3,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(30),
-                                ),
-                              ),
-                              child: _isVerifying
-                                  ? const SizedBox(
-                                      height: 23,
-                                      width: 23,
-                                      child: CircularProgressIndicator(
-                                        color: Colors.white,
-                                        strokeWidth: 2.5,
-                                      ),
-                                    )
-                                  : const Text(
-                                      'Verify OTP',
-                                      style: TextStyle(
-                                        fontSize: 17,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                            ),
-                          ),
-                          const SizedBox(height: 22),
-                          _buildResendControl(),
-                          const SizedBox(height: 22),
-                          TextButton.icon(
-                            onPressed: _isVerifying || _isResending
-                                ? null
-                                : () {
-                                    Navigator.pushAndRemoveUntil(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (_) => const LoginScreen(),
-                                      ),
-                                      (route) => false,
-                                    );
-                                  },
-                            icon: const Icon(
-                              Icons.arrow_back_rounded,
-                              color: _cyan,
-                            ),
-                            label: const Text(
-                              'Back to Login',
-                              style: TextStyle(
-                                color: _cyan,
-                                fontSize: 15,
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              widget.email,
+                              style: const TextStyle(
+                                color: _navy,
+                                fontSize: 13,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
@@ -625,75 +485,128 @@ class _OtpVerificationScreenState
                         ],
                       ),
                     ),
+
+                    const SizedBox(height: 28),
+
+                    Row(
+                      children: List.generate(6, _buildOtpBox),
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    SizedBox(
+                      width: double.infinity,
+                      height: 50,
+                      child: ElevatedButton(
+                        onPressed: _isVerifying || _isResending
+                            ? null
+                            : _verifyOtp,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _darkButton,
+                          foregroundColor: Colors.white,
+                          disabledBackgroundColor: Colors.blueGrey,
+                          elevation: 0,
+                          shape: const RoundedRectangleBorder(
+                            borderRadius: BorderRadius.zero,
+                          ),
+                        ),
+                        child: _isVerifying
+                            ? const SizedBox(
+                                height: 22,
+                                width: 22,
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Text(
+                                'Verify OTP',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 20),
+
+                    Center(child: _buildResendControl()),
+
+                    const SizedBox(height: 12),
+
+                    TextButton.icon(
+                      onPressed: _isVerifying || _isResending
+                          ? null
+                          : () {
+                              Navigator.pushAndRemoveUntil(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const LoginScreen(),
+                                ),
+                                (route) => false,
+                              );
+                            },
+                      icon: const Icon(
+                        Icons.arrow_back_rounded,
+                        size: 18,
+                      ),
+                      label: const Text('Back to Login'),
+                      style: TextButton.styleFrom(
+                        foregroundColor: _blue,
+                      ),
+                    ),
                   ],
                 ),
               ),
-            );
-          },
+            ),
+          ),
         ),
       ),
     );
   }
 }
 
-class _OtpHeaderWavePainter extends CustomPainter {
+class MedicalLogo extends StatelessWidget {
+  const MedicalLogo({super.key});
+
   @override
-  void paint(Canvas canvas, Size size) {
-    final cyanWave = Path()
-      ..moveTo(0, size.height * 0.68)
-      ..cubicTo(
-        size.width * 0.28,
-        size.height * 0.54,
-        size.width * 0.43,
-        size.height * 0.98,
-        size.width * 0.69,
-        size.height * 0.79,
-      )
-      ..cubicTo(
-        size.width * 0.83,
-        size.height * 0.70,
-        size.width * 0.91,
-        size.height * 0.62,
-        size.width,
-        size.height * 0.60,
-      )
-      ..lineTo(size.width, size.height)
-      ..lineTo(0, size.height)
-      ..close();
-
-    canvas.drawPath(
-      cyanWave,
-      Paint()..color = _OtpVerificationScreenState._cyan,
-    );
-
-    final blueWave = Path()
-      ..moveTo(0, size.height * 0.75)
-      ..cubicTo(
-        size.width * 0.27,
-        size.height * 0.61,
-        size.width * 0.45,
-        size.height * 1.02,
-        size.width * 0.70,
-        size.height * 0.84,
-      )
-      ..cubicTo(
-        size.width * 0.84,
-        size.height * 0.75,
-        size.width * 0.92,
-        size.height * 0.68,
-        size.width,
-        size.height * 0.64,
-      )
-      ..lineTo(size.width, size.height)
-      ..lineTo(0, size.height)
-      ..close();
-
-    canvas.drawPath(
-      blueWave,
-      Paint()..color = _OtpVerificationScreenState._blue,
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 155,
+      height: 145,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          ShaderMask(
+            shaderCallback: (bounds) {
+              return const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Color.fromARGB(255, 71, 127, 177),
+                  Color.fromARGB(255, 44, 70, 141),
+                  Color.fromARGB(255, 11, 37, 56),
+                  Color.fromARGB(255, 4, 15, 29),
+                ],
+              ).createShader(bounds);
+            },
+            child: const Icon(
+              Icons.favorite_rounded,
+              size: 145,
+              color: Colors.white,
+            ),
+          ),
+          const Positioned(
+            top: 35,
+            child: Icon(
+              Icons.add_rounded,
+              size: 65,
+              color: Colors.white,
+            ),
+          ),
+        ],
+      ),
     );
   }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

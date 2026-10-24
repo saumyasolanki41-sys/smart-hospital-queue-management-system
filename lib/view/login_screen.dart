@@ -362,7 +362,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 vertical: 8,
                               ),
                             ),
-                            child: const Text('Forgot password?'),
+                            child: const Text(''),
                           ),
                         ),
                         const SizedBox(height: 14),
