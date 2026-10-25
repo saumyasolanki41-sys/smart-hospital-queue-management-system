@@ -8,6 +8,7 @@ import About from "./pages/About";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Departments from "./pages/Departments";
+import DoctorProfile from "./pages/DoctorProfile";
 import Home from "./pages/Home";
 import MyQueue from "./pages/MyQueue";
 import QueueStatus from "./pages/QueueStatus";
@@ -31,7 +32,8 @@ export default function App() {
             <Route path="/" element={<LandingPage />} />
             <Route path="/about" element={<About />} />
             <Route path="/departments" element={<Departments />} />
-            
+            <Route path="/doctors/:doctorId" element={<DoctorProfile />} />
+            {/* Add your other public pages here, e.g. your "How it works" page */}
 
             {/* Patients only */}
             <Route element={<ProtectedRoute roles={["patient"]} />}>

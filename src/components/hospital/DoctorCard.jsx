@@ -1,4 +1,4 @@
-// src/components/hospital/DoctorCard.jsx
+import { Link } from "react-router-dom";
 import { Briefcase, Clock, Wallet } from "lucide-react";
 
 const inr = new Intl.NumberFormat("en-IN", {
@@ -7,13 +7,19 @@ const inr = new Intl.NumberFormat("en-IN", {
   maximumFractionDigits: 0,
 });
 
-// The API has no photo field, so show initials instead ("Dr Asha Rao" -> "AR").
 function initials(name) {
   const parts = name.replace(/^dr\.?\s+/i, "").trim().split(/\s+/);
   return ((parts[0]?.[0] ?? "") + (parts[1]?.[0] ?? "")).toUpperCase() || "D";
 }
 
-export default function DoctorCard({ doctor, showJoin = true, onJoin, joining = false, busy = false }) {
+export default function DoctorCard({
+  doctor,
+  showJoin = true,
+  onJoin,
+  joining = false,
+  busy = false,
+  link = true,
+}) {
   const {
     name,
     specialization,
@@ -21,7 +27,7 @@ export default function DoctorCard({ doctor, showJoin = true, onJoin, joining = 
     experienceYears,
     consultationFee,
     isAvailable,
-    averageConsultationMinutes, // may be missing on older records
+    averageConsultationMinutes, 
   } = doctor;
 
   return (
@@ -31,7 +37,15 @@ export default function DoctorCard({ doctor, showJoin = true, onJoin, joining = 
           {initials(name)}
         </span>
         <div className="min-w-0 flex-1">
-          <h3 className="truncate font-semibold text-slate-900">{name}</h3>
+          <h3 className="truncate font-semibold text-slate-900">
+            {link ? (
+              <Link to={`/doctors/${doctor._id}`} className="hover:underline">
+                {name}
+              </Link>
+            ) : (
+              name
+            )}
+          </h3>
           <p className="truncate text-sm text-slate-600">{specialization}</p>
           {department?.name && <p className="text-xs text-slate-400">{department.name}</p>}
         </div>
@@ -60,6 +74,15 @@ export default function DoctorCard({ doctor, showJoin = true, onJoin, joining = 
           </li>
         )}
       </ul>
+
+      {link && (
+        <Link
+          to={`/doctors/${doctor._id}`}
+          className="mt-3 text-sm font-medium text-primary/70 hover:underline"
+        >
+          View profile →
+        </Link>
+      )}
 
       {showJoin && (
         <button
