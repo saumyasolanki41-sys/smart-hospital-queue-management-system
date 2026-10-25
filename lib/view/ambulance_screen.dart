@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:geocoding/geocoding.dart';
 import 'package:provider/provider.dart';
+
 import '../models/ambulance_request_model.dart';
 import '../controller/ambulance_controller.dart';
 
@@ -48,8 +50,7 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
     setState(() => _isGettingLocation = true);
 
     try {
-      final serviceEnabled =
-          await Geolocator.isLocationServiceEnabled();
+      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
 
       if (!serviceEnabled) {
         if (mounted) {
@@ -58,8 +59,7 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
         return false;
       }
 
-      LocationPermission permission =
-          await Geolocator.checkPermission();
+      LocationPermission permission = await Geolocator.checkPermission();
 
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
@@ -94,14 +94,84 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
 
       if (!mounted) return false;
 
+      // Save the current GPS coordinates.
       setState(() {
         _latitude = position.latitude;
         _longitude = position.longitude;
       });
 
-      _showMessage('Current location detected successfully.');
+      // Convert GPS coordinates into a readable address.
+      try {
+        final geocoding = Geocoding();
+
+        final placemarks = await geocoding.placemarkFromCoordinates(
+          position.latitude,
+          position.longitude,
+        );
+
+        if (!mounted) return false;
+
+        if (placemarks.isEmpty) {
+          _showMessage(
+            'GPS detected, but no readable address was found. '
+            'Please enter the address manually.',
+          );
+          return true;
+        }
+
+        final place = placemarks.first;
+
+        // Build an address using the available location details.
+        final addressParts =
+            <String?>[
+                  place.name,
+                  place.street,
+                  place.subLocality,
+                  place.locality,
+                  place.subAdministrativeArea,
+                  place.administrativeArea,
+                  place.postalCode,
+                  place.country,
+                ]
+                .whereType<String>()
+                .map((part) => part.trim())
+                .where((part) => part.isNotEmpty)
+                .toList();
+
+        // Remove repeated address parts.
+        final uniqueParts = <String>[];
+        for (final part in addressParts) {
+          if (!uniqueParts.any(
+            (existing) => existing.toLowerCase() == part.toLowerCase(),
+          )) {
+            uniqueParts.add(part);
+          }
+        }
+
+        final address = uniqueParts.join(', ');
+
+        if (address.isNotEmpty) {
+          // Automatically fill the Pickup Address text field.
+          _addressController.text = address;
+
+          _showMessage('Pickup address filled successfully.');
+        } else {
+          _showMessage(
+            'GPS detected, but no readable address was found. '
+            'Please enter the address manually.',
+          );
+        }
+      } catch (_) {
+        if (mounted) {
+          _showMessage(
+            'GPS detected, but the address could not be retrieved. '
+            'Please enter it manually.',
+          );
+        }
+      }
+
       return true;
-    } catch (e) {
+    } catch (_) {
       if (mounted) {
         _showMessage('Could not get location. Please try again.');
       }
@@ -145,7 +215,7 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
     final controller = context.read<AmbulanceController>();
 
     await controller.requestAmbulance(
-      pickupAddress: address,
+      pickupAddress: _addressController.text.trim(),
       latitude: latitude,
       longitude: longitude,
       contactPhone: phone,
@@ -153,22 +223,23 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
 
     if (!mounted) return;
 
-    if (controller.error == null &&
-        controller.selectedRequest != null) {
+    if (controller.error == null && controller.selectedRequest != null) {
       _addressController.clear();
       _phoneController.clear();
+
+      setState(() {
+        _latitude = null;
+        _longitude = null;
+      });
+
       _showMessage('Ambulance request submitted successfully.');
     } else {
-      _showMessage(
-        controller.error ?? 'Unable to submit ambulance request.',
-      );
+      _showMessage(controller.error ?? 'Unable to submit ambulance request.');
     }
   }
 
   Future<void> _refreshRequests() async {
-    await context
-        .read<AmbulanceController>()
-        .fetchMyRequests(refresh: true);
+    await context.read<AmbulanceController>().fetchMyRequests(refresh: true);
   }
 
   Future<void> _refreshEta(AmbulanceRequestModel request) async {
@@ -189,10 +260,7 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
       context: context,
       builder: (dialogContext) => AlertDialog(
         backgroundColor: _cardColor,
-        title: const Text(
-          'Cancel Request',
-          style: TextStyle(color: _heading),
-        ),
+        title: const Text('Cancel Request', style: TextStyle(color: _heading)),
         content: const Text(
           'Are you sure you want to cancel this ambulance request?',
         ),
@@ -244,13 +312,17 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
 
   String _display(dynamic value, [String fallback = 'Not available']) {
     if (value == null) return fallback;
+
     final text = value.toString().trim();
+
     if (text.isEmpty || text == 'null') return fallback;
+
     return text;
   }
 
   bool _canCancel(String status) {
     final value = status.toLowerCase();
+
     return value != 'cancelled' &&
         value != 'canceled' &&
         value != 'completed' &&
@@ -293,10 +365,7 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
               padding: const EdgeInsets.all(21),
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
-                  colors: [
-                    Color(0xFF246F96),
-                    Color(0xFF8DB8F5),
-                  ],
+                  colors: [Color(0xFF246F96), Color(0xFF8DB8F5)],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -424,9 +493,7 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
                       ),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: _primary,
-                        side: const BorderSide(
-                          color: Color(0xFF9DBDF2),
-                        ),
+                        side: const BorderSide(color: Color(0xFF9DBDF2)),
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(13),
@@ -495,8 +562,7 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton.icon(
-                      onPressed: controller.isRequesting ||
-                              _isGettingLocation
+                      onPressed: controller.isRequesting || _isGettingLocation
                           ? null
                           : _submitRequest,
                       icon: controller.isRequesting
@@ -551,13 +617,8 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
                   ),
                   child: IconButton(
                     tooltip: 'Refresh requests',
-                    onPressed: controller.isLoading
-                        ? null
-                        : _refreshRequests,
-                    icon: const Icon(
-                      Icons.refresh_rounded,
-                      color: _primary,
-                    ),
+                    onPressed: controller.isLoading ? null : _refreshRequests,
+                    icon: const Icon(Icons.refresh_rounded, color: _primary),
                   ),
                 ),
               ],
@@ -572,8 +633,7 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
                   child: CircularProgressIndicator(color: _primary),
                 ),
               )
-            else if (controller.error != null &&
-                controller.requests.isEmpty)
+            else if (controller.error != null && controller.requests.isEmpty)
               _EmptyState(
                 icon: Icons.cloud_off_rounded,
                 title: 'Unable to load requests',
@@ -616,10 +676,7 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
       hintStyle: const TextStyle(color: _muted, fontSize: 13),
       filled: true,
       fillColor: Colors.white,
-      contentPadding: const EdgeInsets.symmetric(
-        horizontal: 15,
-        vertical: 17,
-      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 17),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
         borderSide: const BorderSide(color: Color(0xFFD6E3F8)),
@@ -640,10 +697,7 @@ class _SectionHeading extends StatelessWidget {
   final String title;
   final String subtitle;
 
-  const _SectionHeading({
-    required this.title,
-    required this.subtitle,
-  });
+  const _SectionHeading({required this.title, required this.subtitle});
 
   @override
   Widget build(BuildContext context) {
@@ -661,10 +715,7 @@ class _SectionHeading extends StatelessWidget {
         const SizedBox(height: 5),
         Text(
           subtitle,
-          style: const TextStyle(
-            color: Color(0xFF7892B0),
-            fontSize: 13,
-          ),
+          style: const TextStyle(color: Color(0xFF7892B0), fontSize: 13),
         ),
       ],
     );
@@ -692,13 +743,12 @@ class _RequestCard extends StatelessWidget {
     final eta = request.estimatedArrivalMinutes;
 
     final normalizedStatus = status.toLowerCase();
-    final statusColor = normalizedStatus == 'completed' ||
-            normalizedStatus == 'served'
+    final statusColor =
+        normalizedStatus == 'completed' || normalizedStatus == 'served'
         ? const Color(0xFF268566)
-        : normalizedStatus == 'cancelled' ||
-                normalizedStatus == 'canceled'
-            ? const Color(0xFFB94D58)
-            : const Color(0xFF246F96);
+        : normalizedStatus == 'cancelled' || normalizedStatus == 'canceled'
+        ? const Color(0xFFB94D58)
+        : const Color(0xFF246F96);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
@@ -783,10 +833,7 @@ class _RequestCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   display(request.pickupAddress),
-                  style: const TextStyle(
-                    color: Color(0xFF526D8C),
-                    height: 1.4,
-                  ),
+                  style: const TextStyle(color: Color(0xFF526D8C), height: 1.4),
                 ),
               ),
             ],
@@ -809,10 +856,7 @@ class _RequestCard extends StatelessWidget {
                 const Expanded(
                   child: Text(
                     'Estimated arrival',
-                    style: TextStyle(
-                      color: Color(0xFF526D8C),
-                      fontSize: 13,
-                    ),
+                    style: TextStyle(color: Color(0xFF526D8C), fontSize: 13),
                   ),
                 ),
                 Text(
@@ -900,17 +944,11 @@ class _EmptyState extends StatelessWidget {
           Text(
             message,
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: Color(0xFF7892B0),
-              height: 1.45,
-            ),
+            style: const TextStyle(color: Color(0xFF7892B0), height: 1.45),
           ),
           if (buttonLabel != null && onPressed != null) ...[
             const SizedBox(height: 12),
-            TextButton(
-              onPressed: onPressed,
-              child: Text(buttonLabel!),
-            ),
+            TextButton(onPressed: onPressed, child: Text(buttonLabel!)),
           ],
         ],
       ),

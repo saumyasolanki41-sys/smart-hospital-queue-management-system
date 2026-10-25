@@ -21,11 +21,12 @@ class DoctorDetailsScreen extends StatefulWidget {
 }
 
 class _DoctorDetailsScreenState extends State<DoctorDetailsScreen> {
-  static const Color _primary = Color(0xFF246F96);
+  static const Color _primary = Color.fromARGB(255, 14, 18, 33);
+  static const Color _skyBlue = Color(0xFF8DB8F5);
   static const Color _background = Color(0xFFE6EFFF);
-  static const Color _heading = Color(0xFF173B5E);
-  static const Color _lightBlue = Color(0xFFE8F0FF);
-  static const Color _muted = Color(0xFF7892B0);
+  static const Color _darkText = Color.fromARGB(255, 5, 26, 37);
+  static const Color _muted = Color(0xFF60758A);
+  static const Color _lightCard = Color(0xFFF5F8FF);
 
   String? _selectedSlot;
   bool _isSelectingSlot = false;
@@ -125,8 +126,7 @@ class _DoctorDetailsScreenState extends State<DoctorDetailsScreen> {
   Widget build(BuildContext context) {
     final doctor = widget.doctor;
     final tokenController = context.watch<TokenController>();
-    final isDark =
-        Theme.of(context).brightness == Brightness.dark;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final colors = Theme.of(context).colorScheme;
 
     final specialization =
@@ -147,8 +147,8 @@ class _DoctorDetailsScreenState extends State<DoctorDetailsScreen> {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              Color(0xFFE6EFFF),
-              Color(0xFFF5F8FF),
+              _background,
+              Color(0xFFF2F6FF),
               Colors.white,
             ],
           ),
@@ -160,52 +160,42 @@ class _DoctorDetailsScreenState extends State<DoctorDetailsScreen> {
                 child: ListView(
                   padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
                   children: [
-                    // App bar
+                    // Header matching HomeScreen
                     Row(
                       children: [
-                        Container(
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(13),
-                            boxShadow: [
-                              BoxShadow(
-                                color: _heading.withValues(alpha: 0.06),
-                                blurRadius: 8,
-                                offset: const Offset(0, 3),
-                              ),
-                            ],
-                          ),
-                          child: IconButton(
-                            onPressed: () => Navigator.pop(context),
-                            icon: const Icon(
-                              Icons.arrow_back_rounded,
-                              color: _heading,
-                              size: 25,
-                            ),
-                          ),
+                        _HeaderButton(
+                          icon: Icons.arrow_back_rounded,
+                          onPressed: () => Navigator.pop(context),
                         ),
                         const SizedBox(width: 14),
                         const Expanded(
                           child: Text(
                             'Doctor Details',
                             style: TextStyle(
-                              color: _heading,
+                              color: _primary,
                               fontSize: 23,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                         ),
                         Container(
-                          height: 44,
-                          width: 44,
+                          height: 46,
+                          width: 46,
                           decoration: BoxDecoration(
                             color: Colors.white,
-                            borderRadius: BorderRadius.circular(13),
+                            borderRadius: BorderRadius.circular(15),
+                            boxShadow: [
+                              BoxShadow(
+                                color: _primary.withValues(alpha: 0.06),
+                                blurRadius: 10,
+                                offset: const Offset(0, 3),
+                              ),
+                            ],
                           ),
                           child: const Icon(
                             Icons.local_hospital_rounded,
                             color: _primary,
-                            size: 24,
+                            size: 25,
                           ),
                         ),
                       ],
@@ -213,23 +203,16 @@ class _DoctorDetailsScreenState extends State<DoctorDetailsScreen> {
 
                     const SizedBox(height: 24),
 
-                    // Doctor information banner
+                    // Doctor banner
                     Container(
-                      padding: const EdgeInsets.all(20),
+                      padding: const EdgeInsets.all(22),
                       decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            Color(0xFF246F96),
-                            Color(0xFF8DB8F5),
-                          ],
-                        ),
-                        borderRadius: BorderRadius.circular(22),
+                        color: _primary,
+                        borderRadius: BorderRadius.circular(24),
                         boxShadow: [
                           BoxShadow(
-                            color: _primary.withValues(alpha: 0.16),
-                            blurRadius: 12,
+                            color: _primary.withValues(alpha: 0.15),
+                            blurRadius: 14,
                             offset: const Offset(0, 5),
                           ),
                         ],
@@ -250,9 +233,9 @@ class _DoctorDetailsScreenState extends State<DoctorDetailsScreen> {
                                 ),
                                 SizedBox(height: 8),
                                 Text(
-                                  'View doctor information and book your appointment.',
+                                  'View doctor details and choose a time for your visit.',
                                   style: TextStyle(
-                                    color: Colors.white,
+                                    color: Colors.white70,
                                     fontSize: 13,
                                     height: 1.5,
                                   ),
@@ -262,8 +245,8 @@ class _DoctorDetailsScreenState extends State<DoctorDetailsScreen> {
                           ),
                           SizedBox(width: 12),
                           Icon(
-                            Icons.medical_information_rounded,
-                            color: Colors.white,
+                            Icons.medical_services_rounded,
+                            color: _skyBlue,
                             size: 43,
                           ),
                         ],
@@ -280,12 +263,11 @@ class _DoctorDetailsScreenState extends State<DoctorDetailsScreen> {
                         color: isDark ? colors.surface : Colors.white,
                         borderRadius: BorderRadius.circular(24),
                         border: Border.all(
-                          color: const Color(0xFFB7D2F8)
-                              .withValues(alpha: 0.65),
+                          color: _skyBlue.withValues(alpha: 0.35),
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: _heading.withValues(alpha: 0.06),
+                            color: _primary.withValues(alpha: 0.06),
                             blurRadius: 12,
                             offset: const Offset(0, 4),
                           ),
@@ -298,13 +280,13 @@ class _DoctorDetailsScreenState extends State<DoctorDetailsScreen> {
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               border: Border.all(
-                                color: const Color(0xFFB7D2F8),
+                                color: _skyBlue,
                                 width: 2,
                               ),
                             ),
                             child: const CircleAvatar(
                               radius: 48,
-                              backgroundColor: _lightBlue,
+                              backgroundColor: _background,
                               child: Icon(
                                 Icons.person_rounded,
                                 color: _primary,
@@ -319,21 +301,21 @@ class _DoctorDetailsScreenState extends State<DoctorDetailsScreen> {
                             doctor.name,
                             textAlign: TextAlign.center,
                             style: TextStyle(
-                              color: isDark ? colors.onSurface : _heading,
+                              color: isDark ? colors.onSurface : _primary,
                               fontSize: 23,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
 
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 10),
 
                           Container(
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 14,
-                              vertical: 7,
+                              horizontal: 15,
+                              vertical: 8,
                             ),
                             decoration: BoxDecoration(
-                              color: _lightBlue,
+                              color: _background,
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: Text(
@@ -405,19 +387,18 @@ class _DoctorDetailsScreenState extends State<DoctorDetailsScreen> {
 
                     const SizedBox(height: 24),
 
-                    // Information section
+                    // Doctor information
                     Container(
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
                         color: isDark ? colors.surface : Colors.white,
                         borderRadius: BorderRadius.circular(22),
                         border: Border.all(
-                          color: const Color(0xFFB7D2F8)
-                              .withValues(alpha: 0.65),
+                          color: _skyBlue.withValues(alpha: 0.35),
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: _heading.withValues(alpha: 0.04),
+                            color: _primary.withValues(alpha: 0.05),
                             blurRadius: 10,
                             offset: const Offset(0, 3),
                           ),
@@ -437,7 +418,7 @@ class _DoctorDetailsScreenState extends State<DoctorDetailsScreen> {
                               Text(
                                 'Doctor Information',
                                 style: TextStyle(
-                                  color: _heading,
+                                  color: _primary,
                                   fontSize: 19,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -471,10 +452,7 @@ class _DoctorDetailsScreenState extends State<DoctorDetailsScreen> {
 
                           if (_selectedSlot != null) ...[
                             const SizedBox(height: 20),
-                            const Divider(
-                              color: _lightBlue,
-                              height: 1,
-                            ),
+                            const Divider(color: _background),
                             const SizedBox(height: 18),
                             _InfoRow(
                               icon: Icons.access_time_rounded,
@@ -492,8 +470,11 @@ class _DoctorDetailsScreenState extends State<DoctorDetailsScreen> {
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFE8F0FF),
-                        borderRadius: BorderRadius.circular(17),
+                        color: _background,
+                        borderRadius: BorderRadius.circular(18),
+                        border: Border.all(
+                          color: _skyBlue.withValues(alpha: 0.3),
+                        ),
                       ),
                       child: const Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -508,7 +489,7 @@ class _DoctorDetailsScreenState extends State<DoctorDetailsScreen> {
                             child: Text(
                               'Choose an available time slot before booking your token.',
                               style: TextStyle(
-                                color: _heading,
+                                color: _darkText,
                                 fontSize: 13,
                                 height: 1.5,
                               ),
@@ -531,7 +512,7 @@ class _DoctorDetailsScreenState extends State<DoctorDetailsScreen> {
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: _heading.withValues(alpha: 0.08),
+                      color: _primary.withValues(alpha: 0.08),
                       blurRadius: 14,
                       offset: const Offset(0, -4),
                     ),
@@ -574,7 +555,7 @@ class _DoctorDetailsScreenState extends State<DoctorDetailsScreen> {
                           style: OutlinedButton.styleFrom(
                             foregroundColor: _primary,
                             side: const BorderSide(
-                              color: _primary,
+                              color: _skyBlue,
                               width: 1.4,
                             ),
                             shape: RoundedRectangleBorder(
@@ -643,14 +624,50 @@ class _DoctorDetailsScreenState extends State<DoctorDetailsScreen> {
   }
 }
 
+class _HeaderButton extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback onPressed;
+
+  const _HeaderButton({
+    required this.icon,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: [
+          BoxShadow(
+            color: const Color.fromARGB(255, 14, 18, 33)
+                .withValues(alpha: 0.06),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: IconButton(
+        onPressed: onPressed,
+        icon: Icon(
+          icon,
+          color: const Color.fromARGB(255, 14, 18, 33),
+          size: 25,
+        ),
+      ),
+    );
+  }
+}
+
 class _InfoRow extends StatelessWidget {
   final IconData icon;
   final String label;
   final String value;
 
-  static const Color _primary = Color(0xFF246F96);
-  static const Color _heading = Color(0xFF173B5E);
-  static const Color _muted = Color(0xFF7892B0);
+  static const Color _primary = Color.fromARGB(255, 14, 18, 33);
+  static const Color _muted = Color(0xFF60758A);
+  static const Color _background = Color(0xFFE6EFFF);
 
   const _InfoRow({
     required this.icon,
@@ -660,8 +677,7 @@ class _InfoRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark =
-        Theme.of(context).brightness == Brightness.dark;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final colors = Theme.of(context).colorScheme;
 
     return Row(
@@ -671,7 +687,7 @@ class _InfoRow extends StatelessWidget {
           height: 39,
           width: 39,
           decoration: BoxDecoration(
-            color: const Color(0xFFE8F0FF),
+            color: _background,
             borderRadius: BorderRadius.circular(12),
           ),
           child: Icon(
@@ -701,7 +717,7 @@ class _InfoRow extends StatelessWidget {
               Text(
                 value,
                 style: TextStyle(
-                  color: isDark ? colors.onSurface : _heading,
+                  color: isDark ? colors.onSurface : _primary,
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
                 ),

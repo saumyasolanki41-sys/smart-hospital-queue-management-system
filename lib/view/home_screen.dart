@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
 import '../models/token_model.dart';
+import '../models/doctor_model.dart';
 import '../controller/auth_controller.dart';
 import '../controller/token_controller.dart';
+import '../controller/doctor_controller.dart';
 import 'ambulance_screen.dart';
 import 'department_screen.dart';
+import 'doctor_details_screen.dart';
 import 'live_queue_screen.dart';
 import 'my_tokens_screen.dart';
 import 'profile_screen.dart';
@@ -23,6 +25,8 @@ class _HomeScreenState extends State<HomeScreen> {
   static const Color _background = Color(0xFFE6EFFF);
   static const Color _darkText = Color.fromARGB(255, 5, 26, 37);
   static const Color _muted = Color(0xFF60758A);
+
+  bool _openingDoctorProfile = false;
 
   @override
   void initState() {
@@ -113,6 +117,74 @@ class _HomeScreenState extends State<HomeScreen> {
       context,
       DepartmentScreen(selectedDepartmentName: departmentName),
     );
+  }
+
+  // Opens the actual doctor profile associated with this appointment.
+  Future<void> _openDoctorProfile(TokenModel token) async {
+    if (_openingDoctorProfile) return;
+
+    setState(() {
+      _openingDoctorProfile = true;
+    });
+
+    try {
+      final doctorController = context.read<DoctorController>();
+
+      await doctorController.fetchDoctors(
+        departmentId: token.departmentId,
+        refresh: true,
+      );
+
+      if (!mounted) return;
+
+      // Find the doctor using the ID stored in the appointment token.
+      DoctorModel? matchedDoctor;
+
+      for (final doctor in doctorController.doctors) {
+        if (doctor.id.trim() == token.doctorId.trim()) {
+          matchedDoctor = doctor;
+          break;
+        }
+      }
+
+      if (matchedDoctor == null) {
+        final error = doctorController.error;
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              error != null
+                  ? 'Unable to load doctor details. $error'
+                  : 'Doctor details could not be found. Please try again.',
+            ),
+          ),
+        );
+        return;
+      }
+
+      await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => DoctorDetailsScreen(
+            doctor: matchedDoctor!,
+          ),
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Unable to open doctor profile. Please try again.'),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _openingDoctorProfile = false;
+        });
+      }
+    }
   }
 
   bool _isActiveToken(TokenModel token) {
@@ -280,7 +352,7 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  'Next Appointment',
+                  'Upcoming Appointments',
                   style: TextStyle(
                     color: isDark ? colors.onSurface : _darkText,
                     fontSize: 18,
@@ -288,28 +360,23 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: _background,
-                  borderRadius: BorderRadius.circular(20),
+              TextButton(
+                onPressed: () => _navigate(
+                  context,
+                  const MyTokensScreen(),
                 ),
                 child: const Text(
-                  'APPOINTMENT',
+                  'View All',
                   style: TextStyle(
                     color: _primary,
-                    fontSize: 9,
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
             ],
           ),
 
-          const SizedBox(height: 20),
+          const SizedBox(height: 18),
 
           if (isLoading &&
               tokenController.tokens.isEmpty &&
@@ -328,6 +395,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
           ] else if (token != null) ...[
+            // Appointment date and time.
             if (appointmentTime != null)
               Container(
                 width: double.infinity,
@@ -341,7 +409,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     const Icon(
                       Icons.access_time_rounded,
                       color: _primary,
-                      size: 24,
+                      size: 25,
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -381,39 +449,136 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
 
-            const SizedBox(height: 15),
+            const SizedBox(height: 18),
 
-            _appointmentDetail(
-              icon: Icons.person_rounded,
-              label: doctorName != null && doctorName.isNotEmpty
-                  ? 'Dr. $doctorName'
-                  : 'Doctor details unavailable',
-              isDark: isDark,
-              colors: colors,
+            // Doctor information.
+            Row(
+              children: [
+                Container(
+                  height: 56,
+                  width: 56,
+                  decoration: BoxDecoration(
+                    color: _background,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: const Icon(
+                    Icons.medical_services_rounded,
+                    color: _primary,
+                    size: 29,
+                  ),
+                ),
+                const SizedBox(width: 13),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        doctorName != null && doctorName.isNotEmpty
+                            ? 'Dr. $doctorName'
+                            : 'Doctor details unavailable',
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: isDark ? colors.onSurface : _darkText,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      if (departmentName != null) ...[
+                        const SizedBox(height: 5),
+                        Text(
+                          departmentName,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: _muted,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ],
             ),
 
-            if (departmentName != null) ...[
-              const SizedBox(height: 10),
-              _appointmentDetail(
-                icon: Icons.local_hospital_rounded,
-                label: departmentName,
-                isDark: isDark,
-                colors: colors,
-              ),
-            ],
-
             if (tokenNumber != null && tokenNumber.isNotEmpty) ...[
-              const SizedBox(height: 10),
-              _appointmentDetail(
-                icon: Icons.confirmation_number_rounded,
-                label: 'Token: $tokenNumber',
-                isDark: isDark,
-                colors: colors,
+              const SizedBox(height: 15),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 13,
+                  vertical: 11,
+                ),
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? colors.surfaceContainerHighest
+                      : const Color(0xFFF5F8FF),
+                  borderRadius: BorderRadius.circular(13),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.confirmation_number_rounded,
+                      color: _primary,
+                      size: 21,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'Token: $tokenNumber',
+                        style: TextStyle(
+                          color: isDark ? colors.onSurface : _darkText,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ],
 
             const SizedBox(height: 18),
 
+            // Open the matching doctor's profile.
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: _openingDoctorProfile || token.doctorId.trim().isEmpty
+                    ? null
+                    : () => _openDoctorProfile(token),
+                icon: _openingDoctorProfile
+                    ? const SizedBox(
+                        height: 18,
+                        width: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Icon(Icons.person_search_rounded),
+                label: Text(
+                  _openingDoctorProfile
+                      ? 'Loading Doctor Profile...'
+                      : 'View Doctor Profile',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _primary,
+                  foregroundColor: Colors.white,
+                  disabledBackgroundColor: _muted,
+                  disabledForegroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 10),
+
+            // Keep the existing My Tokens navigation.
             SizedBox(
               width: double.infinity,
               child: OutlinedButton(
@@ -506,30 +671,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _appointmentDetail({
-    required IconData icon,
-    required String label,
-    required bool isDark,
-    required ColorScheme colors,
-  }) {
-    return Row(
-      children: [
-        Icon(icon, color: _primary, size: 20),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Text(
-            label,
-            style: TextStyle(
-              color: isDark ? colors.onSurface : _darkText,
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
@@ -576,85 +717,78 @@ class _HomeScreenState extends State<HomeScreen> {
               onRefresh: () => _refreshBackend(context),
               child: ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(20, 18, 20, 30),
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 30),
                 children: [
-                  // Header with profile icon at the top-right.
+                  // Greeting and profile icon.
                   Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
+                      const SizedBox(width: 13),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Home',
-                              style: TextStyle(
-                                color: isDark ? colors.onSurface : _darkText,
-                                fontSize: 29,
+                              '${_greeting()}!',
+                              style: const TextStyle(
+                                color: Color.fromARGB(255, 4, 9, 15),
+                                fontSize: 26,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                            const SizedBox(height: 17),
-                            Text(
-                              _greeting(),
-                              style: const TextStyle(
-                                color: _muted,
-                                fontSize: 17,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
+                            const SizedBox(height: 3),
                             Text(
                               name,
-                              maxLines: 2,
+                              maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
                                 color: isDark ? colors.onSurface : _darkText,
-                                fontSize: 25,
+                                fontSize: 21,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
                           ],
                         ),
                       ),
-
-                      // Tapping the profile icon opens ProfileScreen.
-                      InkWell(
-                        onTap: () => _navigate(
-                          context,
-                          const ProfileScreen(),
-                        ),
-                        borderRadius: BorderRadius.circular(40),
-                        child: Container(
-                          height: 66,
-                          width: 66,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: _skyBlue.withValues(alpha: 0.6),
-                              width: 2,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: const Color(0xFF315B91)
-                                    .withValues(alpha: 0.12),
-                                blurRadius: 12,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
+                      const SizedBox(width: 8),
+                      Material(
+                        color: Colors.white,
+                        shape: const CircleBorder(),
+                        child: InkWell(
+                          onTap: () => _navigate(
+                            context,
+                            const ProfileScreen(),
                           ),
-                          child: const Icon(
-                            Icons.person_rounded,
-                            size: 39,
-                            color: _primary,
+                          customBorder: const CircleBorder(),
+                          child: const SizedBox(
+                            height: 52,
+                            width: 52,
+                            child: Icon(
+                              Icons.person_outline_rounded,
+                              color: _primary,
+                              size: 29,
+                            ),
                           ),
                         ),
                       ),
                     ],
                   ),
 
-                  const SizedBox(height: 25),
+                  const SizedBox(height: 30),
 
-                  // Next appointment
+                  Text(
+                    'How are you feeling\ntoday?',
+                    style: TextStyle(
+                      color: isDark ? colors.onSurface : _darkText,
+                      fontSize: 30,
+                      height: 1.12,
+                      letterSpacing: -0.6,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+
+                  const SizedBox(height: 27),
+
                   _buildAppointmentCard(
                     context,
                     tokenController: tokenController,
@@ -662,9 +796,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     colors: colors,
                   ),
 
-                  const SizedBox(height: 27),
+                  const SizedBox(height: 28),
 
-                  // Quick actions
                   Text(
                     'Quick Actions',
                     style: TextStyle(
@@ -706,7 +839,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
                   const SizedBox(height: 29),
 
-                  // Departments
                   Row(
                     children: [
                       Expanded(
@@ -798,7 +930,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
                   const SizedBox(height: 15),
 
-                  // Ambulance shortcut
+                  // Ambulance shortcut.
                   Material(
                     color: isDark ? colors.surfaceContainer : Colors.white,
                     borderRadius: BorderRadius.circular(20),
@@ -867,7 +999,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
 
-      // Bottom navigation: Profile has been removed.
+      // Existing bottom navigation and logout behavior.
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: isDark ? colors.surfaceContainer : Colors.white,
