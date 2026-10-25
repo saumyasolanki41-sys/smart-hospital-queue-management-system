@@ -1,7 +1,6 @@
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
 import '../controller/auth_controller.dart';
 import 'ambulance_screen.dart';
 import 'my_tokens_screen.dart';
@@ -222,7 +221,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Header
+            
                 Row(
                   children: [
                     _HeaderButton(
@@ -256,17 +255,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ],
                       ),
                     ),
-                    _HeaderButton(
-                      icon: Icons.edit_outlined,
-                      onTap: _editProfile,
-                      isDark: isDark,
-                    ),
                   ],
                 ),
 
                 const SizedBox(height: 25),
 
-                // Profile banner
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(23),
@@ -495,7 +488,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                 const SizedBox(height: 25),
 
-                // Logout
+            
                 SizedBox(
                   width: double.infinity,
                   child: OutlinedButton.icon(
@@ -564,7 +557,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 }
 
-// Header button
 class _HeaderButton extends StatelessWidget {
   final IconData icon;
   final VoidCallback onTap;
@@ -606,7 +598,6 @@ class _HeaderButton extends StatelessWidget {
   }
 }
 
-// Section heading
 class _SectionHeading extends StatelessWidget {
   final String title;
   final String subtitle;
@@ -667,8 +658,6 @@ class _SectionHeading extends StatelessWidget {
     );
   }
 }
-
-// Personal information row
 class _InformationRow extends StatelessWidget {
   final IconData icon;
   final String title;
@@ -738,7 +727,6 @@ class _InformationRow extends StatelessWidget {
   }
 }
 
-// Divider between profile rows
 class _SoftDivider extends StatelessWidget {
   const _SoftDivider();
 
@@ -752,7 +740,6 @@ class _SoftDivider extends StatelessWidget {
   }
 }
 
-// Smart Hospital menu row
 class _ProfileMenuRow extends StatelessWidget {
   final IconData icon;
   final String title;
@@ -818,7 +805,6 @@ class _ProfileMenuRow extends StatelessWidget {
   }
 }
 
-// Edit profile screen
 class EditProfileScreen extends StatefulWidget {
   final String fullName;
   final String age;
@@ -1078,7 +1064,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         color: Colors.transparent,
         size: 0,
       ),
-      // Keep the original field icons.
+ 
       icon: null,
       filled: true,
       fillColor: const Color(0xFFF5F8FF),

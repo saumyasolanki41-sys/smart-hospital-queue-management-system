@@ -176,16 +176,14 @@ class _MyTokensScreenState extends State<MyTokensScreen> {
                             : Colors.white,
                         borderRadius: BorderRadius.circular(14),
                       ),
-                      child: IconButton(
-                        tooltip: 'Refresh appointments',
-                        onPressed: tokenController.isLoading
-                            ? null
-                            : _refreshTokens,
-                        icon: const Icon(
-                          Icons.refresh_rounded,
-                          color: _primary,
-                        ),
-                      ),
+                      // child: IconButton(
+                      //   tooltip: 'Refresh appointments',
+                      //  onPressed: _refreshTokens,
+                      //   icon: const Icon(
+                      //     Icons.refresh_rounded,
+                      //     color: _primary,
+                      //   ),
+                      // ),
                     ),
                   ],
                 ),
@@ -454,7 +452,7 @@ class _MyTokensScreenState extends State<MyTokensScreen> {
                 ),
                 const _BottomNavItem(
                   icon: Icons.history_rounded,
-                  label: 'History',
+                  label: 'My Tokens',
                   selected: true,
                 ),
                 _BottomNavItem(

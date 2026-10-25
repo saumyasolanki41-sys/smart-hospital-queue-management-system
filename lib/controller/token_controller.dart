@@ -18,6 +18,9 @@ class TokenController extends ChangeNotifier {
   bool _isBooking = false;
   bool _isCancelling = false;
 
+  // Tracks whether another refresh is needed.
+  bool _refreshRequested = false;
+
   String? _error;
 
   List<TokenModel> get tokens => List.unmodifiable(_tokens);
@@ -62,7 +65,8 @@ class TokenController extends ChangeNotifier {
     } on ApiException catch (exception) {
       _error = exception.message;
       return null;
-    } catch (_) {
+    } catch (e) {
+      debugPrint('Book token error: $e');
       _error = 'Unable to book your token. Please try again.';
       return null;
     } finally {
@@ -72,37 +76,58 @@ class TokenController extends ChangeNotifier {
   }
 
   Future<void> fetchMyTokens({bool refresh = false}) async {
-    if (_isLoading) return;
+    // If a fetch is already running, queue another fetch
+    // when a refresh is requested.
+    if (_isLoading) {
+      if (refresh) {
+        _refreshRequested = true;
+      }
+      return;
+    }
 
     _isLoading = true;
     _error = null;
     notifyListeners();
 
     try {
-      _tokens = await _queueService.getMyTokens();
+      do {
+        _refreshRequested = false;
 
-      if (_selectedToken != null) {
-        final selectedId = _selectedToken!.id;
+        try {
+          final fetchedTokens = await _queueService.getMyTokens();
 
-        final matchingTokens = _tokens.where(
-          (token) => token.id == selectedId,
-        );
+          _tokens = fetchedTokens;
 
-        _selectedToken =
-            matchingTokens.isNotEmpty ? matchingTokens.first : null;
-      }
-    } on ApiException catch (exception) {
-      _error = exception.message;
+          if (_selectedToken != null) {
+            final selectedId = _selectedToken!.id;
 
-      if (!refresh) {
-        _tokens = [];
-      }
-    } catch (_) {
-      _error = 'Unable to load your tokens. Please try again.';
+            final matchingTokens = _tokens.where(
+              (token) => token.id == selectedId,
+            );
 
-      if (!refresh) {
-        _tokens = [];
-      }
+            _selectedToken = matchingTokens.isNotEmpty
+                ? matchingTokens.first
+                : null;
+          }
+
+          _error = null;
+        } on ApiException catch (exception) {
+          _error = exception.message;
+
+          if (!refresh && _tokens.isEmpty) {
+            _tokens = [];
+          }
+        } catch (e) {
+          debugPrint('Fetch tokens error: $e');
+          _error = 'Unable to load your tokens. Please try again.';
+
+          if (!refresh && _tokens.isEmpty) {
+            _tokens = [];
+          }
+        }
+
+        notifyListeners();
+      } while (_refreshRequested);
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -131,7 +156,8 @@ class TokenController extends ChangeNotifier {
       return token;
     } on ApiException catch (exception) {
       _error = exception.message;
-    } catch (_) {
+    } catch (e) {
+      debugPrint('Fetch token status error: $e');
       _error = 'Unable to fetch token status. Please try again.';
     }
 
@@ -173,7 +199,8 @@ class TokenController extends ChangeNotifier {
     } on ApiException catch (exception) {
       _error = exception.message;
       return false;
-    } catch (_) {
+    } catch (e) {
+      debugPrint('Cancel token error: $e');
       _error = 'Unable to cancel your token. Please try again.';
       return false;
     } finally {
@@ -196,6 +223,7 @@ class TokenController extends ChangeNotifier {
     _tokens = [];
     _selectedToken = null;
     _error = null;
+    _refreshRequested = false;
     notifyListeners();
   }
 }
