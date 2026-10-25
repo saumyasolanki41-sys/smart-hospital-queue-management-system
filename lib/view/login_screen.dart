@@ -1,8 +1,6 @@
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-
 import '../controller/auth_controller.dart';
 import 'otp_verification_screen.dart';
 import 'signup_screen.dart';
@@ -278,7 +276,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             fontSize: 15,
                           ),
                         ),
-                        const SizedBox(height: 28),
+                        const SizedBox(height: 28), 
                         TextFormField(
                           controller: _emailController,
                           keyboardType: TextInputType.emailAddress,
@@ -524,7 +522,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 }
 
-// Only the logo has been changed.
+
 class LoginMedicalLogo extends StatelessWidget {
   const LoginMedicalLogo({super.key});
 

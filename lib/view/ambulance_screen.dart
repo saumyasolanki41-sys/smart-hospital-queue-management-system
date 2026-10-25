@@ -12,11 +12,11 @@ class AmbulanceScreen extends StatefulWidget {
 }
 
 class _AmbulanceScreenState extends State<AmbulanceScreen> {
-  static const Color _primary = Color(0xFF236D96);
-  static const Color _background = Color(0xFFC2E9EC);
-  static const Color _heading = Color(0xFF285C7D);
-  static const Color _cardColor = Color(0xFFF3FAFF);
-  static const Color _muted = Color(0xFF78A8BB);
+  static const Color _primary = Color(0xFF246F96);
+  static const Color _background = Color(0xFFE6EFFF);
+  static const Color _heading = Color(0xFF173B5E);
+  static const Color _cardColor = Color(0xFFFFFFFF);
+  static const Color _muted = Color(0xFF7892B0);
 
   final _addressController = TextEditingController();
   final _phoneController = TextEditingController();
@@ -203,7 +203,7 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: _primary,
+              backgroundColor: const Color.fromARGB(255, 14, 18, 33),
               foregroundColor: Colors.white,
             ),
             onPressed: () => Navigator.pop(dialogContext, true),
@@ -294,8 +294,8 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
                   colors: [
-                    Color(0xFF236D96),
-                    Color(0xFF398FA9),
+                    Color(0xFF246F96),
+                    Color(0xFF8DB8F5),
                   ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
@@ -341,7 +341,7 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
                         Text(
                           'Request emergency transport and track your request.',
                           style: TextStyle(
-                            color: Color(0xFFE4F6FF),
+                            color: Color(0xFFE8F0FF),
                             height: 1.45,
                             fontSize: 13,
                           ),
@@ -425,7 +425,7 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
                       style: OutlinedButton.styleFrom(
                         foregroundColor: _primary,
                         side: const BorderSide(
-                          color: Color(0xFF9ACBD8),
+                          color: Color(0xFF9DBDF2),
                         ),
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
@@ -515,7 +515,7 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
                             : 'Request Ambulance',
                       ),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: _primary,
+                        backgroundColor: const Color.fromARGB(255, 14, 18, 33),
                         foregroundColor: Colors.white,
                         disabledBackgroundColor: _muted,
                         padding: const EdgeInsets.symmetric(vertical: 16),
@@ -622,11 +622,11 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
       ),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: Color(0xFFD9E9EE)),
+        borderSide: const BorderSide(color: Color(0xFFD6E3F8)),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: Color(0xFFD9E9EE)),
+        borderSide: const BorderSide(color: Color(0xFFD6E3F8)),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
@@ -653,7 +653,7 @@ class _SectionHeading extends StatelessWidget {
         Text(
           title,
           style: const TextStyle(
-            color: Color(0xFF285C7D),
+            color: Color(0xFF173B5E),
             fontSize: 20,
             fontWeight: FontWeight.bold,
           ),
@@ -662,7 +662,7 @@ class _SectionHeading extends StatelessWidget {
         Text(
           subtitle,
           style: const TextStyle(
-            color: Color(0xFF78A8BB),
+            color: Color(0xFF7892B0),
             fontSize: 13,
           ),
         ),
@@ -698,18 +698,18 @@ class _RequestCard extends StatelessWidget {
         : normalizedStatus == 'cancelled' ||
                 normalizedStatus == 'canceled'
             ? const Color(0xFFB94D58)
-            : const Color(0xFF236D96);
+            : const Color(0xFF246F96);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
       padding: const EdgeInsets.all(17),
       decoration: BoxDecoration(
-        color: const Color(0xFFF3FAFF),
+        color: const Color(0xFFFFFFFF),
         borderRadius: BorderRadius.circular(21),
-        border: Border.all(color: const Color(0xFFD9EDF2)),
+        border: Border.all(color: const Color(0xFFD6E3F8)),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF285C7D).withValues(alpha: 0.07),
+            color: const Color(0xFF173B5E).withValues(alpha: 0.07),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -724,12 +724,12 @@ class _RequestCard extends StatelessWidget {
                 height: 49,
                 width: 49,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFD9F0F7),
+                  color: const Color(0xFFE8F0FF),
                   borderRadius: BorderRadius.circular(15),
                 ),
                 child: const Icon(
                   Icons.airport_shuttle_rounded,
-                  color: Color(0xFF236D96),
+                  color: Color(0xFF246F96),
                   size: 28,
                 ),
               ),
@@ -738,7 +738,7 @@ class _RequestCard extends StatelessWidget {
                 child: Text(
                   'Ambulance Request',
                   style: TextStyle(
-                    color: Color(0xFF285C7D),
+                    color: Color(0xFF173B5E),
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
                   ),
@@ -769,14 +769,14 @@ class _RequestCard extends StatelessWidget {
           ),
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 16),
-            child: Divider(color: Color(0xFFDCEBF0), height: 1),
+            child: Divider(color: Color(0xFFD6E3F8), height: 1),
           ),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Icon(
                 Icons.location_on_outlined,
-                color: Color(0xFF398FA9),
+                color: Color(0xFF8DB8F5),
                 size: 21,
               ),
               const SizedBox(width: 9),
@@ -784,7 +784,7 @@ class _RequestCard extends StatelessWidget {
                 child: Text(
                   display(request.pickupAddress),
                   style: const TextStyle(
-                    color: Color(0xFF53768B),
+                    color: Color(0xFF526D8C),
                     height: 1.4,
                   ),
                 ),
@@ -795,14 +795,14 @@ class _RequestCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(13),
             decoration: BoxDecoration(
-              color: const Color(0xFFE5F5F8),
+              color: const Color(0xFFE8F0FF),
               borderRadius: BorderRadius.circular(13),
             ),
             child: Row(
               children: [
                 const Icon(
                   Icons.schedule_rounded,
-                  color: Color(0xFF236D96),
+                  color: Color(0xFF246F96),
                   size: 23,
                 ),
                 const SizedBox(width: 10),
@@ -810,7 +810,7 @@ class _RequestCard extends StatelessWidget {
                   child: Text(
                     'Estimated arrival',
                     style: TextStyle(
-                      color: Color(0xFF53768B),
+                      color: Color(0xFF526D8C),
                       fontSize: 13,
                     ),
                   ),
@@ -818,7 +818,7 @@ class _RequestCard extends StatelessWidget {
                 Text(
                   eta == null ? 'Pending' : '$eta min',
                   style: const TextStyle(
-                    color: Color(0xFF285C7D),
+                    color: Color(0xFF173B5E),
                     fontSize: 15,
                     fontWeight: FontWeight.bold,
                   ),
@@ -836,8 +836,8 @@ class _RequestCard extends StatelessWidget {
                 icon: const Icon(Icons.schedule_rounded, size: 18),
                 label: const Text('Refresh ETA'),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFF236D96),
-                  side: const BorderSide(color: Color(0xFF9ACBD8)),
+                  foregroundColor: const Color(0xFF246F96),
+                  side: const BorderSide(color: Color(0xFF9DBDF2)),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -880,18 +880,18 @@ class _EmptyState extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: const Color(0xFFF3FAFF),
+        color: const Color(0xFFFFFFFF),
         borderRadius: BorderRadius.circular(21),
       ),
       child: Column(
         children: [
-          Icon(icon, size: 43, color: const Color(0xFF398FA9)),
+          Icon(icon, size: 43, color: const Color(0xFF8DB8F5)),
           const SizedBox(height: 12),
           Text(
             title,
             textAlign: TextAlign.center,
             style: const TextStyle(
-              color: Color(0xFF285C7D),
+              color: Color(0xFF173B5E),
               fontSize: 17,
               fontWeight: FontWeight.bold,
             ),
@@ -901,7 +901,7 @@ class _EmptyState extends StatelessWidget {
             message,
             textAlign: TextAlign.center,
             style: const TextStyle(
-              color: Color(0xFF78A8BB),
+              color: Color(0xFF7892B0),
               height: 1.45,
             ),
           ),

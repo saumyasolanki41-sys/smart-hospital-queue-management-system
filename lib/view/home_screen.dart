@@ -1,6 +1,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import '../models/token_model.dart';
 import '../controller/auth_controller.dart';
 import '../controller/token_controller.dart';
@@ -18,9 +19,11 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  static const Color _primary = Color(0xFF236D96);
-  static const Color _background = Color(0xFFC2E9EC);
-  static const Color _textColor = Color(0xFF285C7D);
+  static const Color _primary = Color.fromARGB(255, 14, 18, 33);
+  static const Color _skyBlue = Color(0xFF8DB8F5);
+  static const Color _background = Color(0xFFE6EFFF);
+  static const Color _darkText = Color.fromARGB(255, 5, 26, 37);
+  static const Color _muted = Color(0xFF60758A);
 
   @override
   void initState() {
@@ -28,9 +31,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-
-      final tokenController = context.read<TokenController>();
-      tokenController.fetchMyTokens(refresh: true);
+      context.read<TokenController>().fetchMyTokens(refresh: true);
     });
   }
 
@@ -38,15 +39,28 @@ class _HomeScreenState extends State<HomeScreen> {
     final shouldLogout = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
+        backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(22),
         ),
-        title: const Text('Logout'),
-        content: const Text('Are you sure you want to logout?'),
+        title: const Text(
+          'Logout',
+          style: TextStyle(
+            color: _darkText,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        content: const Text(
+          'Are you sure you want to logout?',
+          style: TextStyle(color: _darkText),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Cancel'),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: _primary),
+            ),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(dialogContext, true),
@@ -76,8 +90,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _refreshBackend(BuildContext context) async {
-    final tokenController = context.read<TokenController>();
-    await tokenController.fetchMyTokens(refresh: true);
+    await context.read<TokenController>().fetchMyTokens(refresh: true);
   }
 
   Future<void> _navigate(BuildContext context, Widget screen) async {
@@ -126,6 +139,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     final upcoming = tokens.where((token) {
       final time = token.appointmentTime;
+
       return _isActiveToken(token) &&
           time != null &&
           !time.toLocal().isBefore(now);
@@ -137,9 +151,7 @@ class _HomeScreenState extends State<HomeScreen> {
           .compareTo(b.appointmentTime!.toLocal());
     });
 
-    if (upcoming.isNotEmpty) {
-      return upcoming.first;
-    }
+    if (upcoming.isNotEmpty) return upcoming.first;
 
     if (selectedToken != null && _isActiveToken(selectedToken)) {
       return selectedToken;
@@ -158,9 +170,7 @@ class _HomeScreenState extends State<HomeScreen> {
       return bDate.compareTo(aDate);
     });
 
-    if (activeTokens.isNotEmpty) {
-      return activeTokens.first;
-    }
+    if (activeTokens.isNotEmpty) return activeTokens.first;
 
     return null;
   }
@@ -208,7 +218,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
     final isLoading = tokenController.isLoading;
     final hasError = tokenController.error != null;
-
     final appointmentTime = token?.appointmentTime;
 
     final rawDoctorName = token?.doctorName?.trim();
@@ -237,193 +246,288 @@ class _HomeScreenState extends State<HomeScreen> {
     final tokenNumber = token?.tokenNumber.trim();
 
     return Container(
-      padding: const EdgeInsets.all(17),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: isDark ? colors.surfaceContainer : const Color(0xFFF3FAFF),
-        borderRadius: BorderRadius.circular(19),
+        color: isDark ? colors.surfaceContainer : Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: _skyBlue.withValues(alpha: 0.35),
+        ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF285C7D).withValues(alpha: 0.13),
-            blurRadius: 12,
-            offset: const Offset(0, 6),
+            color: _primary.withValues(alpha: 0.08),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
-      child: Row(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            height: 72,
-            width: 72,
-            decoration: const BoxDecoration(
-              color: Color(0xFFD5F1F8),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.medical_services_rounded,
-              color: Color(0xFF438DA7),
-              size: 36,
-            ),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: _background,
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                child: const Icon(
+                  Icons.calendar_month_rounded,
+                  color: _primary,
+                  size: 27,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
                   'Next Appointment',
                   style: TextStyle(
-                    color: isDark
-                        ? colors.onSurfaceVariant
-                        : const Color(0xFF7EA6BC),
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
+                    color: isDark ? colors.onSurface : _darkText,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(height: 9),
-
-                if (isLoading &&
-                    tokenController.tokens.isEmpty &&
-                    tokenController.selectedToken == null) ...[
-                  const Row(
-                    children: [
-                      SizedBox(
-                        height: 17,
-                        width: 17,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: _primary,
-                        ),
-                      ),
-                      SizedBox(width: 9),
-                      Flexible(
-                        child: Text(
-                          'Loading your appointment...',
-                          style: TextStyle(fontSize: 12),
-                        ),
-                      ),
-                    ],
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: _background,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: const Text(
+                  'APPOINTMENT',
+                  style: TextStyle(
+                    color: _primary,
+                    fontSize: 9,
+                    fontWeight: FontWeight.bold,
                   ),
-                ] else if (token != null) ...[
-                  if (appointmentTime != null)
-                    Text(
-                      '${_formatAppointmentDate(appointmentTime)} at '
-                      '${_formatAppointmentTime(appointmentTime)}',
-                      style: TextStyle(
-                        color: isDark ? colors.onSurface : _textColor,
-                        fontSize: 17,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    )
-                  else
-                    Text(
-                      'Appointment time unavailable',
-                      style: TextStyle(
-                        color: isDark ? colors.onSurface : _textColor,
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-
-                  const SizedBox(height: 7),
-
-                  Text(
-                    doctorName != null && doctorName.isNotEmpty
-                        ? 'Dr. $doctorName'
-                        : 'Doctor details unavailable',
-                    style: TextStyle(
-                      color: isDark
-                          ? colors.onSurface
-                          : const Color(0xFF53768B),
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-
-                  if (departmentName != null) ...[
-                    const SizedBox(height: 4),
-                    Text(
-                      departmentName,
-                      style: const TextStyle(
-                        color: Color(0xFF82A5B8),
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
-
-                  if (tokenNumber != null && tokenNumber.isNotEmpty) ...[
-                    const SizedBox(height: 5),
-                    Text(
-                      'Token: $tokenNumber',
-                      style: const TextStyle(
-                        color: Color(0xFF438DA7),
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-
-                  const SizedBox(height: 10),
-
-                  InkWell(
-                    onTap: () => _navigate(
-                      context,
-                      const MyTokensScreen(),
-                    ),
-                    child: const Text(
-                      'View My Tokens  >',
-                      style: TextStyle(
-                        color: Color(0xFF6F9BB4),
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ] else ...[
-                  Text(
-                    isLoading
-                        ? 'Loading your appointment...'
-                        : hasError
-                            ? 'Unable to load appointments'
-                            : 'No upcoming appointment',
-                    style: TextStyle(
-                      color: isDark ? colors.onSurface : _textColor,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 7),
-                  Text(
-                    hasError
-                        ? 'Pull down to refresh and try again.'
-                        : 'Book an appointment to see your doctor and visit time here.',
-                    style: const TextStyle(
-                      color: Color(0xFF82A5B8),
-                      fontSize: 12,
-                      height: 1.4,
-                    ),
-                  ),
-                  const SizedBox(height: 9),
-                  InkWell(
-                    onTap: () => _navigate(
-                      context,
-                      const DepartmentScreen(),
-                    ),
-                    child: const Text(
-                      'Book an Appointment  >',
-                      style: TextStyle(
-                        color: Color(0xFF6F9BB4),
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ],
-              ],
-            ),
+                ),
+              ),
+            ],
           ),
+
+          const SizedBox(height: 20),
+
+          if (isLoading &&
+              tokenController.tokens.isEmpty &&
+              tokenController.selectedToken == null) ...[
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.all(12),
+                child: CircularProgressIndicator(color: _primary),
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Center(
+              child: Text(
+                'Loading your appointment...',
+                style: TextStyle(color: _muted, fontSize: 13),
+              ),
+            ),
+          ] else if (token != null) ...[
+            if (appointmentTime != null)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(15),
+                decoration: BoxDecoration(
+                  color: _background,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.access_time_rounded,
+                      color: _primary,
+                      size: 24,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _formatAppointmentDate(appointmentTime),
+                            style: const TextStyle(
+                              color: _darkText,
+                              fontSize: 17,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 3),
+                          Text(
+                            _formatAppointmentTime(appointmentTime),
+                            style: const TextStyle(
+                              color: _primary,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            else
+              const Text(
+                'Appointment time unavailable',
+                style: TextStyle(
+                  color: _darkText,
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+
+            const SizedBox(height: 15),
+
+            _appointmentDetail(
+              icon: Icons.person_rounded,
+              label: doctorName != null && doctorName.isNotEmpty
+                  ? 'Dr. $doctorName'
+                  : 'Doctor details unavailable',
+              isDark: isDark,
+              colors: colors,
+            ),
+
+            if (departmentName != null) ...[
+              const SizedBox(height: 10),
+              _appointmentDetail(
+                icon: Icons.local_hospital_rounded,
+                label: departmentName,
+                isDark: isDark,
+                colors: colors,
+              ),
+            ],
+
+            if (tokenNumber != null && tokenNumber.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              _appointmentDetail(
+                icon: Icons.confirmation_number_rounded,
+                label: 'Token: $tokenNumber',
+                isDark: isDark,
+                colors: colors,
+              ),
+            ],
+
+            const SizedBox(height: 18),
+
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton(
+                onPressed: () => _navigate(
+                  context,
+                  const MyTokensScreen(),
+                ),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: _primary,
+                  side: const BorderSide(color: _skyBlue),
+                  padding: const EdgeInsets.symmetric(vertical: 13),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+                child: const Text(
+                  'View My Tokens',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ),
+            ),
+          ] else ...[
+            Center(
+              child: Container(
+                padding: const EdgeInsets.all(15),
+                decoration: const BoxDecoration(
+                  color: _background,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.event_available_rounded,
+                  size: 34,
+                  color: _primary,
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Center(
+              child: Text(
+                isLoading
+                    ? 'Loading your appointment...'
+                    : hasError
+                        ? 'Unable to load appointments'
+                        : 'No upcoming appointment',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: isDark ? colors.onSurface : _darkText,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            const SizedBox(height: 7),
+            Text(
+              hasError
+                  ? 'Pull down to refresh and try again.'
+                  : 'Book an appointment to see your doctor and visit time here.',
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: _muted,
+                fontSize: 13,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 15),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () => _navigate(
+                  context,
+                  const DepartmentScreen(),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _primary,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 13),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+                child: const Text(
+                  'Book an Appointment',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ),
+            ),
+          ],
         ],
       ),
+    );
+  }
+
+  Widget _appointmentDetail({
+    required IconData icon,
+    required String label,
+    required bool isDark,
+    required ColorScheme colors,
+  }) {
+    return Row(
+      children: [
+        Icon(icon, color: _primary, size: 20),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            label,
+            style: TextStyle(
+              color: isDark ? colors.onSurface : _darkText,
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -446,33 +550,36 @@ class _HomeScreenState extends State<HomeScreen> {
         bottom: false,
         child: Stack(
           children: [
-            Positioned(
-              top: 0,
-              left: 0,
-              right: 0,
+            Positioned.fill(
               child: Container(
-                height: 370,
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: isDark
-                        ? [colors.surface, colors.surface]
-                        : const [
-                            Color(0xFFB9E7EA),
-                            Color(0xFFD7F4F3),
+                  gradient: isDark
+                      ? null
+                      : const LinearGradient(
+                          colors: [
+                            Color(0xFF8DB8F5),
+                            Color(0xFFB7D2F8),
+                            Color(0xFFE6EFFF),
+                            Colors.white,
+                            Color(0xFFE8F0FF),
+                            Color(0xFF9DBDF2),
                           ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
+                          stops: [0.0, 0.16, 0.32, 0.55, 0.78, 1.0],
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                        ),
                 ),
               ),
             ),
+
             RefreshIndicator(
               color: _primary,
               onRefresh: () => _refreshBackend(context),
               child: ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(20, 18, 20, 110),
+                padding: const EdgeInsets.fromLTRB(20, 18, 20, 30),
                 children: [
+                  // Header with profile icon at the top-right.
                   Row(
                     children: [
                       Expanded(
@@ -482,46 +589,65 @@ class _HomeScreenState extends State<HomeScreen> {
                             Text(
                               'Home',
                               style: TextStyle(
-                                color: isDark ? colors.onSurface : _textColor,
+                                color: isDark ? colors.onSurface : _darkText,
                                 fontSize: 29,
-                                fontWeight: FontWeight.w500,
+                                fontWeight: FontWeight.bold,
                               ),
                             ),
-                            const SizedBox(height: 23),
+                            const SizedBox(height: 17),
                             Text(
                               _greeting(),
-                              style: TextStyle(
-                                color: isDark
-                                    ? colors.onSurfaceVariant
-                                    : const Color(0xFF78A8BB),
-                                fontSize: 19,
+                              style: const TextStyle(
+                                color: _muted,
+                                fontSize: 17,
                               ),
                             ),
-                            const SizedBox(height: 3),
+                            const SizedBox(height: 4),
                             Text(
                               name,
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
-                                color: isDark ? colors.onSurface : _textColor,
-                                fontSize: 24,
+                                color: isDark ? colors.onSurface : _darkText,
+                                fontSize: 25,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
                           ],
                         ),
                       ),
-                      Container(
-                        height: 62,
-                        width: 62,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.65),
-                          shape: BoxShape.circle,
+
+                      // Tapping the profile icon opens ProfileScreen.
+                      InkWell(
+                        onTap: () => _navigate(
+                          context,
+                          const ProfileScreen(),
                         ),
-                        child: const Icon(
-                          Icons.person_rounded,
-                          size: 40,
-                          color: Color(0xFF6499AD),
+                        borderRadius: BorderRadius.circular(40),
+                        child: Container(
+                          height: 66,
+                          width: 66,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: _skyBlue.withValues(alpha: 0.6),
+                              width: 2,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFF315B91)
+                                    .withValues(alpha: 0.12),
+                                blurRadius: 12,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: const Icon(
+                            Icons.person_rounded,
+                            size: 39,
+                            color: _primary,
+                          ),
                         ),
                       ),
                     ],
@@ -529,6 +655,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
                   const SizedBox(height: 25),
 
+                  // Next appointment
                   _buildAppointmentCard(
                     context,
                     tokenController: tokenController,
@@ -536,24 +663,38 @@ class _HomeScreenState extends State<HomeScreen> {
                     colors: colors,
                   ),
 
-                  const SizedBox(height: 25),
+                  const SizedBox(height: 27),
+
+                  // Quick actions
+                  Text(
+                    'Quick Actions',
+                    style: TextStyle(
+                      color: isDark ? colors.onSurface : _darkText,
+                      fontSize: 21,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+
+                  const SizedBox(height: 14),
 
                   Row(
                     children: [
                       Expanded(
                         child: _MainActionButton(
                           title: 'Book Token',
-                          icon: Icons.add_rounded,
+                          subtitle: 'Book a doctor visit',
+                          icon: Icons.add_circle_outline_rounded,
                           onTap: () => _navigate(
                             context,
                             const DepartmentScreen(),
                           ),
                         ),
                       ),
-                      const SizedBox(width: 16),
+                      const SizedBox(width: 14),
                       Expanded(
                         child: _MainActionButton(
                           title: 'Track Queue',
+                          subtitle: 'Check your queue',
                           icon: Icons.access_time_rounded,
                           onTap: () => _navigate(
                             context,
@@ -564,17 +705,18 @@ class _HomeScreenState extends State<HomeScreen> {
                     ],
                   ),
 
-                  const SizedBox(height: 27),
+                  const SizedBox(height: 29),
 
+                  // Departments
                   Row(
                     children: [
                       Expanded(
                         child: Text(
                           'Departments',
                           style: TextStyle(
-                            color: isDark ? colors.onSurface : _textColor,
+                            color: isDark ? colors.onSurface : _darkText,
                             fontSize: 22,
-                            fontWeight: FontWeight.w600,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
                       ),
@@ -586,9 +728,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         child: const Text(
                           'View All',
                           style: TextStyle(
-                            color: _textColor,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
+                            color: _primary,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
                       ),
@@ -601,15 +742,13 @@ class _HomeScreenState extends State<HomeScreen> {
                     crossAxisCount: 3,
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
-                    crossAxisSpacing: 13,
-                    mainAxisSpacing: 16,
-                    childAspectRatio: 0.82,
+                    crossAxisSpacing: 12,
+                    mainAxisSpacing: 14,
+                    childAspectRatio: 0.79,
                     children: [
                       _DepartmentTile(
                         title: 'General\nMedicine',
                         icon: Icons.medication_rounded,
-                        color: const Color(0xFF55BFA4),
-                        background: const Color(0xFFE1F8EE),
                         onTap: () => _openDepartment(
                           context,
                           'General Medicine',
@@ -618,8 +757,6 @@ class _HomeScreenState extends State<HomeScreen> {
                       _DepartmentTile(
                         title: 'Cardiology',
                         icon: Icons.favorite_rounded,
-                        color: const Color(0xFF57B8C6),
-                        background: const Color(0xFFE0F8FC),
                         onTap: () => _openDepartment(
                           context,
                           'Cardiology',
@@ -628,8 +765,6 @@ class _HomeScreenState extends State<HomeScreen> {
                       _DepartmentTile(
                         title: 'Pediatrics',
                         icon: Icons.child_care_rounded,
-                        color: const Color(0xFFC98796),
-                        background: const Color(0xFFFFE9EF),
                         onTap: () => _openDepartment(
                           context,
                           'Pediatrics',
@@ -638,8 +773,6 @@ class _HomeScreenState extends State<HomeScreen> {
                       _DepartmentTile(
                         title: 'Orthopedics',
                         icon: Icons.accessibility_new_rounded,
-                        color: const Color(0xFFB69C38),
-                        background: const Color(0xFFFFF4C9),
                         onTap: () => _openDepartment(
                           context,
                           'Orthopedics',
@@ -648,8 +781,6 @@ class _HomeScreenState extends State<HomeScreen> {
                       _DepartmentTile(
                         title: 'Gynecology',
                         icon: Icons.female_rounded,
-                        color: const Color(0xFFA28BD8),
-                        background: const Color(0xFFEFE5FF),
                         onTap: () => _openDepartment(
                           context,
                           'Gynecology',
@@ -658,14 +789,77 @@ class _HomeScreenState extends State<HomeScreen> {
                       _DepartmentTile(
                         title: 'Dermatology',
                         icon: Icons.face_rounded,
-                        color: const Color(0xFFD18D9D),
-                        background: const Color(0xFFFFE6ED),
                         onTap: () => _openDepartment(
                           context,
                           'Dermatology',
                         ),
                       ),
                     ],
+                  ),
+
+                  const SizedBox(height: 15),
+
+                  // Ambulance shortcut
+                  Material(
+                    color: isDark ? colors.surfaceContainer : Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    child: InkWell(
+                      onTap: () => _navigate(
+                        context,
+                        const AmbulanceScreen(),
+                      ),
+                      borderRadius: BorderRadius.circular(20),
+                      child: Padding(
+                        padding: const EdgeInsets.all(17),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: _background,
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                              child: const Icon(
+                                Icons.emergency_rounded,
+                                color: _primary,
+                                size: 28,
+                              ),
+                            ),
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Ambulance Services',
+                                    style: TextStyle(
+                                      color: isDark
+                                          ? colors.onSurface
+                                          : _darkText,
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  const Text(
+                                    'Access ambulance assistance',
+                                    style: TextStyle(
+                                      color: _muted,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const Icon(
+                              Icons.arrow_forward_ios_rounded,
+                              color: _muted,
+                              size: 17,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -674,17 +868,18 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
 
+      // Bottom navigation: Profile has been removed.
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          color: _primary,
+          color: isDark ? colors.surfaceContainer : Colors.white,
           borderRadius: const BorderRadius.vertical(
-            top: Radius.circular(20),
+            top: Radius.circular(24),
           ),
           boxShadow: [
             BoxShadow(
-              color: _primary.withValues(alpha: 0.18),
-              blurRadius: 12,
-              offset: const Offset(0, -3),
+              color: _primary.withValues(alpha: 0.12),
+              blurRadius: 18,
+              offset: const Offset(0, -4),
             ),
           ],
         ),
@@ -692,21 +887,23 @@ class _HomeScreenState extends State<HomeScreen> {
           top: false,
           child: Padding(
             padding: const EdgeInsets.symmetric(
-              horizontal: 12,
+              horizontal: 5,
               vertical: 8,
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
                 _BottomNavItem(
-                  icon: Icons.home_outlined,
+                  icon: Icons.home_rounded,
                   label: 'Home',
                   selected: true,
+                  isDark: isDark,
                   onTap: () {},
                 ),
                 _BottomNavItem(
-                  icon: Icons.history_rounded,
+                  icon: Icons.confirmation_number_outlined,
                   label: 'My Tokens',
+                  isDark: isDark,
                   onTap: () => _navigate(
                     context,
                     const MyTokensScreen(),
@@ -715,25 +912,38 @@ class _HomeScreenState extends State<HomeScreen> {
                 _BottomNavItem(
                   icon: Icons.airport_shuttle_rounded,
                   label: 'Ambulance',
+                  isDark: isDark,
                   onTap: () => _navigate(
                     context,
                     const AmbulanceScreen(),
                   ),
                 ),
-                _BottomNavItem(
-                  icon: Icons.person_outline_rounded,
-                  label: 'Profile',
-                  onTap: () => _navigate(
-                    context,
-                    const ProfileScreen(),
-                  ),
-                ),
-                IconButton(
-                  tooltip: 'Logout',
-                  onPressed: () => _logout(context),
-                  icon: const Icon(
-                    Icons.logout_rounded,
-                    color: Colors.white,
+                InkWell(
+                  onTap: () => _logout(context),
+                  borderRadius: BorderRadius.circular(15),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 7,
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.logout_rounded,
+                          size: 23,
+                          color: isDark ? colors.onSurface : _muted,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Logout',
+                          style: TextStyle(
+                            fontSize: 9,
+                            color: isDark ? colors.onSurface : _muted,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ],
@@ -755,43 +965,60 @@ class _HomeScreenState extends State<HomeScreen> {
 
 class _MainActionButton extends StatelessWidget {
   final String title;
+  final String subtitle;
   final IconData icon;
   final VoidCallback onTap;
 
   const _MainActionButton({
     required this.title,
+    required this.subtitle,
     required this.icon,
     required this.onTap,
   });
 
+  static const Color primaryBlue = Color.fromARGB(255, 14, 18, 33);
+
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 62,
-      child: ElevatedButton(
-        onPressed: onTap,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF236D96),
-          foregroundColor: Colors.white,
-          elevation: 4,
-          shadowColor: const Color(0xFF236D96).withValues(alpha: 0.3),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(20),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          constraints: const BoxConstraints(minHeight: 105),
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF315B91).withValues(alpha: 0.12),
+                blurRadius: 12,
+                offset: const Offset(0, 5),
+              ),
+            ],
           ),
-          padding: const EdgeInsets.symmetric(horizontal: 8),
-        ),
-        child: FittedBox(
-          fit: BoxFit.scaleDown,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(icon, size: 20),
-              const SizedBox(width: 7),
+              Icon(icon, color: primaryBlue, size: 28),
+              const SizedBox(height: 10),
               Text(
                 title,
                 style: const TextStyle(
+                  color: Color.fromARGB(255, 5, 26, 37),
                   fontSize: 15,
-                  fontWeight: FontWeight.w600,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                subtitle,
+                style: const TextStyle(
+                  color: Color(0xFF60758A),
+                  fontSize: 11,
                 ),
               ),
             ],
@@ -805,22 +1032,21 @@ class _MainActionButton extends StatelessWidget {
 class _DepartmentTile extends StatelessWidget {
   final String title;
   final IconData icon;
-  final Color color;
-  final Color background;
   final VoidCallback onTap;
 
   const _DepartmentTile({
     required this.title,
     required this.icon,
-    required this.color,
-    required this.background,
     required this.onTap,
   });
+
+  static const Color primaryBlue = Color.fromARGB(255, 14, 18, 33);
+  static const Color darkText = Color.fromARGB(255, 5, 26, 37);
 
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: background,
+      color: Colors.white,
       borderRadius: BorderRadius.circular(22),
       child: InkWell(
         onTap: onTap,
@@ -828,11 +1054,15 @@ class _DepartmentTile extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.fromLTRB(5, 13, 5, 10),
           decoration: BoxDecoration(
+            color: Colors.white,
             borderRadius: BorderRadius.circular(22),
+            border: Border.all(
+              color: const Color(0xFFE2E8F0),
+            ),
             boxShadow: [
               BoxShadow(
-                color: color.withValues(alpha: 0.12),
-                blurRadius: 8,
+                color: const Color(0xFF315B91).withValues(alpha: 0.10),
+                blurRadius: 10,
                 offset: const Offset(0, 4),
               ),
             ],
@@ -840,15 +1070,27 @@ class _DepartmentTile extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, size: 43, color: color),
-              const SizedBox(height: 12),
+              Container(
+                height: 57,
+                width: 57,
+                decoration: const BoxDecoration(
+                  color: Color(0xFFE8F0FF),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  icon,
+                  size: 32,
+                  color: primaryBlue,
+                ),
+              ),
+              const SizedBox(height: 11),
               Text(
                 title,
                 textAlign: TextAlign.center,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
-                  color: Color(0xFF53768B),
+                  color: darkText,
                   fontSize: 12,
                   height: 1.35,
                   fontWeight: FontWeight.w600,
@@ -866,43 +1108,61 @@ class _BottomNavItem extends StatelessWidget {
   final IconData icon;
   final String label;
   final bool selected;
+  final bool isDark;
   final VoidCallback onTap;
 
   const _BottomNavItem({
     required this.icon,
     required this.label,
     required this.onTap,
+    required this.isDark,
     this.selected = false,
   });
 
+  static const Color primaryBlue = Color.fromARGB(255, 14, 18, 33);
+  static const Color darkText = Color.fromARGB(255, 5, 26, 37);
+
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+
+    final itemColor = selected
+        ? primaryBlue
+        : isDark
+            ? colors.onSurfaceVariant
+            : const Color(0xFF60758A);
+
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(15),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
         padding: const EdgeInsets.symmetric(
-          horizontal: 10,
+          horizontal: 9,
           vertical: 7,
         ),
         decoration: BoxDecoration(
           color: selected
-              ? Colors.white.withValues(alpha: 0.18)
+              ? const Color(0xFFE8F0FF)
               : Colors.transparent,
           borderRadius: BorderRadius.circular(15),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 25, color: Colors.white),
-            const SizedBox(height: 3),
+            Icon(icon, size: 23, color: itemColor),
+            const SizedBox(height: 4),
             Text(
               label,
-              style: const TextStyle(
-                color: Colors.white,
+              style: TextStyle(
+                color: selected
+                    ? darkText
+                    : isDark
+                        ? colors.onSurface
+                        : itemColor,
                 fontSize: 9,
-                fontWeight: FontWeight.w500,
+                fontWeight:
+                    selected ? FontWeight.bold : FontWeight.w500,
               ),
             ),
           ],

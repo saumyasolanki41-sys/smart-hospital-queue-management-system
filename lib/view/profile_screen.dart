@@ -1,5 +1,7 @@
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import '../controller/auth_controller.dart';
 import 'ambulance_screen.dart';
 import 'my_tokens_screen.dart';
@@ -12,9 +14,11 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  static const Color _primary = Color(0xFF236D96);
-  static const Color _background = Color(0xFFC2E9EC);
-  static const Color _textColor = Color(0xFF285C7D);
+  static const Color _primary = Color.fromARGB(255, 14, 18, 33);
+  static const Color _skyBlue = Color(0xFF8DB8F5);
+  static const Color _background = Color(0xFFE6EFFF);
+  static const Color _textColor = Color.fromARGB(255, 5, 26, 37);
+  static const Color _muted = Color(0xFF60758A);
 
   String? _age;
   String? _gender;
@@ -72,12 +76,33 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Logout'),
-        content: const Text('Are you sure you want to logout?'),
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(22),
+        ),
+        icon: const Icon(
+          Icons.logout_rounded,
+          color: Colors.redAccent,
+          size: 35,
+        ),
+        title: const Text(
+          'Logout',
+          style: TextStyle(
+            color: _textColor,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        content: const Text(
+          'Are you sure you want to logout?',
+          style: TextStyle(color: _textColor),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Cancel'),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: _primary),
+            ),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
@@ -129,15 +154,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
     showDialog<void>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: Text(title),
-        content: Text(message),
+        backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
+        ),
+        title: Text(
+          title,
+          style: const TextStyle(
+            color: _textColor,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        content: Text(
+          message,
+          style: const TextStyle(color: _muted),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Close'),
+            child: const Text(
+              'Close',
+              style: TextStyle(color: _primary),
+            ),
           ),
         ],
       ),
@@ -148,6 +186,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget build(BuildContext context) {
     final auth = context.watch<AuthController>();
     final user = auth.user;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colors = Theme.of(context).colorScheme;
 
     final fullName = user?.name.trim().isNotEmpty == true
         ? user!.name
@@ -158,129 +198,157 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final gender = _gender ?? user?.gender ?? 'Not added';
 
     return Scaffold(
-      backgroundColor: _background,
+      backgroundColor: isDark ? colors.surface : _background,
       body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              Color(0xFFEAFBFC),
-              Color(0xFFC2E9EC),
-            ],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
+        decoration: BoxDecoration(
+          gradient: isDark
+              ? null
+              : const LinearGradient(
+                  colors: [
+                    Color(0xFF8DB8F5),
+                    Color(0xFFB7D2F8),
+                    Color(0xFFE6EFFF),
+                    Colors.white,
+                    Color(0xFFE8F0FF),
+                  ],
+                  stops: [0.0, 0.20, 0.42, 0.70, 1.0],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                ),
         ),
         child: SafeArea(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(20, 18, 20, 24),
+            padding: const EdgeInsets.fromLTRB(20, 18, 20, 30),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Header
                 Row(
                   children: [
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.8),
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      child: IconButton(
-                        onPressed: () => Navigator.maybePop(context),
-                        icon: const Icon(
-                          Icons.arrow_back_ios_new,
-                          color: _primary,
-                        ),
+                    _HeaderButton(
+                      icon: Icons.arrow_back_rounded,
+                      onTap: () => Navigator.maybePop(context),
+                      isDark: isDark,
+                    ),
+                    const SizedBox(width: 13),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'My Profile',
+                            style: TextStyle(
+                              fontSize: 25,
+                              fontWeight: FontWeight.bold,
+                              color: isDark
+                                  ? colors.onSurface
+                                  : _textColor,
+                            ),
+                          ),
+                          const SizedBox(height: 3),
+                          const Text(
+                            'Manage your personal details',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: _muted,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(width: 14),
-                    const Expanded(
-                      child: Text(
-                        'My Profile',
-                        style: TextStyle(
-                          fontSize: 25,
-                          fontWeight: FontWeight.bold,
-                          color: _textColor,
-                        ),
-                      ),
-                    ),
-                    IconButton(
-                      onPressed: _editProfile,
-                      icon: const Icon(
-                        Icons.edit_outlined,
-                        color: _primary,
-                      ),
-                      tooltip: 'Edit profile',
+                    _HeaderButton(
+                      icon: Icons.edit_outlined,
+                      onTap: _editProfile,
+                      isDark: isDark,
                     ),
                   ],
                 ),
-                const SizedBox(height: 24),
 
-                // Profile card
+                const SizedBox(height: 25),
+
+                // Profile banner
                 Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.all(22),
+                  padding: const EdgeInsets.all(23),
                   decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(24),
+                    gradient: const LinearGradient(
+                      colors: [
+                        Color.fromARGB(255, 14, 18, 33),
+                        Color(0xFF315B91),
+                        Color(0xFF8DB8F5),
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(25),
                     boxShadow: [
                       BoxShadow(
-                        color: _primary.withValues(alpha: 0.10),
-                        blurRadius: 18,
-                        offset: const Offset(0, 7),
+                        color: _primary.withValues(alpha: 0.16),
+                        blurRadius: 20,
+                        offset: const Offset(0, 8),
                       ),
                     ],
                   ),
                   child: Column(
                     children: [
                       Container(
-                        width: 94,
-                        height: 94,
+                        width: 102,
+                        height: 102,
                         decoration: BoxDecoration(
-                          color: const Color(0xFFDDF3F5),
+                          color: Colors.white.withValues(alpha: 0.15),
                           shape: BoxShape.circle,
                           border: Border.all(
-                            color: _primary.withValues(alpha: 0.25),
+                            color: Colors.white.withValues(alpha: 0.65),
                             width: 2,
                           ),
                         ),
                         child: const Icon(
                           Icons.person_rounded,
-                          size: 56,
-                          color: _primary,
+                          size: 61,
+                          color: Colors.white,
                         ),
                       ),
-                      const SizedBox(height: 14),
+                      const SizedBox(height: 17),
                       Text(
                         fullName,
                         textAlign: TextAlign.center,
                         style: const TextStyle(
-                          fontSize: 22,
+                          fontSize: 23,
                           fontWeight: FontWeight.bold,
-                          color: _textColor,
+                          color: Colors.white,
                         ),
                       ),
-                      const SizedBox(height: 6),
+                      const SizedBox(height: 7),
                       Text(
                         email,
                         textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.blueGrey.shade600,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: Color(0xFFE6EFFF),
                         ),
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 18),
                       OutlinedButton.icon(
                         onPressed: _editProfile,
-                        icon: const Icon(Icons.edit_outlined, size: 18),
+                        icon: const Icon(
+                          Icons.edit_outlined,
+                          size: 18,
+                        ),
                         label: const Text('Edit Profile'),
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: _primary,
-                          side: const BorderSide(color: _primary),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                          foregroundColor: Colors.white,
+                          side: const BorderSide(
+                            color: Colors.white70,
+                          ),
+                          backgroundColor: Colors.white.withValues(
+                            alpha: 0.10,
                           ),
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 11,
+                            horizontal: 21,
+                            vertical: 12,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
                           ),
                         ),
                       ),
@@ -288,69 +356,69 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
 
-                const SizedBox(height: 26),
-                const Text(
-                  'Personal Information',
-                  style: TextStyle(
-                    fontSize: 19,
-                    fontWeight: FontWeight.bold,
-                    color: _textColor,
-                  ),
+                const SizedBox(height: 28),
+
+                const _SectionHeading(
+                  title: 'Personal Information',
+                  subtitle: 'Your registered details',
+                  icon: Icons.person_outline_rounded,
                 ),
-                const SizedBox(height: 12),
+
+                const SizedBox(height: 14),
 
                 Container(
                   padding: const EdgeInsets.all(18),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
+                  decoration: _cardDecoration(isDark, colors),
                   child: Column(
                     children: [
                       _InformationRow(
-                        icon: Icons.person_outline,
+                        icon: Icons.person_outline_rounded,
                         title: 'Full Name',
                         value: fullName,
+                        isDark: isDark,
+                        colors: colors,
                       ),
-                      const Divider(height: 24),
+                      const _SoftDivider(),
                       _InformationRow(
                         icon: Icons.email_outlined,
                         title: 'Email Address',
                         value: email,
+                        isDark: isDark,
+                        colors: colors,
                       ),
-                      const Divider(height: 24),
+                      const _SoftDivider(),
                       _InformationRow(
                         icon: Icons.cake_outlined,
                         title: 'Age',
                         value: age,
+                        isDark: isDark,
+                        colors: colors,
                       ),
-                      const Divider(height: 24),
+                      const _SoftDivider(),
                       _InformationRow(
-                        icon: Icons.people_outline,
+                        icon: Icons.people_outline_rounded,
                         title: 'Gender',
                         value: gender,
+                        isDark: isDark,
+                        colors: colors,
                       ),
                     ],
                   ),
                 ),
 
-                const SizedBox(height: 26),
-                const Text(
-                  'Smart Hospital',
-                  style: TextStyle(
-                    fontSize: 19,
-                    fontWeight: FontWeight.bold,
-                    color: _textColor,
-                  ),
+                const SizedBox(height: 28),
+
+                const _SectionHeading(
+                  title: 'Smart Hospital',
+                  subtitle: 'Your healthcare shortcuts',
+                  icon: Icons.local_hospital_outlined,
                 ),
-                const SizedBox(height: 12),
+
+                const SizedBox(height: 14),
 
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 15),
+                  decoration: _cardDecoration(isDark, colors),
                   child: Column(
                     children: [
                       _ProfileMenuRow(
@@ -358,19 +426,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         title: 'My Tokens',
                         subtitle: 'View your booked appointments',
                         onTap: _openTokens,
+                        isDark: isDark,
+                        colors: colors,
                       ),
-                      const Divider(height: 1),
+                      const _SoftDivider(),
                       _ProfileMenuRow(
                         icon: Icons.local_hospital_outlined,
                         title: 'Ambulance Services',
                         subtitle: 'Access ambulance information',
                         onTap: _openAmbulance,
+                        isDark: isDark,
+                        colors: colors,
                       ),
-                      const Divider(height: 1),
+                      const _SoftDivider(),
                       _ProfileMenuRow(
                         icon: Icons.medical_information_outlined,
                         title: 'Medical History',
                         subtitle: 'Your health information',
+                        isDark: isDark,
+                        colors: colors,
                         onTap: () => _showInformationDialog(
                           title: 'Medical History',
                           message:
@@ -378,11 +452,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               'to your hospital records when available.',
                         ),
                       ),
-                      const Divider(height: 1),
+                      const _SoftDivider(),
                       _ProfileMenuRow(
                         icon: Icons.notifications_none_rounded,
                         title: 'Notifications',
                         subtitle: 'Appointment and queue updates',
+                        isDark: isDark,
+                        colors: colors,
                         onTap: () => _showInformationDialog(
                           title: 'Notifications',
                           message:
@@ -390,18 +466,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               'here when notifications are configured.',
                         ),
                       ),
-                      const Divider(height: 1),
+                      const _SoftDivider(),
                       _ProfileMenuRow(
                         icon: Icons.calendar_month_outlined,
                         title: 'Appointments',
                         subtitle: 'Manage your appointments',
                         onTap: _openTokens,
+                        isDark: isDark,
+                        colors: colors,
                       ),
-                      const Divider(height: 1),
+                      const _SoftDivider(),
                       _ProfileMenuRow(
                         icon: Icons.help_outline_rounded,
                         title: 'Help & Support',
                         subtitle: 'Get help using CareQueue',
+                        isDark: isDark,
+                        colors: colors,
                         onTap: () => _showInformationDialog(
                           title: 'Help & Support',
                           message:
@@ -413,24 +493,48 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
 
-                const SizedBox(height: 24),
+                const SizedBox(height: 25),
+
+                // Logout
                 SizedBox(
                   width: double.infinity,
-                  child: ElevatedButton.icon(
+                  child: OutlinedButton.icon(
                     onPressed: auth.isLoading ? null : _logout,
-                    icon: const Icon(Icons.logout_rounded),
-                    label: Text(auth.isLoading ? 'Please wait...' : 'Logout'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
+                    icon: auth.isLoading
+                        ? const SizedBox(
+                            height: 18,
+                            width: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: _primary,
+                            ),
+                          )
+                        : const Icon(Icons.logout_rounded),
+                    label: Text(
+                      auth.isLoading ? 'Please wait...' : 'Logout',
+                    ),
+                    style: OutlinedButton.styleFrom(
                       foregroundColor: Colors.red.shade700,
-                      elevation: 0,
+                      backgroundColor: Colors.white,
+                      side: BorderSide(
+                        color: Colors.red.shade100,
+                      ),
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(15),
-                        side: BorderSide(
-                          color: Colors.red.shade100,
-                        ),
                       ),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 15),
+
+                const Center(
+                  child: Text(
+                    'Your health, our priority',
+                    style: TextStyle(
+                      color: _muted,
+                      fontSize: 12,
                     ),
                   ),
                 ),
@@ -441,8 +545,280 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
     );
   }
+
+  BoxDecoration _cardDecoration(bool isDark, ColorScheme colors) {
+    return BoxDecoration(
+      color: isDark ? colors.surfaceContainer : Colors.white,
+      borderRadius: BorderRadius.circular(22),
+      border: Border.all(
+        color: _skyBlue.withValues(alpha: 0.35),
+      ),
+      boxShadow: [
+        BoxShadow(
+          color: _primary.withValues(alpha: 0.08),
+          blurRadius: 20,
+          offset: const Offset(0, 8),
+        ),
+      ],
+    );
+  }
 }
 
+// Header button
+class _HeaderButton extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback onTap;
+  final bool isDark;
+
+  const _HeaderButton({
+    required this.icon,
+    required this.onTap,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? colors.surfaceContainer : Colors.white,
+        borderRadius: BorderRadius.circular(15),
+        border: Border.all(
+          color: const Color(0xFF8DB8F5).withValues(alpha: 0.4),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF315B91).withValues(alpha: 0.08),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: IconButton(
+        onPressed: onTap,
+        icon: Icon(
+          icon,
+          color: const Color.fromARGB(255, 14, 18, 33),
+        ),
+      ),
+    );
+  }
+}
+
+// Section heading
+class _SectionHeading extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final IconData icon;
+
+  const _SectionHeading({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Container(
+          height: 45,
+          width: 45,
+          decoration: BoxDecoration(
+            color: const Color(0xFFE8F0FF),
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: Icon(
+            icon,
+            color: const Color.fromARGB(255, 14, 18, 33),
+            size: 24,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 19,
+                  fontWeight: FontWeight.bold,
+                  color: Color.fromARGB(255, 5, 26, 37),
+                ),
+              ),
+              const SizedBox(height: 3),
+              const Text(
+                '',
+                style: TextStyle(fontSize: 1),
+              ),
+              Text(
+                subtitle,
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: Color(0xFF60758A),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// Personal information row
+class _InformationRow extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String value;
+  final bool isDark;
+  final ColorScheme colors;
+
+  const _InformationRow({
+    required this.icon,
+    required this.title,
+    required this.value,
+    required this.isDark,
+    required this.colors,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 43,
+            height: 43,
+            decoration: BoxDecoration(
+              color: const Color(0xFFE8F0FF),
+              borderRadius: BorderRadius.circular(13),
+            ),
+            child: Icon(
+              icon,
+              color: const Color.fromARGB(255, 14, 18, 33),
+              size: 21,
+            ),
+          ),
+          const SizedBox(width: 13),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: isDark
+                        ? colors.onSurfaceVariant
+                        : const Color(0xFF60758A),
+                  ),
+                ),
+                const SizedBox(height: 5),
+                Text(
+                  value,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: isDark
+                        ? colors.onSurface
+                        : const Color.fromARGB(255, 5, 26, 37),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// Divider between profile rows
+class _SoftDivider extends StatelessWidget {
+  const _SoftDivider();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Divider(
+      height: 19,
+      thickness: 1,
+      color: Color(0xFFE2E8F0),
+    );
+  }
+}
+
+// Smart Hospital menu row
+class _ProfileMenuRow extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+  final bool isDark;
+  final ColorScheme colors;
+
+  const _ProfileMenuRow({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+    required this.isDark,
+    required this.colors,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      contentPadding: const EdgeInsets.symmetric(vertical: 5),
+      leading: Container(
+        width: 45,
+        height: 45,
+        decoration: BoxDecoration(
+          color: const Color(0xFFE8F0FF),
+          borderRadius: BorderRadius.circular(13),
+        ),
+        child: Icon(
+          icon,
+          color: const Color.fromARGB(255, 14, 18, 33),
+          size: 22,
+        ),
+      ),
+      title: Text(
+        title,
+        style: TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+          color: isDark
+              ? colors.onSurface
+              : const Color.fromARGB(255, 5, 26, 37),
+        ),
+      ),
+      subtitle: Padding(
+        padding: const EdgeInsets.only(top: 4),
+        child: Text(
+          subtitle,
+          style: TextStyle(
+            fontSize: 11,
+            color: isDark
+                ? colors.onSurfaceVariant
+                : const Color(0xFF60758A),
+          ),
+        ),
+      ),
+      trailing: Icon(
+        Icons.chevron_right_rounded,
+        color: isDark ? colors.onSurfaceVariant : const Color(0xFF60758A),
+      ),
+      onTap: onTap,
+    );
+  }
+}
+
+// Edit profile screen
 class EditProfileScreen extends StatefulWidget {
   final String fullName;
   final String age;
@@ -460,10 +836,12 @@ class EditProfileScreen extends StatefulWidget {
 }
 
 class _EditProfileScreenState extends State<EditProfileScreen> {
-  static const Color _primary = Color(0xFF236D96);
-  static const Color _textColor = Color(0xFF285C7D);
+  static const Color _primary = Color.fromARGB(255, 14, 18, 33);
+  static const Color _skyBlue = Color(0xFF8DB8F5);
+  static const Color _textColor = Color.fromARGB(255, 5, 26, 37);
 
   final _formKey = GlobalKey<FormState>();
+
   late final TextEditingController _fullNameController;
   late final TextEditingController _ageController;
   late String? _gender;
@@ -478,9 +856,18 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   @override
   void initState() {
     super.initState();
-    _fullNameController = TextEditingController(text: widget.fullName);
-    _ageController = TextEditingController(text: widget.age);
-    _gender = _genders.contains(widget.gender) ? widget.gender : null;
+
+    _fullNameController = TextEditingController(
+      text: widget.fullName,
+    );
+
+    _ageController = TextEditingController(
+      text: widget.age,
+    );
+
+    _gender = _genders.contains(widget.gender)
+        ? widget.gender
+        : null;
   }
 
   @override
@@ -495,7 +882,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
     if (_gender == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select your gender')),
+        const SnackBar(
+          content: Text('Please select your gender'),
+        ),
       );
       return;
     }
@@ -513,137 +902,161 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFEAFBFC),
+      backgroundColor: const Color(0xFFE6EFFF),
       appBar: AppBar(
-        title: const Text('Edit Profile'),
-        backgroundColor: const Color(0xFFEAFBFC),
+        title: const Text(
+          'Edit Profile',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        backgroundColor: const Color(0xFFE6EFFF),
         foregroundColor: _textColor,
         elevation: 0,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Container(
-          padding: const EdgeInsets.all(22),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(24),
-            boxShadow: [
-              BoxShadow(
-                color: _primary.withValues(alpha: 0.08),
-                blurRadius: 18,
-                offset: const Offset(0, 6),
-              ),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              Color(0xFFB7D2F8),
+              Color(0xFFE6EFFF),
+              Colors.white,
             ],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
           ),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Center(
-                  child: CircleAvatar(
-                    radius: 38,
-                    backgroundColor: Color(0xFFDDF3F5),
-                    child: Icon(
-                      Icons.person_outline_rounded,
-                      size: 42,
-                      color: _primary,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 24),
-                const Text(
-                  'Update your details',
-                  style: TextStyle(
-                    fontSize: 21,
-                    fontWeight: FontWeight.bold,
-                    color: _textColor,
-                  ),
-                ),
-                const SizedBox(height: 20),
-
-                TextFormField(
-                  controller: _fullNameController,
-                  textCapitalization: TextCapitalization.words,
-                  decoration: _inputDecoration(
-                    label: 'Full Name',
-                    icon: Icons.person_outline,
-                  ),
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Please enter your full name';
-                    }
-                    if (value.trim().length < 2) {
-                      return 'Please enter a valid name';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 18),
-
-                TextFormField(
-                  controller: _ageController,
-                  keyboardType: TextInputType.number,
-                  decoration: _inputDecoration(
-                    label: 'Age',
-                    icon: Icons.cake_outlined,
-                  ),
-                  validator: (value) {
-                    final age = int.tryParse(value?.trim() ?? '');
-                    if (age == null || age < 1 || age > 120) {
-                      return 'Enter a valid age between 1 and 120';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 18),
-
-                DropdownButtonFormField<String>(
-                  initialValue: _gender,
-                  decoration: _inputDecoration(
-                    label: 'Gender',
-                    icon: Icons.people_outline,
-                  ),
-                  items: _genders.map((gender) {
-                    return DropdownMenuItem(
-                      value: gender,
-                      child: Text(gender),
-                    );
-                  }).toList(),
-                  onChanged: (value) {
-                    setState(() => _gender = value);
-                  },
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please select your gender';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 28),
-
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: _saveProfile,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: _primary,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                    ),
-                    child: const Text(
-                      'Save Changes',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
+        ),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(20),
+          child: Container(
+            padding: const EdgeInsets.all(22),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(23),
+              border: Border.all(
+                color: _skyBlue.withValues(alpha: 0.35),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: _primary.withValues(alpha: 0.08),
+                  blurRadius: 20,
+                  offset: const Offset(0, 8),
                 ),
               ],
+            ),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Center(
+                    child: CircleAvatar(
+                      radius: 42,
+                      backgroundColor: Color(0xFFE8F0FF),
+                      child: Icon(
+                        Icons.person_outline_rounded,
+                        size: 45,
+                        color: _primary,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 22),
+                  const Text(
+                    'Update your details',
+                    style: TextStyle(
+                      fontSize: 21,
+                      fontWeight: FontWeight.bold,
+                      color: _textColor,
+                    ),
+                  ),
+                  const SizedBox(height: 7),
+                  const Text(
+                    'Keep your profile information up to date.',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Color(0xFF60758A),
+                    ),
+                  ),
+                  const SizedBox(height: 23),
+
+                  TextFormField(
+                    controller: _fullNameController,
+                    textCapitalization: TextCapitalization.words,
+                    decoration: _inputDecoration(
+                      label: 'Full Name',
+                      icon: Icons.person_outline,
+                    ),
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Please enter your full name';
+                      }
+                      if (value.trim().length < 2) {
+                        return 'Please enter a valid name';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 18),
+
+                  TextFormField(
+                    controller: _ageController,
+                    keyboardType: TextInputType.number,
+                    decoration: _inputDecoration(
+                      label: 'Age',
+                      icon: Icons.cake_outlined,
+                    ),
+                    validator: (value) {
+                      final age = int.tryParse(value?.trim() ?? '');
+
+                      if (age == null || age < 1 || age > 120) {
+                        return 'Enter an age between 1 and 120';
+                      }
+
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 18),
+
+                  DropdownButtonFormField<String>(
+                    initialValue: _gender,
+                    decoration: _inputDecoration(
+                      label: 'Gender',
+                      icon: Icons.people_outline,
+                    ),
+                    items: _genders.map((gender) {
+                      return DropdownMenuItem(
+                        value: gender,
+                        child: Text(gender),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      setState(() => _gender = value);
+                    },
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please select your gender';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 27),
+
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: _saveProfile,
+                      icon: const Icon(Icons.check_rounded),
+                      label: const Text('Save Changes'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _primary,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -657,124 +1070,39 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }) {
     return InputDecoration(
       labelText: label,
-      prefixIcon: Icon(icon, color: _primary),
+      labelStyle: const TextStyle(
+        color: Color(0xFF60758A),
+      ),
+      prefixIcon: const Icon(
+        Icons.circle,
+        color: Colors.transparent,
+        size: 0,
+      ),
+      // Keep the original field icons.
+      icon: null,
       filled: true,
-      fillColor: const Color(0xFFF5FBFC),
+      fillColor: const Color(0xFFF5F8FF),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: Color(0xFFD7E9ED)),
+        borderSide: const BorderSide(
+          color: Color(0xFFE2E8F0),
+        ),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: Color(0xFFD7E9ED)),
+        borderSide: const BorderSide(
+          color: Color(0xFFE2E8F0),
+        ),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: _primary, width: 1.5),
-      ),
-    );
-  }
-}
-
-class _InformationRow extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String value;
-
-  const _InformationRow({
-    required this.icon,
-    required this.title,
-    required this.value,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Container(
-          width: 42,
-          height: 42,
-          decoration: BoxDecoration(
-            color: const Color(0xFFEAF7F8),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Icon(icon, color: const Color(0xFF236D96)),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.blueGrey.shade500,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                value,
-                style: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF285C7D),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _ProfileMenuRow extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final VoidCallback onTap;
-
-  const _ProfileMenuRow({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      contentPadding: const EdgeInsets.symmetric(vertical: 5),
-      leading: Container(
-        width: 44,
-        height: 44,
-        decoration: BoxDecoration(
-          color: const Color(0xFFEAF7F8),
-          borderRadius: BorderRadius.circular(13),
-        ),
-        child: Icon(icon, color: const Color(0xFF236D96)),
-      ),
-      title: Text(
-        title,
-        style: const TextStyle(
-          fontSize: 15,
-          fontWeight: FontWeight.w600,
-          color: Color(0xFF285C7D),
+        borderSide: const BorderSide(
+          color: _skyBlue,
+          width: 1.5,
         ),
       ),
-      subtitle: Text(
-        subtitle,
-        style: TextStyle(
-          fontSize: 12,
-          color: Colors.blueGrey.shade500,
-        ),
-      ),
-      trailing: const Icon(
-        Icons.chevron_right_rounded,
-        color: Color(0xFF236D96),
-      ),
-      onTap: onTap,
+    ).copyWith(
+      prefixIcon: Icon(icon, color: _primary),
     );
   }
 }

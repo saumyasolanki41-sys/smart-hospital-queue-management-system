@@ -16,9 +16,9 @@ class MyTokensScreen extends StatefulWidget {
 }
 
 class _MyTokensScreenState extends State<MyTokensScreen> {
-  static const Color _primary = Color(0xFF236D96);
-  static const Color _background = Color(0xFFC2E9EC);
-  static const Color _textColor = Color(0xFF285C7D);
+  static const Color _primary = Color.fromARGB(255, 14, 18, 33);
+  static const Color _background = Color(0xFFE8F0FF);
+  static const Color _textColor = Color.fromARGB(255, 5, 26, 37);
 
   int _selectedTab = 0;
 
@@ -94,40 +94,44 @@ class _MyTokensScreenState extends State<MyTokensScreen> {
       backgroundColor: isDark ? colors.surface : _background,
       body: SafeArea(
         bottom: false,
-        child: Stack(
-          children: [
-            Positioned(
-              top: 0,
-              left: 0,
-              right: 0,
-              height: 400,
-              child: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: isDark
-                        ? [colors.surface, colors.surface]
-                        : const [
-                            Color(0xFFB9E5E9),
-                            Color(0xFFD2F0F0),
-                          ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                ),
-              ),
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: isDark
+                  ? [colors.surface, colors.surface]
+                  : const [
+                      Color(0xFFE6EFFF),
+                      Color(0xFFF6F9FF),
+                    ],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
             ),
-
-            RefreshIndicator(
-              color: _primary,
-              onRefresh: _refreshTokens,
-              child: ListView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(20, 12, 20, 115),
-                children: [
-                  // Header
-                  Row(
-                    children: [
-                      IconButton(
+          ),
+          child: RefreshIndicator(
+            color: _primary,
+            onRefresh: _refreshTokens,
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 30),
+              children: [
+                // Header
+                Row(
+                  children: [
+                    Container(
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? colors.surfaceContainer
+                            : Colors.white,
+                        borderRadius: BorderRadius.circular(14),
+                        boxShadow: [
+                          BoxShadow(
+                            color: _textColor.withValues(alpha: 0.07),
+                            blurRadius: 8,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child: IconButton(
                         onPressed: () {
                           if (Navigator.canPop(context)) {
                             Navigator.pop(context);
@@ -135,147 +139,287 @@ class _MyTokensScreenState extends State<MyTokensScreen> {
                             Navigator.pushNamed(context, '/home');
                           }
                         },
-                        icon: const Icon(
+                        icon: Icon(
                           Icons.arrow_back_rounded,
-                          color: _textColor,
-                          size: 28,
+                          color: isDark ? colors.onSurface : _textColor,
                         ),
                       ),
-                      const SizedBox(width: 3),
-                      Expanded(
-                        child: Text(
-                          'My Tokens',
-                          style: TextStyle(
-                            color: isDark ? colors.onSurface : _textColor,
-                            fontSize: 24,
-                            fontWeight: FontWeight.w600,
+                    ),
+                    const SizedBox(width: 13),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'My Tokens',
+                            style: TextStyle(
+                              color: isDark ? colors.onSurface : _textColor,
+                              fontSize: 25,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                        ),
+                          const SizedBox(height: 3),
+                          const Text(
+                            'Manage your appointments',
+                            style: TextStyle(
+                              color: Color(0xFF60758A),
+                              fontSize: 13,
+                            ),
+                          ),
+                        ],
                       ),
-                      IconButton(
+                    ),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? colors.surfaceContainer
+                            : Colors.white,
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: IconButton(
                         tooltip: 'Refresh appointments',
-                        onPressed:
-                            tokenController.isLoading ? null : _refreshTokens,
+                        onPressed: tokenController.isLoading
+                            ? null
+                            : _refreshTokens,
                         icon: const Icon(
                           Icons.refresh_rounded,
                           color: _primary,
                         ),
                       ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 24),
+
+                // Summary banner
+                Container(
+                  padding: const EdgeInsets.all(21),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [
+                        Color.fromARGB(255, 14, 18, 33),
+                        Color(0xFF315B91),
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(23),
+                    boxShadow: [
+                      BoxShadow(
+                        color: _primary.withValues(alpha: 0.22),
+                        blurRadius: 15,
+                        offset: const Offset(0, 7),
+                      ),
                     ],
                   ),
-
-                  const SizedBox(height: 20),
-
-                  
-                  Container(
-                    height: 58,
-                    padding: const EdgeInsets.all(3),
-                    decoration: BoxDecoration(
-                      color: isDark
-                          ? colors.surfaceContainer
-                          : const Color(0xFFF1F9FF),
-                      borderRadius: BorderRadius.circular(35),
-                      boxShadow: [
-                        BoxShadow(
-                          color: _textColor.withValues(alpha: 0.16),
-                          blurRadius: 7,
-                          offset: const Offset(0, 4),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Your Healthcare Journey',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              _selectedTab == 0
+                                  ? 'Keep track of your upcoming visits.'
+                                  : 'Review your previous appointments.',
+                              style: const TextStyle(
+                                color: Color(0xFFE6EFFF),
+                                fontSize: 13,
+                                height: 1.5,
+                              ),
+                            ),
+                            const SizedBox(height: 15),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 7,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.17),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text(
+                                '${filteredTokens.length} '
+                                '${filteredTokens.length == 1 ? 'appointment' : 'appointments'}',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: _HistoryTab(
-                            title: 'Upcoming',
-                            selected: _selectedTab == 0,
-                            onTap: () {
-                              setState(() => _selectedTab = 0);
-                            },
-                          ),
+                      ),
+                      const SizedBox(width: 12),
+                      Container(
+                        height: 76,
+                        width: 76,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.16),
+                          shape: BoxShape.circle,
                         ),
-                        Expanded(
-                          child: _HistoryTab(
-                            title: 'Past',
-                            selected: _selectedTab == 1,
-                            onTap: () {
-                              setState(() => _selectedTab = 1);
-                            },
-                          ),
+                        child: const Icon(
+                          Icons.medical_services_rounded,
+                          size: 39,
+                          color: Colors.white,
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
+                ),
 
-                  const SizedBox(height: 28),
+                const SizedBox(height: 25),
 
-                  if (tokenController.isLoading && tokenController.tokens.isEmpty)
-                    const Padding(
-                      padding: EdgeInsets.only(top: 80),
-                      child: Center(
-                        child: CircularProgressIndicator(
-                          color: _primary,
+                // Upcoming and Past tabs
+                Container(
+                  height: 57,
+                  padding: const EdgeInsets.all(5),
+                  decoration: BoxDecoration(
+                    color: isDark ? colors.surfaceContainer : Colors.white,
+                    borderRadius: BorderRadius.circular(18),
+                    boxShadow: [
+                      BoxShadow(
+                        color: _textColor.withValues(alpha: 0.07),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: _HistoryTab(
+                          title: 'Upcoming',
+                          icon: Icons.event_available_rounded,
+                          selected: _selectedTab == 0,
+                          onTap: () {
+                            setState(() => _selectedTab = 0);
+                          },
                         ),
                       ),
-                    )
-                  else if (tokenController.error != null &&
-                      tokenController.tokens.isEmpty)
-                    _HistoryMessage(
-                      icon: Icons.error_outline_rounded,
-                      message: tokenController.error.toString(),
-                      subtitle: 'Please check your connection and try again.',
-                      buttonText: 'Try Again',
-                      onPressed: _refreshTokens,
-                    )
-                  else if (filteredTokens.isEmpty)
-                    _HistoryMessage(
-                      icon: _selectedTab == 0
-                          ? Icons.event_available_rounded
-                          : Icons.history_rounded,
-                      message: _selectedTab == 0
-                          ? 'No upcoming appointments'
-                          : 'No past appointments',
-                      subtitle: _selectedTab == 0
-                          ? 'Your booked tokens will appear here.'
-                          : 'Completed or cancelled tokens will appear here.',
-                      buttonText: _selectedTab == 0
-                          ? 'Refresh'
-                          : null,
-                      onPressed: _selectedTab == 0
-                          ? _refreshTokens
-                          : null,
-                    )
-                  else ...[
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 15),
-                      child: Text(
-                        '${filteredTokens.length} ${_selectedTab == 0 ? 'upcoming' : 'past'} '
-                        '${filteredTokens.length == 1 ? 'appointment' : 'appointments'}',
-                        style: TextStyle(
-                          color: isDark
-                              ? colors.onSurfaceVariant
-                              : const Color(0xFF729DB2),
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
+                      Expanded(
+                        child: _HistoryTab(
+                          title: 'Past',
+                          icon: Icons.history_rounded,
+                          selected: _selectedTab == 1,
+                          onTap: () {
+                            setState(() => _selectedTab = 1);
+                          },
                         ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 25),
+
+                Row(
+                  children: [
+                    Container(
+                      height: 35,
+                      width: 35,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE8F0FF),
+                        borderRadius: BorderRadius.circular(11),
+                      ),
+                      child: Icon(
+                        _selectedTab == 0
+                            ? Icons.calendar_month_rounded
+                            : Icons.history_rounded,
+                        color: _primary,
+                        size: 20,
                       ),
                     ),
-                    ...filteredTokens.map(
-                      (token) => _AppointmentCard(
-                        token: token,
-                        safeText: _safeText,
-                        statusColor: _statusColor(
-                          _safeText(token.status, 'pending'),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        _selectedTab == 0
+                            ? 'Upcoming Appointments'
+                            : 'Appointment History',
+                        style: TextStyle(
+                          color: isDark ? colors.onSurface : _textColor,
+                          fontSize: 17,
+                          fontWeight: FontWeight.bold,
                         ),
-                        isPast: _isPast(token),
-                        onTap: () => _openTokenDetails(token),
                       ),
                     ),
                   ],
+                ),
+
+                const SizedBox(height: 15),
+
+                if (tokenController.isLoading &&
+                    tokenController.tokens.isEmpty)
+                  const Padding(
+                    padding: EdgeInsets.only(top: 70, bottom: 70),
+                    child: Center(
+                      child: CircularProgressIndicator(
+                        color: _primary,
+                      ),
+                    ),
+                  )
+                else if (tokenController.error != null &&
+                    tokenController.tokens.isEmpty)
+                  _HistoryMessage(
+                    icon: Icons.cloud_off_rounded,
+                    message: 'Unable to load appointments',
+                    subtitle: tokenController.error.toString(),
+                    buttonText: 'Try Again',
+                    onPressed: _refreshTokens,
+                  )
+                else if (filteredTokens.isEmpty)
+                  _HistoryMessage(
+                    icon: _selectedTab == 0
+                        ? Icons.event_available_rounded
+                        : Icons.history_rounded,
+                    message: _selectedTab == 0
+                        ? 'No upcoming appointments'
+                        : 'No past appointments',
+                    subtitle: _selectedTab == 0
+                        ? 'Your booked tokens will appear here.'
+                        : 'Completed or cancelled tokens will appear here.',
+                    buttonText: _selectedTab == 0 ? 'Refresh' : null,
+                    onPressed: _selectedTab == 0 ? _refreshTokens : null,
+                  )
+                else ...[
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 13),
+                    child: Text(
+                      '${filteredTokens.length} '
+                      '${_selectedTab == 0 ? 'upcoming' : 'past'} '
+                      '${filteredTokens.length == 1 ? 'appointment' : 'appointments'}',
+                      style: const TextStyle(
+                        color: Color(0xFF60758A),
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
+                  ...filteredTokens.map(
+                    (token) => _AppointmentCard(
+                      token: token,
+                      safeText: _safeText,
+                      statusColor: _statusColor(
+                        _safeText(token.status, 'pending'),
+                      ),
+                      isPast: _isPast(token),
+                      onTap: () => _openTokenDetails(token),
+                    ),
+                  ),
                 ],
-              ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
 
@@ -284,15 +428,15 @@ class _MyTokensScreenState extends State<MyTokensScreen> {
         decoration: const BoxDecoration(
           color: _primary,
           borderRadius: BorderRadius.vertical(
-            top: Radius.circular(20),
+            top: Radius.circular(23),
           ),
         ),
         child: SafeArea(
           top: false,
           child: Padding(
             padding: const EdgeInsets.symmetric(
-              horizontal: 20,
-              vertical: 9,
+              horizontal: 12,
+              vertical: 10,
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -314,7 +458,7 @@ class _MyTokensScreenState extends State<MyTokensScreen> {
                   selected: true,
                 ),
                 _BottomNavItem(
-                  icon: Icons.notifications_none_rounded,
+                  icon: Icons.local_hospital_outlined,
                   label: 'Ambulance',
                   onTap: () {
                     Navigator.push(
@@ -348,11 +492,13 @@ class _MyTokensScreenState extends State<MyTokensScreen> {
 
 class _HistoryTab extends StatelessWidget {
   final String title;
+  final IconData icon;
   final bool selected;
   final VoidCallback onTap;
 
   const _HistoryTab({
     required this.title,
+    required this.icon,
     required this.selected,
     required this.onTap,
   });
@@ -360,22 +506,31 @@ class _HistoryTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: selected ? const Color(0xFF236D96) : Colors.transparent,
-      borderRadius: BorderRadius.circular(30),
+      color: selected
+          ? const Color.fromARGB(255, 14, 18, 33)
+          : Colors.transparent,
+      borderRadius: BorderRadius.circular(14),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(30),
-        child: Center(
-          child: Text(
-            title,
-            style: TextStyle(
-              color: selected
-                  ? Colors.white
-                  : const Color(0xFF356D8D),
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
+        borderRadius: BorderRadius.circular(14),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              size: 19,
+              color: selected ? Colors.white : const Color(0xFF60758A),
             ),
-          ),
+            const SizedBox(width: 7),
+            Text(
+              title,
+              style: TextStyle(
+                color: selected ? Colors.white : const Color(0xFF60758A),
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -408,123 +563,206 @@ class _AppointmentCard extends StatelessWidget {
     final status = safeText(token.status, 'Pending');
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 20),
+      margin: const EdgeInsets.only(bottom: 17),
       decoration: BoxDecoration(
-        color: isDark ? colors.surfaceContainer : const Color(0xFFF1F9FF),
-        borderRadius: BorderRadius.circular(17),
+        color: isDark ? colors.surfaceContainer : Colors.white,
+        borderRadius: BorderRadius.circular(21),
+        border: Border.all(
+          color: isDark
+              ? colors.outlineVariant
+              : const Color(0xFFE2E8F0),
+        ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF285C7D).withValues(alpha: 0.14),
-            blurRadius: 8,
+            color: const Color(0xFF315B91).withValues(alpha: 0.12),
+            blurRadius: 13,
             offset: const Offset(0, 5),
           ),
         ],
       ),
       child: Material(
         color: Colors.transparent,
-        borderRadius: BorderRadius.circular(17),
+        borderRadius: BorderRadius.circular(21),
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(17),
+          borderRadius: BorderRadius.circular(21),
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(12, 16, 12, 15),
-            child: Row(
+            padding: const EdgeInsets.all(16),
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  height: 104,
-                  width: 104,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFD4F1F8),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.medical_services_rounded,
-                    color: Color(0xFF4F91AB),
-                    size: 48,
-                  ),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      height: 57,
+                      width: 57,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE8F0FF),
+                        borderRadius: BorderRadius.circular(17),
+                      ),
+                      child: const Icon(
+                        Icons.medical_services_rounded,
+                        color: Color(0xFF315B91),
+                        size: 30,
+                      ),
+                    ),
+                    const SizedBox(width: 13),
+                    Expanded(
+                      child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Expanded(
-                            child: Text(
-                              isPast ? 'Previous Appointment' : 'Appointment',
-                              style: const TextStyle(
-                                color: Color(0xFF80A5B9),
-                                fontSize: 13,
-                              ),
+                          Text(
+                            isPast ? 'Previous Appointment' : 'Appointment',
+                            style: const TextStyle(
+                              color: Color(0xFF60758A),
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
                             ),
                           ),
-                          const Icon(
-                            Icons.chevron_right_rounded,
-                            color: Color(0xFF80A5B9),
-                            size: 25,
+                          const SizedBox(height: 5),
+                          Text(
+                            doctor,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: isDark
+                                  ? colors.onSurface
+                                  : const Color.fromARGB(255, 5, 26, 37),
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            department,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: Color(0xFF60758A),
+                              fontSize: 13,
+                            ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 5),
-                      Text(
-                        doctor,
-                        maxLines: 2,
+                    ),
+                    const SizedBox(width: 5),
+                    const Icon(
+                      Icons.chevron_right_rounded,
+                      color: Color(0xFF60758A),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 16),
+                const Divider(color: Color(0xFFE2E8F0), height: 1),
+                const SizedBox(height: 14),
+
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.confirmation_number_outlined,
+                      color: Color(0xFF315B91),
+                      size: 19,
+                    ),
+                    const SizedBox(width: 8),
+                    const Text(
+                      'Token number',
+                      style: TextStyle(
+                        color: Color(0xFF60758A),
+                        fontSize: 13,
+                      ),
+                    ),
+                    const Spacer(),
+                    Flexible(
+                      child: Text(
+                        safeText(token.tokenNumber),
+                        textAlign: TextAlign.end,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           color: isDark
                               ? colors.onSurface
-                              : const Color(0xFF285C7D),
-                          fontSize: 16,
+                              : const Color.fromARGB(255, 5, 26, 37),
+                          fontSize: 14,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      const SizedBox(height: 8),
-                      Text(
-                        department,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: Color(0xFF80A5B9),
-                          fontSize: 14,
-                        ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 13),
+
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.circle,
+                      size: 10,
+                      color: Color(0xFF60758A),
+                    ),
+                    const SizedBox(width: 9),
+                    const Text(
+                      'Appointment status',
+                      style: TextStyle(
+                        color: Color(0xFF60758A),
+                        fontSize: 13,
                       ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Token: ${safeText(token.tokenNumber)}',
-                        style: const TextStyle(
-                          color: Color(0xFF80A5B9),
-                          fontSize: 13,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 9,
-                          vertical: 5,
-                        ),
-                        decoration: BoxDecoration(
-                          color: statusColor.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          status,
-                          style: TextStyle(
-                            color: statusColor,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
+                    ),
+                    const Spacer(),
+                    Flexible(
+                      child: Align(
+                        alignment: Alignment.centerRight,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 11,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: statusColor.withValues(alpha: 0.11),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            status,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: statusColor,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ),
                       ),
-                      const SizedBox(height: 9),
-                      const Text(
-                        'View Details  >',
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 16),
+
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 11,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE8F0FF),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.visibility_outlined,
+                        color: Color.fromARGB(255, 14, 18, 33),
+                        size: 18,
+                      ),
+                      SizedBox(width: 8),
+                      Text(
+                        'View Appointment Details',
                         style: TextStyle(
-                          color: Color(0xFF80A5B9),
+                          color: Color.fromARGB(255, 14, 18, 33),
                           fontSize: 13,
-                          fontWeight: FontWeight.w500,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ],
@@ -556,44 +794,75 @@ class _HistoryMessage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 55, horizontal: 15),
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colors = Theme.of(context).colorScheme;
+
+    return Container(
+      margin: const EdgeInsets.only(top: 15),
+      padding: const EdgeInsets.fromLTRB(22, 35, 22, 32),
+      decoration: BoxDecoration(
+        color: isDark ? colors.surfaceContainer : Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(
+          color: isDark
+              ? colors.outlineVariant
+              : const Color(0xFFE2E8F0),
+        ),
+      ),
       child: Column(
         children: [
-          Icon(
-            icon,
-            color: const Color(0xFF4F91AB),
-            size: 55,
+          Container(
+            height: 85,
+            width: 85,
+            decoration: const BoxDecoration(
+              color: Color(0xFFE8F0FF),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              icon,
+              color: const Color(0xFF315B91),
+              size: 42,
+            ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 18),
           Text(
             message,
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: Color(0xFF285C7D),
+            style: TextStyle(
+              color: isDark
+                  ? colors.onSurface
+                  : const Color.fromARGB(255, 5, 26, 37),
               fontSize: 17,
               fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 9),
           Text(
             subtitle,
             textAlign: TextAlign.center,
             style: const TextStyle(
-              color: Color(0xFF729DB2),
+              color: Color(0xFF60758A),
               fontSize: 13,
               height: 1.5,
             ),
           ),
           if (buttonText != null && onPressed != null) ...[
-            const SizedBox(height: 18),
-            ElevatedButton(
+            const SizedBox(height: 20),
+            ElevatedButton.icon(
               onPressed: onPressed,
+              icon: const Icon(Icons.refresh_rounded, size: 18),
+              label: Text(buttonText!),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF236D96),
+                backgroundColor: const Color.fromARGB(255, 14, 18, 33),
                 foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 22,
+                  vertical: 12,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(13),
+                ),
               ),
-              child: Text(buttonText!),
             ),
           ],
         ],
@@ -623,11 +892,11 @@ class _BottomNavItem extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(
           horizontal: 10,
-          vertical: 5,
+          vertical: 6,
         ),
         decoration: BoxDecoration(
           color: selected
-              ? Colors.white.withValues(alpha: 0.17)
+              ? Colors.white.withValues(alpha: 0.18)
               : Colors.transparent,
           borderRadius: BorderRadius.circular(14),
         ),
@@ -637,14 +906,15 @@ class _BottomNavItem extends StatelessWidget {
             Icon(
               icon,
               color: Colors.white,
-              size: 27,
+              size: 24,
             ),
-            const SizedBox(height: 3),
+            const SizedBox(height: 4),
             Text(
               label,
-              style: const TextStyle(
+              style: TextStyle(
                 color: Colors.white,
-                fontSize: 9,
+                fontSize: 10,
+                fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
               ),
             ),
           ],

@@ -11,10 +11,11 @@ class BookingConfirmationScreen extends StatelessWidget {
     required this.token,
   });
 
-  static const Color _primary = Color(0xFF286C91);
-  static const Color _background = Color(0xFFC2E7EB);
-  static const Color _lightBlue = Color(0xFFF1F9FF);
-  static const Color _muted = Color(0xFF80A5B8);
+  static const Color _primary = Color(0xFF246F96);
+  static const Color _background = Color(0xFFE6EFFF);
+  static const Color _heading = Color(0xFF173B5E);
+  static const Color _lightBlue = Color(0xFFB7D2F8);
+  static const Color _muted = Color(0xFF7892B0);
 
   String _formatDate(DateTime? date) {
     if (date == null) return 'Not available';
@@ -73,255 +74,325 @@ class BookingConfirmationScreen extends StatelessWidget {
     return PopScope(
       canPop: true,
       child: Scaffold(
-        backgroundColor: isDark ? colors.surface : _background,
-        body: SafeArea(
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(22, 30, 22, 28),
-            children: [
-              const SizedBox(height: 10),
-
-              Center(
-                child: Container(
-                  height: 100,
-                  width: 100,
+        backgroundColor: _background,
+        body: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                Color(0xFFE6EFFF),
+                Color(0xFFF5F8FF),
+                Colors.white,
+              ],
+            ),
+          ),
+          child: SafeArea(
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(22, 24, 22, 28),
+              children: [
+                // Success banner
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 22,
+                    vertical: 25,
+                  ),
                   decoration: BoxDecoration(
-                    color: Colors.green.withValues(alpha: 0.12),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.check_circle_rounded,
-                    color: Colors.green,
-                    size: 76,
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 24),
-
-              Text(
-                'Booking Confirmed!',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: isDark ? colors.onSurface : _primary,
-                  fontSize: 27,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-
-              const SizedBox(height: 10),
-
-              const Text(
-                'Your hospital queue token has been generated successfully.',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: _muted,
-                  fontSize: 15,
-                  height: 1.5,
-                ),
-              ),
-
-              const SizedBox(height: 30),
-
-              Container(
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? colors.surfaceContainer
-                      : _lightBlue,
-                  borderRadius: BorderRadius.circular(24),
-                  boxShadow: [
-                    BoxShadow(
-                      color: _primary.withValues(alpha: 0.12),
-                      blurRadius: 14,
-                      offset: const Offset(0, 5),
+                    gradient: const LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        Color(0xFF246F96),
+                        Color(0xFF8DB8F5),
+                      ],
                     ),
-                  ],
-                ),
-                child: Column(
-                  children: [
-                    const Text(
-                      'YOUR TOKEN NUMBER',
-                      style: TextStyle(
-                        color: _muted,
-                        fontSize: 13,
-                        letterSpacing: 1.5,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-
-                    const SizedBox(height: 12),
-
-                    Text(
-                      token.tokenNumber.toString(),
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        color: _primary,
-                        fontSize: 48,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-
-                    const SizedBox(height: 14),
-
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        color: _primary.withValues(alpha: 0.10),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        _statusText(token.status),
-                        style: const TextStyle(
-                          color: _primary,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 13,
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 24),
-
-                    Divider(
-                      color: _muted.withValues(alpha: 0.3),
-                    ),
-
-                    const SizedBox(height: 18),
-
-                    _DetailRow(
-                      icon: Icons.person_outline_rounded,
-                      label: 'Doctor',
-                      value: doctorName,
-                    ),
-
-                    const SizedBox(height: 20),
-
-                    _DetailRow(
-                      icon: Icons.local_hospital_outlined,
-                      label: 'Department',
-                      value: departmentName,
-                    ),
-
-                    const SizedBox(height: 20),
-
-                    _DetailRow(
-                      icon: Icons.people_outline_rounded,
-                      label: 'Patients ahead',
-                      value: '${token.patientsAhead}',
-                    ),
-
-                    const SizedBox(height: 20),
-
-                    _DetailRow(
-                      icon: Icons.access_time_rounded,
-                      label: 'Estimated wait',
-                      value: '${token.estimatedWaitMinutes} minutes',
-                    ),
-
-                    if (appointmentTime != null) ...[
-                      const SizedBox(height: 20),
-
-                      _DetailRow(
-                        icon: Icons.calendar_month_outlined,
-                        label: 'Appointment date',
-                        value: _formatDate(appointmentTime),
-                      ),
-
-                      const SizedBox(height: 20),
-
-                      _DetailRow(
-                        icon: Icons.schedule_rounded,
-                        label: 'Appointment time',
-                        value: _formatTime(appointmentTime),
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: [
+                      BoxShadow(
+                        color: _primary.withValues(alpha: 0.18),
+                        blurRadius: 15,
+                        offset: const Offset(0, 6),
                       ),
                     ],
-
-                    const SizedBox(height: 20),
-
-                    _DetailRow(
-                      icon: Icons.event_available_outlined,
-                      label: 'Booking date',
-                      value: _formatDate(token.createdAt),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 24),
-
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? colors.surfaceContainer
-                      : Colors.white.withValues(alpha: 0.65),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: const Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Icon(
-                      Icons.info_outline_rounded,
-                      color: _primary,
-                      size: 24,
-                    ),
-                    SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        'Please arrive at the hospital before your turn. '
-                        'You can check your latest queue status from My Tokens.',
-                        style: TextStyle(
-                          color: _muted,
-                          fontSize: 13,
-                          height: 1.5,
+                  ),
+                  child: Column(
+                    children: [
+                      Container(
+                        height: 86,
+                        width: 86,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.18),
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.5),
+                            width: 2,
+                          ),
+                        ),
+                        child: const Icon(
+                          Icons.check_circle_rounded,
+                          color: Colors.white,
+                          size: 62,
                         ),
                       ),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 28),
-
-              SizedBox(
-                height: 56,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.pushAndRemoveUntil(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const HomeScreen(),
-                      ),
-                      (route) => false,
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _primary,
-                    foregroundColor: Colors.white,
-                    elevation: 3,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                  ),
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.home_rounded),
-                      SizedBox(width: 10),
-                      Text(
-                        'Back to Home',
+                      const SizedBox(height: 20),
+                      const Text(
+                        'Booking Confirmed!',
+                        textAlign: TextAlign.center,
                         style: TextStyle(
-                          fontSize: 17,
+                          color: Colors.white,
+                          fontSize: 27,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
+                      const SizedBox(height: 10),
+                      Text(
+                        'Your hospital queue token has been generated successfully.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.94),
+                          fontSize: 14,
+                          height: 1.5,
+                        ),
+                      ),
                     ],
                   ),
                 ),
-              ),
-            ],
+
+                const SizedBox(height: 25),
+
+                // Token details card
+                Container(
+                  padding: const EdgeInsets.all(22),
+                  decoration: BoxDecoration(
+                    color: isDark ? colors.surface : Colors.white,
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(
+                      color: _lightBlue.withValues(alpha: 0.6),
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: _heading.withValues(alpha: 0.06),
+                        blurRadius: 15,
+                        offset: const Offset(0, 5),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    children: [
+                      const Text(
+                        'YOUR TOKEN NUMBER',
+                        style: TextStyle(
+                          color: _muted,
+                          fontSize: 13,
+                          letterSpacing: 1.5,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+
+                      const SizedBox(height: 10),
+
+                      Text(
+                        token.tokenNumber.toString(),
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: _primary,
+                          fontSize: 52,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+
+                      const SizedBox(height: 12),
+
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 18,
+                          vertical: 9,
+                        ),
+                        decoration: BoxDecoration(
+                          color: _background,
+                          borderRadius: BorderRadius.circular(25),
+                        ),
+                        child: Text(
+                          _statusText(token.status),
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            color: _heading,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      Divider(
+                        color: _muted.withValues(alpha: 0.25),
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      _DetailRow(
+                        icon: Icons.person_outline_rounded,
+                        label: 'Doctor',
+                        value: doctorName,
+                      ),
+
+                      const SizedBox(height: 22),
+
+                      _DetailRow(
+                        icon: Icons.local_hospital_outlined,
+                        label: 'Department',
+                        value: departmentName,
+                      ),
+
+                      const SizedBox(height: 22),
+
+                      _DetailRow(
+                        icon: Icons.people_outline_rounded,
+                        label: 'Patients ahead',
+                        value: '${token.patientsAhead}',
+                      ),
+
+                      const SizedBox(height: 22),
+
+                      _DetailRow(
+                        icon: Icons.access_time_rounded,
+                        label: 'Estimated wait',
+                        value: '${token.estimatedWaitMinutes} minutes',
+                      ),
+
+                      if (appointmentTime != null) ...[
+                        const SizedBox(height: 22),
+
+                        _DetailRow(
+                          icon: Icons.calendar_month_outlined,
+                          label: 'Appointment date',
+                          value: _formatDate(appointmentTime),
+                        ),
+
+                        const SizedBox(height: 22),
+
+                        _DetailRow(
+                          icon: Icons.schedule_rounded,
+                          label: 'Appointment time',
+                          value: _formatTime(appointmentTime),
+                        ),
+                      ],
+
+                      const SizedBox(height: 22),
+
+                      _DetailRow(
+                        icon: Icons.event_available_outlined,
+                        label: 'Booking date',
+                        value: _formatDate(token.createdAt),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 22),
+
+                // Information card
+                Container(
+                  padding: const EdgeInsets.all(17),
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? colors.surfaceContainer
+                        : Colors.white,
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(
+                      color: _lightBlue.withValues(alpha: 0.7),
+                    ),
+                  ),
+                  child: const Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(
+                        Icons.info_outline_rounded,
+                        color: _primary,
+                        size: 25,
+                      ),
+                      SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          'Please arrive at the hospital before your turn. '
+                          'You can check your latest queue status from My Tokens.',
+                          style: TextStyle(
+                            color: _muted,
+                            fontSize: 13,
+                            height: 1.6,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 26),
+
+                // Back to Home button
+                SizedBox(
+                  height: 56,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.pushAndRemoveUntil(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const HomeScreen(),
+                        ),
+                        (route) => false,
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _heading,
+                      foregroundColor: Colors.white,
+                      elevation: 3,
+                      shadowColor: _heading.withValues(alpha: 0.2),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.home_rounded, size: 23),
+                        SizedBox(width: 10),
+                        Text(
+                          'Back to Home',
+                          style: TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 15),
+
+                const Center(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.verified_user_outlined,
+                        size: 15,
+                        color: _muted,
+                      ),
+                      SizedBox(width: 6),
+                      Text(
+                        'Thank you for choosing our hospital',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: _muted,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -334,8 +405,9 @@ class _DetailRow extends StatelessWidget {
   final String label;
   final String value;
 
-  static const Color _primary = Color(0xFF286C91);
-  static const Color _muted = Color(0xFF80A5B8);
+  static const Color _primary = Color(0xFF246F96);
+  static const Color _heading = Color(0xFF173B5E);
+  static const Color _muted = Color(0xFF7892B0);
 
   const _DetailRow({
     required this.icon,
@@ -352,31 +424,44 @@ class _DetailRow extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(
-          icon,
-          color: _primary,
-          size: 23,
-        ),
-        const SizedBox(width: 12),
-        SizedBox(
-          width: 120,
-          child: Text(
-            label,
-            style: const TextStyle(
-              color: _muted,
-              fontSize: 14,
-            ),
+        Container(
+          height: 39,
+          width: 39,
+          decoration: BoxDecoration(
+            color: const Color(0xFFE8F0FF),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Icon(
+            icon,
+            color: _primary,
+            size: 21,
           ),
         ),
+
+        const SizedBox(width: 12),
+
         Expanded(
-          child: Text(
-            value,
-            textAlign: TextAlign.end,
-            style: TextStyle(
-              color: isDark ? colors.onSurface : _primary,
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-            ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: const TextStyle(
+                  color: _muted,
+                  fontSize: 13,
+                ),
+              ),
+              const SizedBox(height: 5),
+              Text(
+                value,
+                textAlign: TextAlign.start,
+                style: TextStyle(
+                  color: isDark ? colors.onSurface : _heading,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
           ),
         ),
       ],

@@ -20,9 +20,11 @@ class DepartmentScreen extends StatefulWidget {
 }
 
 class _DepartmentScreenState extends State<DepartmentScreen> {
-  static const Color _background = Color(0xFFC2E7EB);
-  static const Color _primary = Color(0xFF286C91);
-  static const Color _secondaryText = Color(0xFF80A5B8);
+  static const Color _primary = Color(0xFF246F96);
+  static const Color _background = Color(0xFFE6EFFF);
+  static const Color _heading = Color(0xFF173B5E);
+  static const Color _lightBlue = Color(0xFFB7D2F8);
+  static const Color _muted = Color(0xFF7892B0);
 
   final TextEditingController _searchController =
       TextEditingController();
@@ -31,12 +33,12 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
   String? _openingDepartmentId;
 
   final List<Color> _cardColors = const [
-    Color(0xFFDDF9EC),
-    Color(0xFFDDF7FC),
-    Color(0xFFFFE5E8),
-    Color(0xFFFFF4C4),
-    Color(0xFFEBDFFF),
-    Color(0xFFFFDFEB),
+    Color(0xFFE8F0FF),
+    Color(0xFFF0F6FF),
+    Color(0xFFEAF5FF),
+    Color(0xFFF3F7FF),
+    Color(0xFFE8F0FF),
+    Color(0xFFF0F6FF),
   ];
 
   final List<IconData> _departmentIcons = const [
@@ -190,160 +192,327 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
         .toList();
 
     return Scaffold(
-      backgroundColor: isDark ? colors.surface : _background,
-      body: SafeArea(
-        child: RefreshIndicator(
-          color: _primary,
-          onRefresh: _refreshData,
-          child: ListView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.fromLTRB(20, 12, 20, 30),
-            children: [
-              Row(
-                children: [
-                  IconButton(
-                    onPressed: () {
-                      if (Navigator.canPop(context)) {
-                        Navigator.pop(context);
-                      } else {
-                        Navigator.pushNamed(context, '/home');
-                      }
-                    },
-                    icon: const Icon(
-                      Icons.arrow_back_rounded,
-                      color: _primary,
-                      size: 28,
-                    ),
-                  ),
-                  const SizedBox(width: 4),
-                  Expanded(
-                    child: Text(
-                      'Department Selection',
-                      style: TextStyle(
-                        color: isDark ? colors.onSurface : _primary,
-                        fontSize: 23,
-                        fontWeight: FontWeight.w600,
+      backgroundColor: _background,
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color(0xFFE6EFFF),
+              Color(0xFFF5F8FF),
+              Colors.white,
+            ],
+          ),
+        ),
+        child: SafeArea(
+          child: RefreshIndicator(
+            color: _primary,
+            onRefresh: _refreshData,
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 30),
+              children: [
+                // Top navigation row
+                Row(
+                  children: [
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(13),
+                        boxShadow: [
+                          BoxShadow(
+                            color: _heading.withValues(alpha: 0.05),
+                            blurRadius: 8,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child: IconButton(
+                        onPressed: () {
+                          if (Navigator.canPop(context)) {
+                            Navigator.pop(context);
+                          } else {
+                            Navigator.pushNamed(context, '/home');
+                          }
+                        },
+                        icon: const Icon(
+                          Icons.arrow_back_rounded,
+                          color: _heading,
+                          size: 25,
+                        ),
                       ),
                     ),
-                  ),
-                  IconButton(
-                    tooltip: 'Refresh departments',
-                    onPressed: departmentController.isLoading
-                        ? null
-                        : _refreshData,
-                    icon: const Icon(
-                      Icons.refresh_rounded,
-                      color: _primary,
+                    const SizedBox(width: 12),
+                    const Expanded(
+                      child: Text(
+                        'Departments',
+                        style: TextStyle(
+                          color: _heading,
+                          fontSize: 23,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 14),
-              Container(
-                height: 48,
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? colors.surfaceContainer
-                      : const Color(0xFFF1F9FF),
-                  borderRadius: BorderRadius.circular(28),
-                  boxShadow: [
-                    BoxShadow(
-                      color: _primary.withValues(alpha: 0.13),
-                      blurRadius: 6,
-                      offset: const Offset(0, 3),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(13),
+                      ),
+                      child: IconButton(
+                        tooltip: 'Refresh departments',
+                        onPressed: departmentController.isLoading
+                            ? null
+                            : _refreshData,
+                        icon: const Icon(
+                          Icons.refresh_rounded,
+                          color: _primary,
+                        ),
+                      ),
                     ),
                   ],
                 ),
-                child: TextField(
-                  controller: _searchController,
-                  onChanged: (value) {
-                    setState(() {
-                      _searchQuery = value.trim();
-                    });
-                  },
-                  decoration: InputDecoration(
-                    hintText: 'Search Departments',
-                    hintStyle: const TextStyle(
-                      color: Color(0xFF89979F),
-                      fontSize: 16,
+
+                const SizedBox(height: 22),
+
+                // Gradient header banner
+                Container(
+                  padding: const EdgeInsets.all(22),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        Color(0xFF246F96),
+                        Color(0xFF8DB8F5),
+                      ],
                     ),
-                    prefixIcon: const Icon(
-                      Icons.search_rounded,
-                      color: _secondaryText,
-                    ),
-                    suffixIcon: _searchQuery.isEmpty
-                        ? null
-                        : IconButton(
-                            onPressed: () {
-                              _searchController.clear();
-                              setState(() => _searchQuery = '');
-                            },
-                            icon: const Icon(
-                              Icons.close_rounded,
-                              color: _secondaryText,
+                    borderRadius: BorderRadius.circular(22),
+                    boxShadow: [
+                      BoxShadow(
+                        color: _primary.withValues(alpha: 0.18),
+                        blurRadius: 14,
+                        offset: const Offset(0, 5),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Find Your Department',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 21,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
-                          ),
-                    border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(
-                      vertical: 12,
+                            SizedBox(height: 9),
+                            Text(
+                              'Choose a medical department to explore available doctors.',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 13,
+                                height: 1.5,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Container(
+                        padding: const EdgeInsets.all(13),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.18),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: const Icon(
+                          Icons.local_hospital_rounded,
+                          color: Colors.white,
+                          size: 36,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 25),
+
+                // Search heading
+                const Text(
+                  'Search Departments',
+                  style: TextStyle(
+                    color: _heading,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+
+                const SizedBox(height: 12),
+
+                // Search field
+                Container(
+                  decoration: BoxDecoration(
+                    color: isDark ? colors.surface : Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: _lightBlue.withValues(alpha: 0.7),
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: _heading.withValues(alpha: 0.05),
+                        blurRadius: 10,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  child: TextField(
+                    controller: _searchController,
+                    onChanged: (value) {
+                      setState(() {
+                        _searchQuery = value.trim();
+                      });
+                    },
+                    style: TextStyle(
+                      color: isDark ? colors.onSurface : _heading,
+                      fontSize: 15,
+                    ),
+                    decoration: InputDecoration(
+                      hintText: 'Search by department name',
+                      hintStyle: const TextStyle(
+                        color: _muted,
+                        fontSize: 14,
+                      ),
+                      prefixIcon: const Icon(
+                        Icons.search_rounded,
+                        color: _primary,
+                        size: 23,
+                      ),
+                      suffixIcon: _searchQuery.isEmpty
+                          ? null
+                          : IconButton(
+                              onPressed: () {
+                                _searchController.clear();
+                                setState(() => _searchQuery = '');
+                              },
+                              icon: const Icon(
+                                Icons.close_rounded,
+                                color: _muted,
+                              ),
+                            ),
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(
+                        vertical: 17,
+                        horizontal: 16,
+                      ),
                     ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 30),
-              if (departmentController.isLoading &&
-                  departmentController.departments.isEmpty)
-                const Padding(
-                  padding: EdgeInsets.all(35),
-                  child: Center(
-                    child: CircularProgressIndicator(
-                      color: _primary,
-                    ),
-                  ),
-                )
-              else if (departmentController.error != null &&
-                  departmentController.departments.isEmpty)
-                _StatusMessage(
-                  icon: Icons.cloud_off_rounded,
-                  message: departmentController.error!,
-                  actionLabel: 'Try Again',
-                  onAction: () {
-                    departmentController.refreshDepartments();
-                  },
-                )
-              else if (departments.isEmpty)
-                _StatusMessage(
-                  icon: Icons.search_off_rounded,
-                  message: _searchQuery.isEmpty
-                      ? 'No departments are available.'
-                      : 'No departments match your search.',
-                  actionLabel:
-                      _searchQuery.isNotEmpty ? 'Clear Search' : null,
-                  onAction: _searchQuery.isNotEmpty
-                      ? () {
-                          _searchController.clear();
-                          setState(() => _searchQuery = '');
-                        }
-                      : null,
-                )
-              else
-                ...departments.asMap().entries.map((entry) {
-                  final index = entry.key;
-                  final department = entry.value;
-                  final isOpening =
-                      _openingDepartmentId == department.id;
 
-                  return _DepartmentCard(
-                    department: department,
-                    backgroundColor:
-                        _cardColors[index % _cardColors.length],
-                    icon: _departmentIcons[
-                        index % _departmentIcons.length],
-                    isLoading: isOpening,
-                    onTap: () => _selectDepartment(department),
-                  );
-                }),
-            ],
+                const SizedBox(height: 26),
+
+                // Department list heading
+                Row(
+                  children: [
+                    const Expanded(
+                      child: Text(
+                        'Available Departments',
+                        style: TextStyle(
+                          color: _heading,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    if (!departmentController.isLoading &&
+                        departments.isNotEmpty)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 11,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFE8F0FF),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          '${departments.length} found',
+                          style: const TextStyle(
+                            color: _primary,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+
+                const SizedBox(height: 15),
+
+                // Loading state
+                if (departmentController.isLoading &&
+                    departmentController.departments.isEmpty)
+                  const Padding(
+                    padding: EdgeInsets.all(35),
+                    child: Center(
+                      child: CircularProgressIndicator(
+                        color: _primary,
+                      ),
+                    ),
+                  )
+
+                // Error state
+                else if (departmentController.error != null &&
+                    departmentController.departments.isEmpty)
+                  _StatusMessage(
+                    icon: Icons.cloud_off_rounded,
+                    message: departmentController.error!,
+                    actionLabel: 'Try Again',
+                    onAction: () {
+                      departmentController.refreshDepartments();
+                    },
+                  )
+
+                // Empty search or empty department list
+                else if (departments.isEmpty)
+                  _StatusMessage(
+                    icon: Icons.search_off_rounded,
+                    message: _searchQuery.isEmpty
+                        ? 'No departments are available.'
+                        : 'No departments match your search.',
+                    actionLabel:
+                        _searchQuery.isNotEmpty ? 'Clear Search' : null,
+                    onAction: _searchQuery.isNotEmpty
+                        ? () {
+                            _searchController.clear();
+                            setState(() => _searchQuery = '');
+                          }
+                        : null,
+                  )
+
+                // Department cards
+                else
+                  ...departments.asMap().entries.map((entry) {
+                    final index = entry.key;
+                    final department = entry.value;
+                    final isOpening =
+                        _openingDepartmentId == department.id;
+
+                    return _DepartmentCard(
+                      department: department,
+                      backgroundColor:
+                          _cardColors[index % _cardColors.length],
+                      icon: _departmentIcons[
+                          index % _departmentIcons.length],
+                      isLoading: isOpening,
+                      onTap: () => _selectDepartment(department),
+                    );
+                  }),
+              ],
+            ),
           ),
         ),
       ),
@@ -357,6 +526,9 @@ class _DepartmentCard extends StatelessWidget {
   final IconData icon;
   final bool isLoading;
   final VoidCallback onTap;
+
+  static const Color _primary = Color(0xFF246F96);
+  static const Color _heading = Color(0xFF173B5E);
 
   const _DepartmentCard({
     required this.department,
@@ -373,71 +545,85 @@ class _DepartmentCard extends StatelessWidget {
     final colors = Theme.of(context).colorScheme;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 17),
+      margin: const EdgeInsets.only(bottom: 14),
       decoration: BoxDecoration(
-        color: isDark ? colors.surfaceContainer : backgroundColor,
-        borderRadius: BorderRadius.circular(22),
+        color: isDark ? colors.surface : Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: const Color(0xFFB7D2F8).withValues(alpha: 0.65),
+        ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF367B91).withValues(alpha: 0.13),
-            blurRadius: 9,
-            offset: const Offset(0, 5),
+            color: _heading.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
       child: Material(
         color: Colors.transparent,
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(20),
         child: InkWell(
           onTap: isLoading ? null : onTap,
-          borderRadius: BorderRadius.circular(22),
+          borderRadius: BorderRadius.circular(20),
           child: Padding(
             padding: const EdgeInsets.symmetric(
-              horizontal: 15,
-              vertical: 19,
+              horizontal: 16,
+              vertical: 17,
             ),
             child: Row(
               children: [
                 Container(
-                  height: 45,
-                  width: 45,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFF3998B8),
-                    shape: BoxShape.circle,
+                  height: 53,
+                  width: 53,
+                  decoration: BoxDecoration(
+                    color: backgroundColor,
+                    borderRadius: BorderRadius.circular(16),
                   ),
                   child: Icon(
                     icon,
-                    color: Colors.white,
-                    size: 25,
+                    color: _primary,
+                    size: 28,
                   ),
                 ),
-                const SizedBox(width: 17),
+
+                const SizedBox(width: 15),
+
                 Expanded(
                   child: Text(
                     department.name,
                     style: TextStyle(
-                      color: isDark
-                          ? colors.onSurface
-                          : const Color(0xFF285C7D),
-                      fontSize: 17,
+                      color: isDark ? colors.onSurface : _heading,
+                      fontSize: 16,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                 ),
+
+                const SizedBox(width: 8),
+
                 if (isLoading)
                   const SizedBox(
-                    height: 22,
-                    width: 22,
+                    height: 23,
+                    width: 23,
                     child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: _DepartmentScreenState._primary,
+                      strokeWidth: 2.3,
+                      color: _primary,
                     ),
                   )
                 else
-                  const Icon(
-                    Icons.chevron_right_rounded,
-                    color: Color(0xFF3988A4),
-                    size: 30,
+                  Container(
+                    height: 34,
+                    width: 34,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE8F0FF),
+                      borderRadius: BorderRadius.circular(11),
+                    ),
+                    child: const Icon(
+                      Icons.chevron_right_rounded,
+                      color: _primary,
+                      size: 25,
+                    ),
                   ),
               ],
             ),
@@ -461,34 +647,75 @@ class _StatusMessage extends StatelessWidget {
     this.onAction,
   });
 
+  static const Color _primary = Color(0xFF246F96);
+  static const Color _heading = Color(0xFF173B5E);
+  // static const Color _muted = Color(0xFF7892B0);
+
   @override
   Widget build(BuildContext context) {
-    return Padding(
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(top: 8),
       padding: const EdgeInsets.symmetric(
-        vertical: 28,
-        horizontal: 12,
+        vertical: 30,
+        horizontal: 18,
+      ),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: const Color(0xFFB7D2F8).withValues(alpha: 0.65),
+        ),
       ),
       child: Column(
         children: [
-          Icon(
-            icon,
-            color: const Color(0xFF3998B8),
-            size: 45,
+          Container(
+            height: 65,
+            width: 65,
+            decoration: BoxDecoration(
+              color: const Color(0xFFE8F0FF),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Icon(
+              icon,
+              color: _primary,
+              size: 34,
+            ),
           ),
-          const SizedBox(height: 12),
+
+          const SizedBox(height: 15),
+
           Text(
             message,
             textAlign: TextAlign.center,
             style: const TextStyle(
-              color: Color(0xFF285C7D),
+              color: _heading,
               fontSize: 14,
+              height: 1.5,
             ),
           ),
+
           if (actionLabel != null && onAction != null) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
             OutlinedButton(
               onPressed: onAction,
-              child: Text(actionLabel!),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: _primary,
+                side: const BorderSide(color: _primary),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 22,
+                  vertical: 11,
+                ),
+              ),
+              child: Text(
+                actionLabel!,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ),
           ],
         ],

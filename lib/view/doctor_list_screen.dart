@@ -1,5 +1,7 @@
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import '../models/doctor_model.dart';
 import '../controller/doctor_controller.dart';
 import 'doctor_details_screen.dart';
@@ -19,9 +21,11 @@ class DoctorListScreen extends StatefulWidget {
 }
 
 class _DoctorListScreenState extends State<DoctorListScreen> {
-  static const Color _background = Color(0xFFC2E7EB);
-  static const Color _primary = Color(0xFF286C91);
-  static const Color _secondaryText = Color(0xFF80A5B8);
+  static const Color _background = Color(0xFFE6EFFF);
+  static const Color _primary = Color(0xFF246F96);
+  static const Color _heading = Color(0xFF173B5E);
+  static const Color _lightBlue = Color(0xFFE8F0FF);
+  static const Color _muted = Color(0xFF7892B0);
 
   final TextEditingController _searchController =
       TextEditingController();
@@ -99,168 +103,311 @@ class _DoctorListScreenState extends State<DoctorListScreen> {
         departmentName != null && departmentName.isNotEmpty;
 
     return Scaffold(
-      backgroundColor: isDark ? colors.surface : _background,
-      body: SafeArea(
-        child: RefreshIndicator(
-          color: _primary,
-          onRefresh: _refreshDoctors,
-          child: ListView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
-            children: [
-              Row(
-                children: [
-                  IconButton(
-                    onPressed: () => Navigator.pop(context),
-                    icon: const Icon(
-                      Icons.arrow_back_rounded,
-                      color: _primary,
-                      size: 28,
-                    ),
-                  ),
-                  const SizedBox(width: 4),
-                  Expanded(
-                    child: Text(
-                      'Doctor List',
-                      style: TextStyle(
-                        color: isDark ? colors.onSurface : _primary,
-                        fontSize: 25,
-                        fontWeight: FontWeight.w600,
+      backgroundColor: _background,
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color(0xFFE6EFFF),
+              Color(0xFFF5F8FF),
+              Colors.white,
+            ],
+          ),
+        ),
+        child: SafeArea(
+          child: RefreshIndicator(
+            color: _primary,
+            onRefresh: _refreshDoctors,
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
+              children: [
+                // Top navigation
+                Row(
+                  children: [
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(13),
+                        boxShadow: [
+                          BoxShadow(
+                            color: _heading.withValues(alpha: 0.05),
+                            blurRadius: 8,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child: IconButton(
+                        onPressed: () => Navigator.pop(context),
+                        icon: const Icon(
+                          Icons.arrow_back_rounded,
+                          color: _heading,
+                          size: 25,
+                        ),
                       ),
                     ),
-                  ),
-                  IconButton(
-                    tooltip: 'Refresh doctors',
-                    onPressed:
-                        controller.isLoading ? null : _refreshDoctors,
-                    icon: const Icon(
-                      Icons.refresh_rounded,
-                      color: _primary,
+                    const SizedBox(width: 12),
+                    const Expanded(
+                      child: Text(
+                        'Doctor List',
+                        style: TextStyle(
+                          color: _heading,
+                          fontSize: 23,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
-                  ),
-                ],
-              ),
-
-              // Selected department heading
-              if (hasDepartmentName) ...[
-                const SizedBox(height: 8),
-                Text(
-                  'Doctors in $departmentName Department',
-                  style: TextStyle(
-                    color: isDark ? colors.onSurface : _primary,
-                    fontSize: 21,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  'Choose a doctor to view their details.',
-                  style: TextStyle(
-                    color: isDark
-                        ? colors.onSurfaceVariant
-                        : _secondaryText,
-                    fontSize: 13,
-                  ),
-                ),
-              ],
-
-              const SizedBox(height: 18),
-
-              // Search doctors
-              Container(
-                height: 48,
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? colors.surfaceContainer
-                      : const Color(0xFFF1F9FF),
-                  borderRadius: BorderRadius.circular(28),
-                  boxShadow: [
-                    BoxShadow(
-                      color: _primary.withValues(alpha: 0.15),
-                      blurRadius: 6,
-                      offset: const Offset(0, 3),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(13),
+                      ),
+                      child: IconButton(
+                        tooltip: 'Refresh doctors',
+                        onPressed:
+                            controller.isLoading ? null : _refreshDoctors,
+                        icon: const Icon(
+                          Icons.refresh_rounded,
+                          color: _primary,
+                        ),
+                      ),
                     ),
                   ],
                 ),
-                child: TextField(
-                  controller: _searchController,
-                  onChanged: (value) {
-                    setState(() {
-                      _searchQuery = value.trim();
-                    });
-                  },
-                  decoration: InputDecoration(
-                    hintText: 'Search Doctors',
-                    hintStyle: const TextStyle(
-                      color: Color(0xFF89979F),
-                      fontSize: 16,
+
+                const SizedBox(height: 22),
+
+                // Department banner
+                Container(
+                  padding: const EdgeInsets.all(21),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        Color(0xFF246F96),
+                        Color(0xFF8DB8F5),
+                      ],
                     ),
-                    prefixIcon: const Icon(
-                      Icons.search_rounded,
-                      color: _secondaryText,
-                    ),
-                    suffixIcon: _searchQuery.isEmpty
-                        ? null
-                        : IconButton(
-                            onPressed: () {
-                              _searchController.clear();
-                              setState(() => _searchQuery = '');
-                            },
-                            icon: const Icon(
-                              Icons.close_rounded,
-                              color: _secondaryText,
+                    borderRadius: BorderRadius.circular(22),
+                    boxShadow: [
+                      BoxShadow(
+                        color: _primary.withValues(alpha: 0.16),
+                        blurRadius: 12,
+                        offset: const Offset(0, 5),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              hasDepartmentName
+                                  ? departmentName
+                                  : 'Find Your Doctor',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 21,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
-                          ),
-                    border: InputBorder.none,
-                    contentPadding:
-                        const EdgeInsets.symmetric(vertical: 12),
+                            const SizedBox(height: 9),
+                            Text(
+                              hasDepartmentName
+                                  ? 'Doctors in this department. Choose a doctor to view their details.'
+                                  : 'Explore available doctors and choose the right specialist for you.',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 13,
+                                height: 1.5,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Container(
+                        padding: const EdgeInsets.all(13),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.18),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: const Icon(
+                          Icons.medical_services_rounded,
+                          color: Colors.white,
+                          size: 35,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ),
 
-              const SizedBox(height: 30),
+                const SizedBox(height: 25),
 
-              if (controller.isLoading && controller.doctors.isEmpty)
-                const Padding(
-                  padding: EdgeInsets.all(32),
-                  child: Center(
-                    child: CircularProgressIndicator(
-                      color: _primary,
+                const Text(
+                  'Search Doctors',
+                  style: TextStyle(
+                    color: _heading,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+
+                const SizedBox(height: 12),
+
+                // Search field
+                Container(
+                  decoration: BoxDecoration(
+                    color: isDark ? colors.surface : Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: const Color(0xFFB7D2F8)
+                          .withValues(alpha: 0.7),
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: _heading.withValues(alpha: 0.04),
+                        blurRadius: 10,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  child: TextField(
+                    controller: _searchController,
+                    onChanged: (value) {
+                      setState(() {
+                        _searchQuery = value.trim();
+                      });
+                    },
+                    style: TextStyle(
+                      color: isDark ? colors.onSurface : _heading,
+                      fontSize: 15,
+                    ),
+                    decoration: InputDecoration(
+                      hintText: 'Name, specialization or qualification',
+                      hintStyle: const TextStyle(
+                        color: _muted,
+                        fontSize: 13,
+                      ),
+                      prefixIcon: const Icon(
+                        Icons.search_rounded,
+                        color: _primary,
+                        size: 23,
+                      ),
+                      suffixIcon: _searchQuery.isEmpty
+                          ? null
+                          : IconButton(
+                              onPressed: () {
+                                _searchController.clear();
+                                setState(() => _searchQuery = '');
+                              },
+                              icon: const Icon(
+                                Icons.close_rounded,
+                                color: _muted,
+                              ),
+                            ),
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(
+                        vertical: 17,
+                        horizontal: 16,
+                      ),
                     ),
                   ),
-                )
-              else if (controller.error != null &&
-                  controller.doctors.isEmpty)
-                _DoctorMessage(
-                  icon: Icons.cloud_off_rounded,
-                  message: controller.error!,
-                  actionLabel: 'Try Again',
-                  onAction: _refreshDoctors,
-                )
-              else if (doctors.isEmpty)
-                _DoctorMessage(
-                  icon: Icons.person_search_rounded,
-                  message: _searchQuery.isEmpty
-                      ? 'No doctors are available.'
-                      : 'No doctors match your search.',
-                  actionLabel:
-                      _searchQuery.isNotEmpty ? 'Clear Search' : null,
-                  onAction: _searchQuery.isNotEmpty
-                      ? () {
-                          _searchController.clear();
-                          setState(() => _searchQuery = '');
-                        }
-                      : null,
-                )
-              else
-                ...doctors.map(
-                  (doctor) => _DoctorListCard(
-                    doctor: doctor,
-                    safeText: _safeText,
-                    onTap: () => _openDoctorDetails(doctor),
-                  ),
                 ),
-            ],
+
+                const SizedBox(height: 25),
+
+                // List heading
+                Row(
+                  children: [
+                    const Expanded(
+                      child: Text(
+                        'Available Doctors',
+                        style: TextStyle(
+                          color: _heading,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    if (!controller.isLoading && doctors.isNotEmpty)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 11,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: _lightBlue,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          '${doctors.length} found',
+                          style: const TextStyle(
+                            color: _primary,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+
+                const SizedBox(height: 15),
+
+                // Loading state
+                if (controller.isLoading && controller.doctors.isEmpty)
+                  const Padding(
+                    padding: EdgeInsets.all(32),
+                    child: Center(
+                      child: CircularProgressIndicator(
+                        color: _primary,
+                      ),
+                    ),
+                  )
+
+                // Error state
+                else if (controller.error != null &&
+                    controller.doctors.isEmpty)
+                  _DoctorMessage(
+                    icon: Icons.cloud_off_rounded,
+                    message: controller.error!,
+                    actionLabel: 'Try Again',
+                    onAction: _refreshDoctors,
+                  )
+
+                // Empty state
+                else if (doctors.isEmpty)
+                  _DoctorMessage(
+                    icon: Icons.person_search_rounded,
+                    message: _searchQuery.isEmpty
+                        ? 'No doctors are available.'
+                        : 'No doctors match your search.',
+                    actionLabel:
+                        _searchQuery.isNotEmpty ? 'Clear Search' : null,
+                    onAction: _searchQuery.isNotEmpty
+                        ? () {
+                            _searchController.clear();
+                            setState(() => _searchQuery = '');
+                          }
+                        : null,
+                  )
+
+                // Doctor cards
+                else
+                  ...doctors.map(
+                    (doctor) => _DoctorListCard(
+                      doctor: doctor,
+                      safeText: _safeText,
+                      onTap: () => _openDoctorDetails(doctor),
+                    ),
+                  ),
+              ],
+            ),
           ),
         ),
       ),
@@ -289,41 +436,56 @@ class _DoctorListCard extends StatelessWidget {
     final qualification = safeText(doctor.qualification);
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 18),
+      margin: const EdgeInsets.only(bottom: 15),
       decoration: BoxDecoration(
-        color: isDark ? colors.surfaceContainer : const Color(0xFFF1F9FF),
-        borderRadius: BorderRadius.circular(16),
+        color: isDark ? colors.surface : Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: const Color(0xFFB7D2F8).withValues(alpha: 0.65),
+        ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF285C7D).withValues(alpha: 0.18),
-            blurRadius: 7,
+            color: const Color(0xFF173B5E).withValues(alpha: 0.05),
+            blurRadius: 10,
             offset: const Offset(0, 4),
           ),
         ],
       ),
       child: Material(
         color: Colors.transparent,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(20),
           child: Padding(
             padding: const EdgeInsets.symmetric(
-              horizontal: 12,
-              vertical: 12,
+              horizontal: 14,
+              vertical: 16,
             ),
             child: Row(
               children: [
-                const CircleAvatar(
-                  radius: 40,
-                  backgroundColor: Color(0xFFD8F3FA),
-                  child: Icon(
-                    Icons.person_rounded,
-                    color: Color(0xFF3988A4),
-                    size: 43,
+                Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: const Color(0xFFB7D2F8),
+                      width: 1.5,
+                    ),
+                  ),
+                  child: const CircleAvatar(
+                    radius: 34,
+                    backgroundColor: Color(0xFFE8F0FF),
+                    child: Icon(
+                      Icons.person_rounded,
+                      color: Color(0xFF246F96),
+                      size: 40,
+                    ),
                   ),
                 ),
+
                 const SizedBox(width: 14),
+
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -332,22 +494,28 @@ class _DoctorListCard extends StatelessWidget {
                         doctor.name,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: Color(0xFF285C7D),
-                          fontSize: 17,
+                        style: TextStyle(
+                          color: isDark
+                              ? colors.onSurface
+                              : const Color(0xFF173B5E),
+                          fontSize: 16,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
+
                       if (specialization.isNotEmpty) ...[
-                        const SizedBox(height: 5),
+                        const SizedBox(height: 6),
                         Text(
                           specialization,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
-                            color: Color(0xFF80A5B8),
-                            fontSize: 14,
+                            color: Color(0xFF7892B0),
+                            fontSize: 13,
                           ),
                         ),
                       ],
+
                       if (qualification.isNotEmpty) ...[
                         const SizedBox(height: 4),
                         Text(
@@ -355,32 +523,73 @@ class _DoctorListCard extends StatelessWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
-                            color: Color(0xFF80A5B8),
+                            color: Color(0xFF7892B0),
                             fontSize: 12,
                           ),
                         ),
                       ],
-                      const SizedBox(height: 5),
-                      Text(
-                        doctor.isAvailable
-                            ? 'Available'
-                            : 'Currently unavailable',
-                        style: TextStyle(
+
+                      const SizedBox(height: 8),
+
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 5,
+                        ),
+                        decoration: BoxDecoration(
                           color: doctor.isAvailable
-                              ? Colors.green.shade700
-                              : colors.error,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
+                              ? const Color(0xFFE6F6EC)
+                              : const Color(0xFFFFE9E9),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              doctor.isAvailable
+                                  ? Icons.check_circle_rounded
+                                  : Icons.cancel_rounded,
+                              size: 13,
+                              color: doctor.isAvailable
+                                  ? Colors.green.shade700
+                                  : Colors.red.shade700,
+                            ),
+                            const SizedBox(width: 5),
+                            Flexible(
+                              child: Text(
+                                doctor.isAvailable
+                                    ? 'Available'
+                                    : 'Currently unavailable',
+                                style: TextStyle(
+                                  color: doctor.isAvailable
+                                      ? Colors.green.shade700
+                                      : Colors.red.shade700,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(width: 4),
-                const Icon(
-                  Icons.chevron_right_rounded,
-                  color: Color(0xFF3988A4),
-                  size: 30,
+
+                const SizedBox(width: 6),
+
+                Container(
+                  height: 32,
+                  width: 32,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE8F0FF),
+                    borderRadius: BorderRadius.circular(11),
+                  ),
+                  child: const Icon(
+                    Icons.chevron_right_rounded,
+                    color: Color(0xFF246F96),
+                    size: 24,
+                  ),
                 ),
               ],
             ),
@@ -404,30 +613,68 @@ class _DoctorMessage extends StatelessWidget {
     this.onAction,
   });
 
+  static const Color _primary = Color(0xFF246F96);
+  static const Color _heading = Color(0xFF173B5E);
+
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 12),
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(top: 8),
+      padding: const EdgeInsets.symmetric(
+        vertical: 30,
+        horizontal: 18,
+      ),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: const Color(0xFFB7D2F8).withValues(alpha: 0.65),
+        ),
+      ),
       child: Column(
         children: [
-          Icon(
-            icon,
-            color: const Color(0xFF3998B8),
-            size: 45,
+          Container(
+            height: 65,
+            width: 65,
+            decoration: BoxDecoration(
+              color: const Color(0xFFE8F0FF),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Icon(
+              icon,
+              color: _primary,
+              size: 34,
+            ),
           ),
-          const SizedBox(height: 12),
+
+          const SizedBox(height: 15),
+
           Text(
             message,
             textAlign: TextAlign.center,
             style: const TextStyle(
-              color: Color(0xFF285C7D),
+              color: _heading,
               fontSize: 14,
+              height: 1.5,
             ),
           ),
+
           if (actionLabel != null && onAction != null) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
             OutlinedButton(
               onPressed: onAction,
+              style: OutlinedButton.styleFrom(
+                foregroundColor: _primary,
+                side: const BorderSide(color: _primary),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 22,
+                  vertical: 11,
+                ),
+              ),
               child: Text(actionLabel!),
             ),
           ],

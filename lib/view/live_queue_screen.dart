@@ -5,10 +5,14 @@ import 'package:provider/provider.dart';
 import '../models/token_model.dart';
 import '../controller/token_controller.dart';
 
-const Color pageColor = Color(0xFFBDE7EA);
-const Color blue = Color(0xFF246D91);
-const Color darkBlue = Color(0xFF285B7B);
-const Color cardColor = Color(0xFFF1F8FF);
+// Home Screen color theme
+const Color pageColor = Color(0xFFE6EFFF);
+const Color blue = Color(0xFF8DB8F5);
+const Color darkBlue = Color.fromARGB(255, 14, 18, 33);
+const Color cardColor = Colors.white;
+const Color mutedColor = Color(0xFF60758A);
+const Color lightBlue = Color(0xFFE8F0FF);
+const Color borderColor = Color(0xFFE2E8F0);
 
 class LiveQueueScreen extends StatefulWidget {
   const LiveQueueScreen({super.key});
@@ -37,6 +41,9 @@ class _LiveQueueScreenState extends State<LiveQueueScreen> {
       context: context,
       builder: (dialogContext) => AlertDialog(
         backgroundColor: cardColor,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(22),
+        ),
         title: const Text(
           'Cancel Token',
           style: TextStyle(
@@ -46,15 +53,26 @@ class _LiveQueueScreenState extends State<LiveQueueScreen> {
         ),
         content: Text(
           'Are you sure you want to cancel token ${token.tokenNumber}?',
+          style: const TextStyle(
+            color: mutedColor,
+            height: 1.5,
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Keep Token'),
+            child: const Text(
+              'Keep Token',
+              style: TextStyle(color: mutedColor),
+            ),
           ),
           FilledButton(
             style: FilledButton.styleFrom(
-              backgroundColor: Colors.red.shade700,
+              backgroundColor: const Color(0xFFC94F58),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
             onPressed: () => Navigator.pop(dialogContext, true),
             child: const Text('Cancel Token'),
@@ -133,10 +151,10 @@ class _LiveQueueScreenState extends State<LiveQueueScreen> {
         return const Color(0xFF23845B);
       case 'cancelled':
       case 'canceled':
-        return Colors.red.shade700;
+        return const Color(0xFFC94F58);
       case 'in progress':
       case 'in-progress':
-        return const Color(0xFFB96C16);
+        return const Color(0xFFB7791F);
       default:
         return blue;
     }
@@ -188,131 +206,163 @@ class _LiveQueueScreenState extends State<LiveQueueScreen> {
           IconButton(
             tooltip: 'Refresh queue',
             onPressed: viewModel.isLoading ? null : _refreshQueue,
-            icon: const Icon(Icons.refresh_rounded, color: blue),
+            icon: const Icon(
+              Icons.refresh_rounded,
+              color: darkBlue,
+            ),
           ),
           const SizedBox(width: 8),
         ],
       ),
-      body: RefreshIndicator(
-        color: blue,
-        onRefresh: _refreshQueue,
-        child: ListView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 30),
-          children: [
-            _buildWelcomeCard(),
-            const SizedBox(height: 22),
-            const Text(
-              'Queue Overview',
-              style: TextStyle(
-                color: darkBlue,
-                fontSize: 21,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 13),
-            Row(
-              children: [
-                Expanded(
-                  child: _OverviewCard(
-                    icon: Icons.confirmation_number_outlined,
-                    title: 'My Tokens',
-                    value: '${viewModel.tokens.length}',
-                    iconColor: blue,
-                  ),
-                ),
-                const SizedBox(width: 13),
-                Expanded(
-                  child: _OverviewCard(
-                    icon: Icons.people_alt_outlined,
-                    title: 'Waiting',
-                    value: '$waitingCount',
-                    iconColor: const Color(0xFF23845B),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 25),
-            Row(
-              children: [
-                const Expanded(
-                  child: Text(
-                    'My Appointments',
-                    style: TextStyle(
-                      color: darkBlue,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-                TextButton.icon(
-                  onPressed: viewModel.isLoading ? null : _refreshQueue,
-                  icon: const Icon(Icons.sync_rounded, size: 17),
-                  label: const Text('Refresh'),
-                  style: TextButton.styleFrom(foregroundColor: blue),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            if (viewModel.isLoading && viewModel.tokens.isEmpty)
-              const Padding(
-                padding: EdgeInsets.all(40),
-                child: Center(
-                  child: CircularProgressIndicator(color: blue),
-                ),
-              )
-            else if (viewModel.error != null &&
-                viewModel.tokens.isEmpty)
-              _QueueMessage(
-                icon: Icons.cloud_off_outlined,
-                title: 'Could not load queue',
-                subtitle: viewModel.error.toString(),
-                buttonText: 'Try Again',
-                onPressed: _refreshQueue,
-              )
-            else if (viewModel.tokens.isEmpty)
-              _QueueMessage(
-                icon: Icons.calendar_month_outlined,
-                title: 'No appointments yet',
-                subtitle:
-                    'Book a token to see your queue position and waiting time here.',
-                buttonText: 'Refresh Queue',
-                onPressed: _refreshQueue,
-              )
-            else
-              ...viewModel.tokens.map(
-                (token) => _TokenCard(
-                  token: token,
-                  status: _status(token.status),
-                  statusColor: _statusColor(_status(token.status)),
-                  canCancel: _canCancel(token.status),
-                  displayText: _displayText,
-                  onCancel: () => _cancelToken(token),
-                ),
-              ),
-            const SizedBox(height: 15),
-            const Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.info_outline_rounded,
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              Color(0xFFE6EFFF),
+              Color(0xFFF5F8FF),
+              Colors.white,
+              Color(0xFFE8F0FF),
+            ],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: RefreshIndicator(
+          color: darkBlue,
+          onRefresh: _refreshQueue,
+          child: ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 30),
+            children: [
+              _buildWelcomeCard(),
+
+              const SizedBox(height: 25),
+
+              const Text(
+                'Queue Overview',
+                style: TextStyle(
                   color: darkBlue,
-                  size: 16,
+                  fontSize: 21,
+                  fontWeight: FontWeight.bold,
                 ),
-                SizedBox(width: 7),
-                Flexible(
-                  child: Text(
-                    'Pull down to update your queue status',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: darkBlue,
-                      fontSize: 12,
+              ),
+
+              const SizedBox(height: 14),
+
+              Row(
+                children: [
+                  Expanded(
+                    child: _OverviewCard(
+                      icon: Icons.confirmation_number_outlined,
+                      title: 'My Tokens',
+                      value: '${viewModel.tokens.length}',
+                      iconColor: darkBlue,
                     ),
                   ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: _OverviewCard(
+                      icon: Icons.people_alt_outlined,
+                      title: 'Waiting',
+                      value: '$waitingCount',
+                      iconColor: const Color(0xFF329875),
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 28),
+
+              Row(
+                children: [
+                  const Expanded(
+                    child: Text(
+                      'My Appointments',
+                      style: TextStyle(
+                        color: darkBlue,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  TextButton.icon(
+                    onPressed:
+                        viewModel.isLoading ? null : _refreshQueue,
+                    icon: const Icon(Icons.sync_rounded, size: 18),
+                    label: const Text('Refresh'),
+                    style: TextButton.styleFrom(
+                      foregroundColor: darkBlue,
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 8),
+
+              if (viewModel.isLoading && viewModel.tokens.isEmpty)
+                const Padding(
+                  padding: EdgeInsets.all(40),
+                  child: Center(
+                    child: CircularProgressIndicator(
+                      color: darkBlue,
+                    ),
+                  ),
+                )
+              else if (viewModel.error != null &&
+                  viewModel.tokens.isEmpty)
+                _QueueMessage(
+                  icon: Icons.cloud_off_outlined,
+                  title: 'Could not load queue',
+                  subtitle: viewModel.error.toString(),
+                  buttonText: 'Try Again',
+                  onPressed: _refreshQueue,
+                )
+              else if (viewModel.tokens.isEmpty)
+                _QueueMessage(
+                  icon: Icons.calendar_month_outlined,
+                  title: 'No appointments yet',
+                  subtitle:
+                      'Book a token to see your queue position and waiting time here.',
+                  buttonText: 'Refresh Queue',
+                  onPressed: _refreshQueue,
+                )
+              else
+                ...viewModel.tokens.map(
+                  (token) => _TokenCard(
+                    token: token,
+                    status: _status(token.status),
+                    statusColor: _statusColor(_status(token.status)),
+                    canCancel: _canCancel(token.status),
+                    displayText: _displayText,
+                    onCancel: () => _cancelToken(token),
+                  ),
                 ),
-              ],
-            ),
-          ],
+
+              const SizedBox(height: 15),
+
+              const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.info_outline_rounded,
+                    color: mutedColor,
+                    size: 17,
+                  ),
+                  SizedBox(width: 7),
+                  Flexible(
+                    child: Text(
+                      'Pull down to update your queue status',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: mutedColor,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -320,19 +370,23 @@ class _LiveQueueScreenState extends State<LiveQueueScreen> {
 
   Widget _buildWelcomeCard() {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFF2B779B), Color(0xFF205E82)],
+          colors: [
+            Color.fromARGB(255, 14, 18, 33),
+            Color(0xFF8DB8F5),
+            Color(0xFFB7D2F8),
+          ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(25),
         boxShadow: [
           BoxShadow(
-            color: darkBlue.withValues(alpha: 0.18),
-            blurRadius: 12,
-            offset: const Offset(0, 6),
+            color: darkBlue.withValues(alpha: 0.16),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
@@ -351,7 +405,7 @@ class _LiveQueueScreenState extends State<LiveQueueScreen> {
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 12),
                 const Text(
                   'Track Queue',
                   style: TextStyle(
@@ -366,21 +420,25 @@ class _LiveQueueScreenState extends State<LiveQueueScreen> {
                   style: TextStyle(
                     color: Colors.white.withValues(alpha: 0.9),
                     fontSize: 13,
+                    height: 1.4,
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 10),
           Container(
-            height: 72,
-            width: 72,
+            height: 76,
+            width: 76,
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.16),
-              borderRadius: BorderRadius.circular(21),
+              color: Colors.white.withValues(alpha: 0.18),
+              borderRadius: BorderRadius.circular(23),
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.25),
+              ),
             ),
             child: const Icon(
-              Icons.local_hospital_outlined,
+              Icons.local_hospital_rounded,
               color: Colors.white,
               size: 42,
             ),
@@ -407,16 +465,16 @@ class _OverviewCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(17),
       decoration: BoxDecoration(
         color: cardColor,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFA9D9E0)),
+        borderRadius: BorderRadius.circular(21),
+        border: Border.all(color: borderColor),
         boxShadow: [
           BoxShadow(
-            color: darkBlue.withValues(alpha: 0.07),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
+            color: darkBlue.withValues(alpha: 0.06),
+            blurRadius: 14,
+            offset: const Offset(0, 5),
           ),
         ],
       ),
@@ -424,28 +482,28 @@ class _OverviewCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            height: 43,
-            width: 43,
+            height: 45,
+            width: 45,
             decoration: BoxDecoration(
-              color: const Color(0xFFD9F1F3),
-              borderRadius: BorderRadius.circular(13),
+              color: lightBlue,
+              borderRadius: BorderRadius.circular(14),
             ),
             child: Icon(icon, color: iconColor, size: 25),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 15),
           Text(
             value,
             style: const TextStyle(
               color: darkBlue,
               fontWeight: FontWeight.bold,
-              fontSize: 27,
+              fontSize: 28,
             ),
           ),
-          const SizedBox(height: 3),
+          const SizedBox(height: 4),
           Text(
             title,
             style: const TextStyle(
-              color: Color(0xFF63859A),
+              color: mutedColor,
               fontSize: 13,
             ),
           ),
@@ -475,17 +533,17 @@ class _TokenCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 17),
-      padding: const EdgeInsets.all(17),
+      margin: const EdgeInsets.only(bottom: 18),
+      padding: const EdgeInsets.all(19),
       decoration: BoxDecoration(
         color: cardColor,
-        borderRadius: BorderRadius.circular(21),
-        border: Border.all(color: const Color(0xFFAADBE0)),
+        borderRadius: BorderRadius.circular(23),
+        border: Border.all(color: borderColor),
         boxShadow: [
           BoxShadow(
-            color: darkBlue.withValues(alpha: 0.08),
-            blurRadius: 9,
-            offset: const Offset(0, 4),
+            color: darkBlue.withValues(alpha: 0.06),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
@@ -495,19 +553,19 @@ class _TokenCard extends StatelessWidget {
           Row(
             children: [
               Container(
-                height: 54,
-                width: 54,
+                height: 55,
+                width: 55,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFD8F0F3),
-                  borderRadius: BorderRadius.circular(16),
+                  color: lightBlue,
+                  borderRadius: BorderRadius.circular(17),
                 ),
                 child: const Icon(
-                  Icons.confirmation_number_outlined,
-                  color: blue,
+                  Icons.confirmation_number_rounded,
+                  color: darkBlue,
                   size: 29,
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 13),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -515,16 +573,16 @@ class _TokenCard extends StatelessWidget {
                     const Text(
                       'Token Number',
                       style: TextStyle(
-                        color: Color(0xFF7897A9),
+                        color: mutedColor,
                         fontSize: 12,
                       ),
                     ),
-                    const SizedBox(height: 3),
+                    const SizedBox(height: 4),
                     Text(
                       displayText(token.tokenNumber),
                       style: const TextStyle(
                         color: darkBlue,
-                        fontSize: 24,
+                        fontSize: 23,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -537,7 +595,7 @@ class _TokenCard extends StatelessWidget {
                   vertical: 7,
                 ),
                 decoration: BoxDecoration(
-                  color: statusColor.withValues(alpha: 0.11),
+                  color: statusColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(30),
                 ),
                 child: Text(
@@ -551,29 +609,41 @@ class _TokenCard extends StatelessWidget {
               ),
             ],
           ),
+
           const Padding(
-            padding: EdgeInsets.symmetric(vertical: 17),
-            child: Divider(height: 1, color: Color(0xFFD8E9EE)),
+            padding: EdgeInsets.symmetric(vertical: 18),
+            child: Divider(
+              height: 1,
+              color: borderColor,
+            ),
           ),
+
           _DetailRow(
             icon: Icons.person_outline_rounded,
             label: 'Doctor',
             value: displayText(token.doctorName),
           ),
-          const SizedBox(height: 14),
+
+          const SizedBox(height: 15),
+
           _DetailRow(
             icon: Icons.local_hospital_outlined,
             label: 'Department',
             value: displayText(token.departmentName),
           ),
-          const SizedBox(height: 18),
+
+          const SizedBox(height: 19),
+
           Row(
             children: [
               Expanded(
                 child: _QueueStat(
                   icon: Icons.people_alt_outlined,
                   label: 'Patients ahead',
-                  value: displayText(token.patientsAhead, fallback: '0'),
+                  value: displayText(
+                    token.patientsAhead,
+                    fallback: '0',
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
@@ -587,11 +657,12 @@ class _TokenCard extends StatelessWidget {
               ),
             ],
           ),
+
           if (canCancel) ...[
-            const SizedBox(height: 17),
+            const SizedBox(height: 18),
             SizedBox(
               width: double.infinity,
-              height: 47,
+              height: 48,
               child: OutlinedButton.icon(
                 onPressed: onCancel,
                 icon: const Icon(Icons.close_rounded, size: 19),
@@ -600,10 +671,12 @@ class _TokenCard extends StatelessWidget {
                   style: TextStyle(fontWeight: FontWeight.w600),
                 ),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFFB74747),
-                  side: const BorderSide(color: Color(0xFFE7B9B9)),
+                  foregroundColor: const Color(0xFFC94F58),
+                  side: const BorderSide(
+                    color: Color(0xFFE8BFC3),
+                  ),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(13),
+                    borderRadius: BorderRadius.circular(14),
                   ),
                 ),
               ),
@@ -630,12 +703,19 @@ class _DetailRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Icon(icon, color: blue, size: 21),
+        Container(
+          padding: const EdgeInsets.all(7),
+          decoration: BoxDecoration(
+            color: lightBlue,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(icon, color: darkBlue, size: 19),
+        ),
         const SizedBox(width: 10),
         Text(
           '$label:',
           style: const TextStyle(
-            color: Color(0xFF7897A9),
+            color: mutedColor,
             fontSize: 13,
           ),
         ),
@@ -670,16 +750,19 @@ class _QueueStat extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(13),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFFE4F4F5),
-        borderRadius: BorderRadius.circular(15),
+        color: const Color(0xFFF0F5FF),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: borderColor.withValues(alpha: 0.8),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: blue, size: 22),
-          const SizedBox(height: 9),
+          Icon(icon, color: darkBlue, size: 22),
+          const SizedBox(height: 10),
           Text(
             value,
             maxLines: 1,
@@ -694,7 +777,7 @@ class _QueueStat extends StatelessWidget {
           Text(
             label,
             style: const TextStyle(
-              color: Color(0xFF63859A),
+              color: mutedColor,
               fontSize: 11,
             ),
           ),
@@ -722,24 +805,31 @@ class _QueueMessage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(25),
       decoration: BoxDecoration(
         color: cardColor,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFAADBE0)),
+        borderRadius: BorderRadius.circular(23),
+        border: Border.all(color: borderColor),
+        boxShadow: [
+          BoxShadow(
+            color: darkBlue.withValues(alpha: 0.05),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         children: [
           Container(
-            height: 68,
-            width: 68,
-            decoration: BoxDecoration(
-              color: const Color(0xFFD8F0F3),
-              borderRadius: BorderRadius.circular(20),
+            height: 72,
+            width: 72,
+            decoration: const BoxDecoration(
+              color: lightBlue,
+              shape: BoxShape.circle,
             ),
-            child: Icon(icon, size: 36, color: blue),
+            child: Icon(icon, size: 36, color: darkBlue),
           ),
-          const SizedBox(height: 15),
+          const SizedBox(height: 16),
           Text(
             title,
             textAlign: TextAlign.center,
@@ -749,29 +839,36 @@ class _QueueMessage extends StatelessWidget {
               fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 9),
           Text(
             subtitle,
             textAlign: TextAlign.center,
             style: const TextStyle(
-              color: Color(0xFF63859A),
+              color: mutedColor,
               fontSize: 13,
+              height: 1.5,
             ),
           ),
           if (buttonText != null && onPressed != null) ...[
-            const SizedBox(height: 16),
+            const SizedBox(height: 18),
             SizedBox(
               width: double.infinity,
-              height: 45,
+              height: 47,
               child: FilledButton(
                 onPressed: onPressed,
                 style: FilledButton.styleFrom(
-                  backgroundColor: blue,
+                  backgroundColor: darkBlue,
+                  foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(13),
+                    borderRadius: BorderRadius.circular(14),
                   ),
                 ),
-                child: Text(buttonText!),
+                child: Text(
+                  buttonText!,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
             ),
           ],

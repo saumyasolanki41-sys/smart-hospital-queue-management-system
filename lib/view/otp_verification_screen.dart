@@ -99,7 +99,7 @@ class _OtpVerificationScreenState
       SnackBar(
         content: Text(message),
         backgroundColor:
-            isError ? Colors.red.shade700 : _blue,
+            isError ? Colors.red.shade700 : const Color.fromARGB(255, 7, 22, 31),
       ),
     );
   }
