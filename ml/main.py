@@ -108,7 +108,12 @@ class QueueInput(BaseModel):
     Queue_Expected_Work_Min: float = 0.0
 
 
-# --- Endpoints ---
+def format_duration(total_minutes: float) -> dict:
+    total_seconds = round(total_minutes * 60)
+    minutes, seconds = divmod(total_seconds, 60)
+    return {
+        "formatted": f"{minutes} min {seconds:02d} sec",
+    }
 
 @app.get("/health")
 def health():
@@ -144,8 +149,8 @@ def predict_ambulance(data: AmbulanceInput):
 
         df = pd.DataFrame([input_data])[AMBULANCE_FEATURES]
         prediction = ambulance_model.predict(df)
-        eta = max(1.0, float(prediction[0]))  
-        return {"eta_minutes": round(eta, 2)}
+        eta = max(1.0, float(prediction[0]))
+        return {"ambulance": format_duration(round(eta,2))}
     except Exception as exc:
         raise HTTPException(status_code=400, detail=f"Prediction failed: {str(exc)}")
 
@@ -181,6 +186,6 @@ def predict_queue(data: QueueInput):
 
         prediction = queue_model.predict(df)
         wait_time = max(0.0, float(prediction[0])) 
-        return {"wait_time_minutes": round(wait_time, 2)}
+        return {"wait_time ": format_duration(round(wait_time, 2))}
     except Exception as exc:
         raise HTTPException(status_code=400, detail=f"Prediction failed: {str(exc)}")
