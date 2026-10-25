@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/token_model.dart';
@@ -18,10 +19,12 @@ class TokenDetailsScreen extends StatefulWidget {
 class _TokenDetailsScreenState extends State<TokenDetailsScreen> {
   bool _isCancelling = false;
 
-  static const Color primaryBlue = Color(0xFF236D96);
-  static const Color darkBlue = Color(0xFF173B5E);
-  static const Color backgroundColor = Color(0xFFEAF5FA);
-  // static const Color lightBlue = Color(0xFFDCEFF7);
+  static const Color primaryBlue = Color.fromARGB(255, 14, 18, 33);
+  static const Color darkBlue = Color.fromARGB(255, 5, 26, 37);
+  static const Color backgroundColor = Color(0xFFE8F0FF);
+  // static const Color mutedColor = Color(0xFF60758A);
+  static const Color accentBlue = Color(0xFF315B91);
+  // static const Color borderColor = Color(0xFFE2E8F0);
 
   String _displayValue(
     dynamic value, [
@@ -50,7 +53,7 @@ class _TokenDetailsScreenState extends State<TokenDetailsScreen> {
       case 'in progress':
         return Colors.orange.shade800;
       default:
-        return primaryBlue;
+        return accentBlue;
     }
   }
 
@@ -154,6 +157,10 @@ class _TokenDetailsScreenState extends State<TokenDetailsScreen> {
   Widget build(BuildContext context) {
     final tokenController = context.watch<TokenController>();
 
+    final isDark =
+        Theme.of(context).brightness == Brightness.dark;
+    final colors = Theme.of(context).colorScheme;
+
     final status = _displayValue(widget.token.status, 'Pending');
     final statusColor = _statusColor(status);
     final canCancel = _canCancel(status);
@@ -161,236 +168,255 @@ class _TokenDetailsScreenState extends State<TokenDetailsScreen> {
         _isCancelling || tokenController.isCancelling;
 
     return Scaffold(
-      backgroundColor: backgroundColor,
+      backgroundColor: isDark ? colors.surface : backgroundColor,
       appBar: AppBar(
-        backgroundColor: backgroundColor,
-        foregroundColor: darkBlue,
+        backgroundColor: isDark ? colors.surface : backgroundColor,
+        foregroundColor: isDark ? colors.onSurface : darkBlue,
         elevation: 0,
         centerTitle: false,
-        title: const Text(
+        title: Text(
           'Token Details',
           style: TextStyle(
             fontWeight: FontWeight.bold,
-            color: darkBlue,
+            color: isDark ? colors.onSurface : darkBlue,
           ),
         ),
       ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
-        children: [
-          // Token number card
-          Container(
-            padding: const EdgeInsets.all(26),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [
-                  Color(0xFF236D96),
-                  Color(0xFF4599B9),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: isDark
+              ? null
+              : const LinearGradient(
+                  colors: [
+                    Color(0xFF8DB8F5),
+                    Color(0xFFB7D2F8),
+                    Color(0xFFE6EFFF),
+                    Colors.white,
+                    Color(0xFFE8F0FF),
+                    Color(0xFF9DBDF2),
+                  ],
+                  stops: [0.0, 0.16, 0.32, 0.55, 0.78, 1.0],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+        ),
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
+          children: [
+            // Token number card
+            Container(
+              padding: const EdgeInsets.all(26),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [
+                    Color.fromARGB(255, 14, 18, 33),
+                    Color(0xFF315B91),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(26),
+                boxShadow: [
+                  BoxShadow(
+                    color: accentBlue.withValues(alpha: 0.18),
+                    blurRadius: 18,
+                    offset: const Offset(0, 8),
+                  ),
                 ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
               ),
-              borderRadius: BorderRadius.circular(26),
-              boxShadow: [
-                BoxShadow(
-                  color: primaryBlue.withValues(alpha: 0.20),
-                  blurRadius: 18,
-                  offset: const Offset(0, 8),
-                ),
-              ],
+              child: Column(
+                children: [
+                  Container(
+                    height: 76,
+                    width: 76,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.18),
+                      borderRadius: BorderRadius.circular(24),
+                    ),
+                    child: const Icon(
+                      Icons.confirmation_number_outlined,
+                      color: Colors.white,
+                      size: 42,
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  const Text(
+                    'YOUR TOKEN NUMBER',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 1.5,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    _displayValue(widget.token.tokenNumber),
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 36,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 9,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          height: 8,
+                          width: 8,
+                          decoration: BoxDecoration(
+                            color: statusColor,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          status,
+                          style: TextStyle(
+                            color: statusColor,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
-            child: Column(
+
+            const SizedBox(height: 28),
+
+            // Section heading
+            const Row(
               children: [
-                Container(
-                  height: 76,
-                  width: 76,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.18),
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-                  child: const Icon(
-                    Icons.confirmation_number_outlined,
-                    color: Colors.white,
-                    size: 42,
-                  ),
+                Icon(
+                  Icons.medical_information_outlined,
+                  color: accentBlue,
+                  size: 24,
                 ),
-                const SizedBox(height: 18),
-                const Text(
-                  'YOUR TOKEN NUMBER',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 1.5,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  _displayValue(widget.token.tokenNumber),
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 36,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 18),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 9,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(30),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        height: 8,
-                        width: 8,
-                        decoration: BoxDecoration(
-                          color: statusColor,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        status,
-                        style: TextStyle(
-                          color: statusColor,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 13,
-                        ),
-                      ),
-                    ],
+                SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Appointment Information',
+                    style: TextStyle(
+                      fontSize: 19,
+                      fontWeight: FontWeight.bold,
+                      color: darkBlue,
+                    ),
                   ),
                 ),
               ],
             ),
-          ),
 
-          const SizedBox(height: 28),
+            const SizedBox(height: 16),
 
-          // Section heading
-          const Row(
-            children: [
-              Icon(
-                Icons.medical_information_outlined,
-                color: primaryBlue,
-                size: 24,
-              ),
-              SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  'Appointment Information',
-                  style: TextStyle(
-                    fontSize: 19,
-                    fontWeight: FontWeight.bold,
-                    color: darkBlue,
+            // Doctor information
+            _InfoCard(
+              icon: Icons.person_outline,
+              title: 'Doctor',
+              value: _displayValue(widget.token.doctorName),
+            ),
+
+            _InfoCard(
+              icon: Icons.local_hospital_outlined,
+              title: 'Department',
+              value: _displayValue(widget.token.departmentName),
+            ),
+
+            _InfoCard(
+              icon: Icons.people_outline,
+              title: 'Patients Ahead',
+              value: _displayValue(widget.token.patientsAhead, '0'),
+            ),
+
+            _InfoCard(
+              icon: Icons.schedule_outlined,
+              title: 'Estimated Waiting Time',
+              value:
+                  '${_displayValue(widget.token.estimatedWaitMinutes, '0')} minutes',
+            ),
+
+            const SizedBox(height: 18),
+
+            // Cancellation button
+            if (canCancel) ...[
+              SizedBox(
+                width: double.infinity,
+                height: 54,
+                child: FilledButton.icon(
+                  onPressed: isCancelling ? null : _confirmCancellation,
+                  icon: isCancelling
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Icon(Icons.cancel_outlined),
+                  label: Text(
+                    isCancelling ? 'Cancelling...' : 'Cancel Token',
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: Colors.red.shade600,
+                    foregroundColor: Colors.white,
+                    disabledBackgroundColor: Colors.red.shade200,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
                   ),
                 ),
               ),
+              const SizedBox(height: 14),
             ],
-          ),
 
-          const SizedBox(height: 16),
-
-          // Doctor information
-          _InfoCard(
-            icon: Icons.person_outline,
-            title: 'Doctor',
-            value: _displayValue(widget.token.doctorName),
-          ),
-
-          _InfoCard(
-            icon: Icons.local_hospital_outlined,
-            title: 'Department',
-            value: _displayValue(widget.token.departmentName),
-          ),
-
-          _InfoCard(
-            icon: Icons.people_outline,
-            title: 'Patients Ahead',
-            value: _displayValue(widget.token.patientsAhead, '0'),
-          ),
-
-          _InfoCard(
-            icon: Icons.schedule_outlined,
-            title: 'Estimated Waiting Time',
-            value:
-                '${_displayValue(widget.token.estimatedWaitMinutes, '0')} minutes',
-          ),
-
-          const SizedBox(height: 18),
-
-          // Cancellation button
-          if (canCancel) ...[
+            // Back button
             SizedBox(
               width: double.infinity,
-              height: 54,
-              child: FilledButton.icon(
-                onPressed: isCancelling ? null : _confirmCancellation,
-                icon: isCancelling
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
-                    : const Icon(Icons.cancel_outlined),
-                label: Text(
-                  isCancelling ? 'Cancelling...' : 'Cancel Token',
-                  style: const TextStyle(
-                    fontSize: 15,
+              height: 52,
+              child: OutlinedButton.icon(
+                onPressed: isCancelling
+                    ? null
+                    : () => Navigator.pop(context),
+                icon: const Icon(Icons.arrow_back_rounded),
+                label: const Text(
+                  'Back',
+                  style: TextStyle(
                     fontWeight: FontWeight.bold,
+                    fontSize: 15,
                   ),
                 ),
-                style: FilledButton.styleFrom(
-                  backgroundColor: Colors.red.shade600,
-                  foregroundColor: Colors.white,
-                  disabledBackgroundColor: Colors.red.shade200,
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: primaryBlue,
+                  side: const BorderSide(
+                    color: primaryBlue,
+                    width: 1.3,
+                  ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
                   ),
                 ),
               ),
             ),
-            const SizedBox(height: 14),
           ],
-
-          // Back button
-          SizedBox(
-            width: double.infinity,
-            height: 52,
-            child: OutlinedButton.icon(
-              onPressed: isCancelling
-                  ? null
-                  : () => Navigator.pop(context),
-              icon: const Icon(Icons.arrow_back_rounded),
-              label: const Text(
-                'Back',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 15,
-                ),
-              ),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: primaryBlue,
-                side: const BorderSide(
-                  color: primaryBlue,
-                  width: 1.3,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-              ),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -407,11 +433,16 @@ class _InfoCard extends StatelessWidget {
     required this.value,
   });
 
-  static const Color primaryBlue = Color(0xFF236D96);
-  static const Color darkBlue = Color(0xFF173B5E);
+  // static const Color primaryBlue = Color.fromARGB(255, 14, 18, 33);
+  static const Color darkBlue = Color.fromARGB(255, 5, 26, 37);
+  static const Color accentBlue = Color(0xFF315B91);
 
   @override
   Widget build(BuildContext context) {
+    final isDark =
+        Theme.of(context).brightness == Brightness.dark;
+    final colors = Theme.of(context).colorScheme;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.symmetric(
@@ -419,14 +450,14 @@ class _InfoCard extends StatelessWidget {
         vertical: 15,
       ),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? colors.surfaceContainer : Colors.white,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: const Color(0xFFDCEAF2),
+          color: isDark ? colors.outlineVariant : const Color(0xFFE2E8F0),
         ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF285C7D).withValues(alpha: 0.05),
+            color: accentBlue.withValues(alpha: 0.08),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -438,12 +469,12 @@ class _InfoCard extends StatelessWidget {
             height: 48,
             width: 48,
             decoration: BoxDecoration(
-              color: const Color(0xFFEAF5FA),
+              color: const Color(0xFFE8F0FF),
               borderRadius: BorderRadius.circular(15),
             ),
             child: Icon(
               icon,
-              color: primaryBlue,
+              color: accentBlue,
               size: 26,
             ),
           ),
@@ -455,7 +486,7 @@ class _InfoCard extends StatelessWidget {
                 Text(
                   title,
                   style: const TextStyle(
-                    color: Color(0xFF7892A8),
+                    color: Color(0xFF60758A),
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
                   ),
@@ -463,8 +494,8 @@ class _InfoCard extends StatelessWidget {
                 const SizedBox(height: 5),
                 Text(
                   value,
-                  style: const TextStyle(
-                    color: darkBlue,
+                  style: TextStyle(
+                    color: isDark ? colors.onSurface : darkBlue,
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
                   ),
