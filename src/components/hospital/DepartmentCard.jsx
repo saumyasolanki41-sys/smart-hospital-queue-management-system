@@ -31,7 +31,7 @@ export default function DepartmentCard({ name, description, selected, onClick, a
       </span>
       <span className="font-semibold">{name}</span>
       {description && (
-        <span className={`mt-1 line-clamp-2 text-sm ${selected ? "text-primary/5" : "text-slate-500"}`}>
+        <span className={`mt-1 line-clamp-2 text-sm ${selected ? "text-white/80" : "text-slate-500"}`}>
           {description}
         </span>
       )}

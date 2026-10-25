@@ -1,15 +1,16 @@
-// src/pages/Home.jsx — the patient's home
 import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Ticket, Stethoscope, Info, Users, Hourglass, ArrowRight } from "lucide-react";
 import Navbar from "../components/layout/Navbar";
 import StatusBadge from "../components/queue/StatusBadge";
 import DepartmentCard from "../components/hospital/DepartmentCard";
+import Pagination from "../components/common/Pagination";
 import { useAuth } from "../components/context/AuthContext";
 import { getMyTokens, getTokenStatus } from "../api/queue";
 import { getDepartments } from "../api/hospital";
 
 const REFRESH_MS = 15000;
+const DEPARTMENTS_PER_PAGE = 8;
 
 function greeting() {
   const hour = new Date().getHours();
@@ -102,10 +103,11 @@ export default function Home() {
   const navigate = useNavigate();
 
   const [tokens, setTokens] = useState([]); 
-  const [details, setDetails] = useState({}); 
+  const [details, setDetails] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [departments, setDepartments] = useState([]);
+  const [deptPage, setDeptPage] = useState(1);
 
   const load = useCallback(async () => {
     try {
@@ -144,6 +146,11 @@ export default function Home() {
 
   const active = tokens.filter((t) => t.status === "waiting" || t.status === "called");
   const earlier = tokens.filter((t) => t.status !== "waiting" && t.status !== "called");
+
+  const totalDeptPages = Math.max(1, Math.ceil(departments.length / DEPARTMENTS_PER_PAGE));
+  const currentDeptPage = Math.min(deptPage, totalDeptPages);
+  const deptStart = (currentDeptPage - 1) * DEPARTMENTS_PER_PAGE;
+  const visibleDepartments = departments.slice(deptStart, deptStart + DEPARTMENTS_PER_PAGE);
 
   const hasActive = active.length > 0;
   useEffect(() => {
@@ -240,7 +247,7 @@ export default function Home() {
             />
             <ActionTile to="/queue" icon={Ticket} title="My queue" text="All of today's tokens" />
             <ActionTile
-              to="/how-it-works"
+              to="/about#how-it-works"
               icon={Info}
               title="How it works"
               text="Tokens, queues and wait times"
@@ -257,7 +264,7 @@ export default function Home() {
               </Link>
             </div>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {departments.map((d) => (
+              {visibleDepartments.map((d) => (
                 <DepartmentCard
                   key={d._id}
                   name={d.name}
@@ -267,6 +274,21 @@ export default function Home() {
                 />
               ))}
             </div>
+
+            {totalDeptPages > 1 && (
+              <div className="mt-6 flex flex-col items-center gap-2">
+                <Pagination
+                  page={currentDeptPage}
+                  totalPages={totalDeptPages}
+                  onChange={setDeptPage}
+                  label="Department pages"
+                />
+                <p className="text-sm text-slate-500">
+                  Showing {deptStart + 1}–{Math.min(deptStart + DEPARTMENTS_PER_PAGE, departments.length)} of{" "}
+                  {departments.length} departments
+                </p>
+              </div>
+            )}
           </section>
         )}
       </main>

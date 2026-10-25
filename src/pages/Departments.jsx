@@ -1,15 +1,16 @@
-// src/pages/Departments.jsx — departments and doctors on a single public page.
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Search, Info } from "lucide-react";
 import Navbar from "../components/layout/Navbar";
 import DepartmentCard from "../components/hospital/DepartmentCard";
+import Pagination from "../components/common/Pagination";
 import DoctorCard from "../components/hospital/DoctorCard";
 import { useAuth } from "../components/context/AuthContext";
 import { getDepartments, getDoctors } from "../api/hospital";
 import { joinQueue, getMyTokens } from "../api/queue";
 
 const PAGE_SIZE = 12;
+const DEPARTMENTS_PER_PAGE = 7; 
 
 function Skeleton({ className }) {
   return <div className={`animate-pulse rounded-2xl bg-white/70 ${className}`} />;
@@ -39,16 +40,17 @@ export default function Departments() {
   const [departments, setDepartments] = useState([]);
   const [deptLoading, setDeptLoading] = useState(true);
   const [deptError, setDeptError] = useState("");
-  const [deptKey, setDeptKey] = useState(0); // bump to retry
+  const [deptKey, setDeptKey] = useState(0); 
+  const [deptPage, setDeptPage] = useState(null); 
 
   // Doctors + filters
-  const [selected, setSelected] = useState(searchParams.get("department")); // department _id, or null for "all"
+  const [selected, setSelected] = useState(searchParams.get("department"));
   const [availableOnly, setAvailableOnly] = useState(false);
   const [search, setSearch] = useState("");
   const [doctors, setDoctors] = useState([]);
   const [docLoading, setDocLoading] = useState(true);
   const [docError, setDocError] = useState("");
-  const [docKey, setDocKey] = useState(0); // bump to retry
+  const [docKey, setDocKey] = useState(0); 
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
   const [moreLoading, setMoreLoading] = useState(false);
@@ -146,6 +148,7 @@ export default function Departments() {
         return;
       }
       if (err.code === "ALREADY_IN_QUEUE") {
+        
         try {
           const mine = await getMyTokens(accessToken);
           const existing = mine.find(
@@ -184,6 +187,14 @@ export default function Departments() {
     : doctors;
 
   const selectedName = departments.find((d) => d._id === selected)?.name;
+
+  
+  const totalDeptPages = Math.max(1, Math.ceil(departments.length / DEPARTMENTS_PER_PAGE));
+  const selectedIndex = departments.findIndex((d) => d._id === selected);
+  const autoDeptPage = selectedIndex >= 0 ? Math.floor(selectedIndex / DEPARTMENTS_PER_PAGE) + 1 : 1;
+  const currentDeptPage = Math.min(deptPage ?? autoDeptPage, totalDeptPages);
+  const deptStart = (currentDeptPage - 1) * DEPARTMENTS_PER_PAGE;
+  const visibleDepartments = departments.slice(deptStart, deptStart + DEPARTMENTS_PER_PAGE);
   const showJoin = !user || user.role === "patient"; // doctors and staff don't join queues
 
   let emptyMessage = "No doctors are listed yet.";
@@ -242,7 +253,7 @@ export default function Departments() {
                     selected={selected === null}
                     onClick={() => chooseDepartment(null)}
                   />
-                  {departments.map((d) => (
+                  {visibleDepartments.map((d) => (
                     <DepartmentCard
                       key={d._id}
                       name={d.name}
@@ -253,6 +264,21 @@ export default function Departments() {
                   ))}
                 </>
               )}
+            </div>
+          )}
+
+          {!deptError && !deptLoading && totalDeptPages > 1 && (
+            <div className="mt-6 flex flex-col items-center gap-2">
+              <Pagination
+                page={currentDeptPage}
+                totalPages={totalDeptPages}
+                onChange={setDeptPage}
+                label="Department pages"
+              />
+              <p className="text-sm text-slate-500">
+                Showing {deptStart + 1}–{Math.min(deptStart + DEPARTMENTS_PER_PAGE, departments.length)} of{" "}
+                {departments.length} departments
+              </p>
             </div>
           )}
         </section>
@@ -281,7 +307,7 @@ export default function Departments() {
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Search by name or specialty"
                   aria-label="Search doctors"
-                  className="w-64 max-w-full rounded-xl border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm outline-none focus:border-primary/60 focus:ring-2 focus:ring-primary/50/40"
+                  className="w-64 max-w-full rounded-xl border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm outline-none focus:border-primary/60 focus:ring-2 focus:ring-primary/40"
                 />
               </div>
             </div>
