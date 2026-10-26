@@ -159,11 +159,11 @@ export default function Footer() {
         <div className="flex flex-col gap-3 pt-5 text-xs text-cyan-100/65 sm:flex-row sm:items-center sm:justify-between">
           <p>© {new Date().getFullYear()} Smart Hospital. All rights reserved.</p>
           <nav aria-label="Legal links" className="flex flex-wrap gap-x-2">
-            <Link to="/contact" className="hover:text-white">Privacy Policy</Link>
+            <Link to="/" className="hover:text-white">Privacy Policy</Link>
             <span aria-hidden="true">•</span>
-            <Link to="/contact" className="hover:text-white">Terms of Service</Link>
+            <Link to="/" className="hover:text-white">Terms of Service</Link>
             <span aria-hidden="true">•</span>
-            <Link to="/contact" className="hover:text-white">Cookie Policy</Link>
+            <Link to="/" className="hover:text-white">Cookie Policy</Link>
           </nav>
         </div>
       </div>
