@@ -119,7 +119,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // Opens the actual doctor profile associated with this appointment.
   Future<void> _openDoctorProfile(TokenModel token) async {
     if (_openingDoctorProfile) return;
 
@@ -137,7 +136,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
       if (!mounted) return;
 
-      // Find the doctor using the ID stored in the appointment token.
       DoctorModel? matchedDoctor;
 
       for (final doctor in doctorController.doctors) {
@@ -175,7 +173,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Unable to open doctor profile. Please try again.'),
+          content: Text(
+            'Unable to open doctor profile. Please try again.',
+          ),
         ),
       );
     } finally {
@@ -276,6 +276,22 @@ class _HomeScreenState extends State<HomeScreen> {
     return '$hour:$minute $period';
   }
 
+  String _getInitials(String name) {
+    final parts = name
+        .trim()
+        .split(RegExp(r'\s+'))
+        .where((part) => part.isNotEmpty)
+        .toList();
+
+    if (parts.isEmpty) return 'P';
+
+    if (parts.length == 1) {
+      return parts.first[0].toUpperCase();
+    }
+
+    return '${parts.first[0]}${parts.last[0]}'.toUpperCase();
+  }
+
   Widget _buildAppointmentCard(
     BuildContext context, {
     required TokenController tokenController,
@@ -317,67 +333,21 @@ class _HomeScreenState extends State<HomeScreen> {
     final tokenNumber = token?.tokenNumber.trim();
 
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: isDark ? colors.surfaceContainer : Colors.white,
+        color: _skyBlue,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: _skyBlue.withValues(alpha: 0.35),
-        ),
         boxShadow: [
           BoxShadow(
-            color: _primary.withValues(alpha: 0.08),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
+            color: _primary.withValues(alpha: 0.12),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: _background,
-                  borderRadius: BorderRadius.circular(15),
-                ),
-                child: const Icon(
-                  Icons.calendar_month_rounded,
-                  color: _primary,
-                  size: 27,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  'Upcoming Appointments',
-                  style: TextStyle(
-                    color: isDark ? colors.onSurface : _darkText,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-              TextButton(
-                onPressed: () => _navigate(
-                  context,
-                  const MyTokensScreen(),
-                ),
-                child: const Text(
-                  'View All',
-                  style: TextStyle(
-                    color: _primary,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 18),
-
           if (isLoading &&
               tokenController.tokens.isEmpty &&
               tokenController.selectedToken == null) ...[
@@ -391,25 +361,32 @@ class _HomeScreenState extends State<HomeScreen> {
             const Center(
               child: Text(
                 'Loading your appointment...',
-                style: TextStyle(color: _muted, fontSize: 13),
+                style: TextStyle(color: _darkText, fontSize: 13),
               ),
             ),
           ] else if (token != null) ...[
-            // Appointment date and time.
             if (appointmentTime != null)
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.all(15),
+                padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: _background,
+                  color: Colors.white,
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Row(
                   children: [
-                    const Icon(
-                      Icons.access_time_rounded,
-                      color: _primary,
-                      size: 25,
+                    Container(
+                      height: 45,
+                      width: 45,
+                      decoration: BoxDecoration(
+                        color: _background,
+                        borderRadius: BorderRadius.circular(13),
+                      ),
+                      child: const Icon(
+                        Icons.calendar_month_rounded,
+                        color: _primary,
+                        size: 25,
+                      ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -420,21 +397,26 @@ class _HomeScreenState extends State<HomeScreen> {
                             _formatAppointmentDate(appointmentTime),
                             style: const TextStyle(
                               color: _darkText,
-                              fontSize: 17,
+                              fontSize: 16,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          const SizedBox(height: 3),
+                          const SizedBox(height: 4),
                           Text(
                             _formatAppointmentTime(appointmentTime),
                             style: const TextStyle(
-                              color: _primary,
-                              fontSize: 14,
+                              color: _muted,
+                              fontSize: 13,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
                         ],
                       ),
+                    ),
+                    const Icon(
+                      Icons.access_time_rounded,
+                      color: _primary,
+                      size: 24,
                     ),
                   ],
                 ),
@@ -449,25 +431,24 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
 
-            const SizedBox(height: 18),
+            const SizedBox(height: 15),
 
-            // Doctor information.
             Row(
               children: [
                 Container(
-                  height: 56,
-                  width: 56,
+                  height: 54,
+                  width: 54,
                   decoration: BoxDecoration(
-                    color: _background,
-                    borderRadius: BorderRadius.circular(16),
+                    color: Colors.white.withValues(alpha: 0.8),
+                    borderRadius: BorderRadius.circular(15),
                   ),
                   child: const Icon(
                     Icons.medical_services_rounded,
                     color: _primary,
-                    size: 29,
+                    size: 28,
                   ),
                 ),
-                const SizedBox(width: 13),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -478,20 +459,20 @@ class _HomeScreenState extends State<HomeScreen> {
                             : 'Doctor details unavailable',
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: isDark ? colors.onSurface : _darkText,
+                        style: const TextStyle(
+                          color: _darkText,
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       if (departmentName != null) ...[
-                        const SizedBox(height: 5),
+                        const SizedBox(height: 4),
                         Text(
                           departmentName,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
-                            color: _muted,
+                            color: _darkText,
                             fontSize: 13,
                           ),
                         ),
@@ -503,16 +484,14 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
 
             if (tokenNumber != null && tokenNumber.isNotEmpty) ...[
-              const SizedBox(height: 15),
+              const SizedBox(height: 14),
               Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 13,
-                  vertical: 11,
+                  vertical: 10,
                 ),
                 decoration: BoxDecoration(
-                  color: isDark
-                      ? colors.surfaceContainerHighest
-                      : const Color(0xFFF5F8FF),
+                  color: Colors.white.withValues(alpha: 0.8),
                   borderRadius: BorderRadius.circular(13),
                 ),
                 child: Row(
@@ -526,8 +505,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     Expanded(
                       child: Text(
                         'Token: $tokenNumber',
-                        style: TextStyle(
-                          color: isDark ? colors.onSurface : _darkText,
+                        style: const TextStyle(
+                          color: _darkText,
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
                         ),
@@ -538,15 +517,15 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ],
 
-            const SizedBox(height: 18),
+            const SizedBox(height: 16),
 
-            // Open the matching doctor's profile.
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
-                onPressed: _openingDoctorProfile || token.doctorId.trim().isEmpty
-                    ? null
-                    : () => _openDoctorProfile(token),
+                onPressed:
+                    _openingDoctorProfile || token.doctorId.trim().isEmpty
+                        ? null
+                        : () => _openDoctorProfile(token),
                 icon: _openingDoctorProfile
                     ? const SizedBox(
                         height: 18,
@@ -576,9 +555,8 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
 
-            const SizedBox(height: 10),
+            const SizedBox(height: 9),
 
-            // Keep the existing My Tokens navigation.
             SizedBox(
               width: double.infinity,
               child: OutlinedButton(
@@ -588,7 +566,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: _primary,
-                  side: const BorderSide(color: _skyBlue),
+                  backgroundColor: Colors.white,
+                  side: BorderSide.none,
                   padding: const EdgeInsets.symmetric(vertical: 13),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),
@@ -604,8 +583,8 @@ class _HomeScreenState extends State<HomeScreen> {
             Center(
               child: Container(
                 padding: const EdgeInsets.all(15),
-                decoration: const BoxDecoration(
-                  color: _background,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.8),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
@@ -624,8 +603,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         ? 'Unable to load appointments'
                         : 'No upcoming appointment',
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: isDark ? colors.onSurface : _darkText,
+                style: const TextStyle(
+                  color: _darkText,
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                 ),
@@ -638,7 +617,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   : 'Book an appointment to see your doctor and visit time here.',
               textAlign: TextAlign.center,
               style: const TextStyle(
-                color: _muted,
+                color: _darkText,
                 fontSize: 13,
                 height: 1.5,
               ),
@@ -719,11 +698,35 @@ class _HomeScreenState extends State<HomeScreen> {
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.fromLTRB(20, 20, 20, 30),
                 children: [
-                  // Greeting and profile icon.
+             
                   Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      const SizedBox(width: 13),
+                      Material(
+                        color: Colors.white,
+                        shape: const CircleBorder(),
+                        child: InkWell(
+                          onTap: () => _navigate(
+                            context,
+                            const ProfileScreen(),
+                          ),
+                          customBorder: const CircleBorder(),
+                          child: SizedBox(
+                            height: 48,
+                            width: 48,
+                            child: Center(
+                              child: Text(
+                                _getInitials(name),
+                                style: const TextStyle(
+                                  color: _primary,
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -731,9 +734,9 @@ class _HomeScreenState extends State<HomeScreen> {
                             Text(
                               '${_greeting()}!',
                               style: const TextStyle(
-                                color: Color.fromARGB(255, 4, 9, 15),
-                                fontSize: 26,
-                                fontWeight: FontWeight.bold,
+                                color: Color.fromARGB(255, 6, 16, 26),
+                                fontSize: 25,
+                                   fontWeight: FontWeight.bold,
                               ),
                             ),
                             const SizedBox(height: 3),
@@ -741,9 +744,9 @@ class _HomeScreenState extends State<HomeScreen> {
                               name,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                color: isDark ? colors.onSurface : _darkText,
-                                fontSize: 21,
+                              style: const TextStyle(
+                                color: _darkText,
+                                fontSize: 17,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -754,40 +757,111 @@ class _HomeScreenState extends State<HomeScreen> {
                       Material(
                         color: Colors.white,
                         shape: const CircleBorder(),
-                        child: InkWell(
-                          onTap: () => _navigate(
+                        child: IconButton(
+                          onPressed: () => _navigate(
                             context,
-                            const ProfileScreen(),
+                            const MyTokensScreen(),
                           ),
-                          customBorder: const CircleBorder(),
-                          child: const SizedBox(
-                            height: 52,
-                            width: 52,
-                            child: Icon(
-                              Icons.person_outline_rounded,
-                              color: _primary,
-                              size: 29,
+                          icon: const Icon(
+                            Icons.notifications_none_rounded,
+                            color: _primary,
+                          ),
+                          tooltip: 'My appointments',
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 28),
+
+                  const Text(
+                    'How are you feeling\ntoday?',
+                    style: TextStyle(
+                      color: _darkText,
+                      fontSize: 29,
+                      height: 1.15,
+                      letterSpacing: -0.5,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+
+                  const SizedBox(height: 20),
+
+       
+                  Material(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(18),
+                    child: InkWell(
+                      onTap: () => _navigate(
+                        context,
+                        const DepartmentScreen(),
+                      ),
+                      borderRadius: BorderRadius.circular(18),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 15,
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.search_rounded,
+                              color: _muted,
+                              size: 23,
                             ),
+                            const SizedBox(width: 11),
+                            const Expanded(
+                              child: Text(
+                                'Search doctors, departments...',
+                                style: TextStyle(
+                                  color: _muted,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ),
+                            Icon(
+                              Icons.medical_services_outlined,
+                              color: _primary.withValues(alpha: 0.8),
+                              size: 21,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 28),
+
+             
+                  Row(
+                    children: [
+                      const Expanded(
+                        child: Text(
+                          'Upcoming Appointments',
+                          style: TextStyle(
+                            color: _darkText,
+                            fontSize: 19,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () => _navigate(
+                          context,
+                          const MyTokensScreen(),
+                        ),
+                        child: const Text(
+                          'View All',
+                          style: TextStyle(
+                            color: _primary,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
                       ),
                     ],
                   ),
 
-                  const SizedBox(height: 30),
-
-                  Text(
-                    'How are you feeling\ntoday?',
-                    style: TextStyle(
-                      color: isDark ? colors.onSurface : _darkText,
-                      fontSize: 30,
-                      height: 1.12,
-                      letterSpacing: -0.6,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-
-                  const SizedBox(height: 27),
+                  const SizedBox(height: 10),
 
                   _buildAppointmentCard(
                     context,
@@ -930,7 +1004,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
                   const SizedBox(height: 15),
 
-                  // Ambulance shortcut.
                   Material(
                     color: isDark ? colors.surfaceContainer : Colors.white,
                     borderRadius: BorderRadius.circular(20),
@@ -999,7 +1072,6 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
 
-      // Existing bottom navigation and logout behavior.
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: isDark ? colors.surfaceContainer : Colors.white,

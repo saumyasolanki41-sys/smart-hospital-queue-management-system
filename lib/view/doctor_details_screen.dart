@@ -21,12 +21,12 @@ class DoctorDetailsScreen extends StatefulWidget {
 }
 
 class _DoctorDetailsScreenState extends State<DoctorDetailsScreen> {
-  static const Color _primary = Color.fromARGB(255, 14, 18, 33);
+  static const Color _primary = Color.fromARGB(255, 14, 58, 111);
   static const Color _skyBlue = Color(0xFF8DB8F5);
   static const Color _background = Color(0xFFE6EFFF);
   static const Color _darkText = Color.fromARGB(255, 5, 26, 37);
   static const Color _muted = Color(0xFF60758A);
-  static const Color _lightCard = Color(0xFFF5F8FF);
+  // static const Color _lightCard = Color(0xFFF5F8FF);
 
   String? _selectedSlot;
   bool _isSelectingSlot = false;

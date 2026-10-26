@@ -426,6 +426,28 @@ class _DoctorListCard extends StatelessWidget {
     required this.onTap,
   });
 
+  // Generate initials while ignoring common doctor titles.
+  String _getInitials(String name) {
+    final words = name
+        .trim()
+        .split(RegExp(r'\s+'))
+        .where((word) => word.isNotEmpty)
+        .where(
+          (word) =>
+              !{'dr', 'dr.', 'doctor', 'prof', 'prof.', 'professor'}
+                  .contains(word.toLowerCase()),
+        )
+        .toList();
+
+    if (words.isEmpty) return '?';
+
+    if (words.length == 1) {
+      return words.first[0].toUpperCase();
+    }
+
+    return '${words.first[0]}${words.last[0]}'.toUpperCase();
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark =
@@ -473,13 +495,16 @@ class _DoctorListCard extends StatelessWidget {
                       width: 1.5,
                     ),
                   ),
-                  child: const CircleAvatar(
+                  child: CircleAvatar(
                     radius: 34,
-                    backgroundColor: Color(0xFFE8F0FF),
-                    child: Icon(
-                      Icons.person_rounded,
-                      color: Color(0xFF246F96),
-                      size: 40,
+                    backgroundColor: const Color(0xFFE8F0FF),
+                    child: Text(
+                      _getInitials(doctor.name),
+                      style: const TextStyle(
+                        color: Color(0xFF246F96),
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ),

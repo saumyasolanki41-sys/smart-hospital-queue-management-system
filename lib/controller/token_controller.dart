@@ -18,7 +18,6 @@ class TokenController extends ChangeNotifier {
   bool _isBooking = false;
   bool _isCancelling = false;
 
-  // Tracks whether another refresh is needed.
   bool _refreshRequested = false;
 
   String? _error;
@@ -52,16 +51,23 @@ class TokenController extends ChangeNotifier {
     try {
       final token = await _queueService.bookToken(
         doctorId: doctorId,
+        selectedSlot: selectedSlot,
       );
 
       _selectedToken = token;
 
       await fetchMyTokens(refresh: true);
 
-      // Keep the newly booked token selected.
-      _selectedToken = token;
+      // Select the latest version of the booked token.
+      final matchingTokens = _tokens.where(
+        (item) => item.id == token.id,
+      );
 
-      return token;
+      _selectedToken = matchingTokens.isNotEmpty
+          ? matchingTokens.first
+          : token;
+
+      return _selectedToken;
     } on ApiException catch (exception) {
       _error = exception.message;
       return null;
@@ -76,8 +82,6 @@ class TokenController extends ChangeNotifier {
   }
 
   Future<void> fetchMyTokens({bool refresh = false}) async {
-    // If a fetch is already running, queue another fetch
-    // when a refresh is requested.
     if (_isLoading) {
       if (refresh) {
         _refreshRequested = true;
@@ -97,6 +101,14 @@ class TokenController extends ChangeNotifier {
           final fetchedTokens = await _queueService.getMyTokens();
 
           _tokens = fetchedTokens;
+
+          // Print appointment times for debugging.
+          for (final token in fetchedTokens) {
+            debugPrint(
+              'Token: ${token.id}, '
+              'Appointment Time: ${token.appointmentTime}',
+            );
+          }
 
           if (_selectedToken != null) {
             final selectedId = _selectedToken!.id;

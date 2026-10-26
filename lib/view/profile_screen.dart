@@ -22,6 +22,33 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String? _age;
   String? _gender;
 
+  String _getInitials(String name) {
+    final words = name
+        .trim()
+        .split(RegExp(r'\s+'))
+        .where((word) => word.isNotEmpty)
+        .where(
+          (word) =>
+              !{
+                'dr',
+                'dr.',
+                'doctor',
+                'prof',
+                'prof.',
+                'professor',
+              }.contains(word.toLowerCase()),
+        )
+        .toList();
+
+    if (words.isEmpty) return '?';
+
+    if (words.length == 1) {
+      return words.first[0].toUpperCase();
+    }
+
+    return '${words.first[0]}${words.last[0]}'.toUpperCase();
+  }
+
   Future<void> _editProfile() async {
     final auth = context.read<AuthController>();
     final user = auth.user;
@@ -181,6 +208,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  BoxDecoration _cardDecoration(
+    bool isDark,
+    ColorScheme colors,
+  ) {
+    return BoxDecoration(
+      color: isDark ? colors.surfaceContainer : Colors.white,
+      borderRadius: BorderRadius.circular(22),
+      border: Border.all(
+        color: _skyBlue.withValues(alpha: 0.35),
+      ),
+      boxShadow: [
+        BoxShadow(
+          color: _primary.withValues(alpha: 0.08),
+          blurRadius: 20,
+          offset: const Offset(0, 8),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthController>();
@@ -221,7 +268,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-            
                 Row(
                   children: [
                     _HeaderButton(
@@ -260,6 +306,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                 const SizedBox(height: 25),
 
+                // Profile header with initials
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(23),
@@ -287,18 +334,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       Container(
                         width: 102,
                         height: 102,
+                        padding: const EdgeInsets.all(4),
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.15),
                           shape: BoxShape.circle,
                           border: Border.all(
                             color: Colors.white.withValues(alpha: 0.65),
                             width: 2,
                           ),
                         ),
-                        child: const Icon(
-                          Icons.person_rounded,
-                          size: 61,
-                          color: Colors.white,
+                        child: CircleAvatar(
+                          backgroundColor: const Color(0xFFE8F0FF),
+                          child: Text(
+                            _getInitials(fullName),
+                            style: const TextStyle(
+                              color: Color(0xFF246F96),
+                              fontSize: 32,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ),
                       ),
                       const SizedBox(height: 17),
@@ -488,7 +541,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                 const SizedBox(height: 25),
 
-            
                 SizedBox(
                   width: double.infinity,
                   child: OutlinedButton.icon(
@@ -536,23 +588,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         ),
       ),
-    );
-  }
-
-  BoxDecoration _cardDecoration(bool isDark, ColorScheme colors) {
-    return BoxDecoration(
-      color: isDark ? colors.surfaceContainer : Colors.white,
-      borderRadius: BorderRadius.circular(22),
-      border: Border.all(
-        color: _skyBlue.withValues(alpha: 0.35),
-      ),
-      boxShadow: [
-        BoxShadow(
-          color: _primary.withValues(alpha: 0.08),
-          blurRadius: 20,
-          offset: const Offset(0, 8),
-        ),
-      ],
     );
   }
 }
@@ -640,10 +675,6 @@ class _SectionHeading extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 3),
-              const Text(
-                '',
-                style: TextStyle(fontSize: 1),
-              ),
               Text(
                 subtitle,
                 style: const TextStyle(
@@ -658,6 +689,7 @@ class _SectionHeading extends StatelessWidget {
     );
   }
 }
+
 class _InformationRow extends StatelessWidget {
   final IconData icon;
   final String title;
@@ -798,7 +830,9 @@ class _ProfileMenuRow extends StatelessWidget {
       ),
       trailing: Icon(
         Icons.chevron_right_rounded,
-        color: isDark ? colors.onSurfaceVariant : const Color(0xFF60758A),
+        color: isDark
+            ? colors.onSurfaceVariant
+            : const Color(0xFF60758A),
       ),
       onTap: onTap,
     );
@@ -838,6 +872,34 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     'Other',
     'Prefer not to say',
   ];
+
+  // Use the same initials in the edit profile avatar.
+  String _getInitials(String name) {
+    final words = name
+        .trim()
+        .split(RegExp(r'\s+'))
+        .where((word) => word.isNotEmpty)
+        .where(
+          (word) =>
+              !{
+                'dr',
+                'dr.',
+                'doctor',
+                'prof',
+                'prof.',
+                'professor',
+              }.contains(word.toLowerCase()),
+        )
+        .toList();
+
+    if (words.isEmpty) return '?';
+
+    if (words.length == 1) {
+      return words.first[0].toUpperCase();
+    }
+
+    return '${words.first[0]}${words.last[0]}'.toUpperCase();
+  }
 
   @override
   void initState() {
@@ -933,14 +995,17 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Center(
+                  Center(
                     child: CircleAvatar(
                       radius: 42,
-                      backgroundColor: Color(0xFFE8F0FF),
-                      child: Icon(
-                        Icons.person_outline_rounded,
-                        size: 45,
-                        color: _primary,
+                      backgroundColor: const Color(0xFFE8F0FF),
+                      child: Text(
+                        _getInitials(_fullNameController.text),
+                        style: const TextStyle(
+                          color: Color(0xFF246F96),
+                          fontSize: 26,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ),
@@ -970,6 +1035,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       label: 'Full Name',
                       icon: Icons.person_outline,
                     ),
+                    onChanged: (_) => setState(() {}),
                     validator: (value) {
                       if (value == null || value.trim().isEmpty) {
                         return 'Please enter your full name';
@@ -1059,13 +1125,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       labelStyle: const TextStyle(
         color: Color(0xFF60758A),
       ),
-      prefixIcon: const Icon(
-        Icons.circle,
-        color: Colors.transparent,
-        size: 0,
-      ),
- 
-      icon: null,
+      prefixIcon: Icon(icon, color: _primary),
       filled: true,
       fillColor: const Color(0xFFF5F8FF),
       border: OutlineInputBorder(
@@ -1087,8 +1147,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           width: 1.5,
         ),
       ),
-    ).copyWith(
-      prefixIcon: Icon(icon, color: _primary),
     );
   }
 }

@@ -14,9 +14,9 @@ class AmbulanceScreen extends StatefulWidget {
 }
 
 class _AmbulanceScreenState extends State<AmbulanceScreen> {
-  static const Color _primary = Color(0xFF246F96);
+  static const Color _primary = Color.fromARGB(255, 3, 38, 57);
   static const Color _background = Color(0xFFE6EFFF);
-  static const Color _heading = Color(0xFF173B5E);
+  static const Color _heading = Color.fromARGB(255, 17, 50, 83);
   static const Color _cardColor = Color(0xFFFFFFFF);
   static const Color _muted = Color(0xFF7892B0);
 
@@ -151,7 +151,7 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
         final address = uniqueParts.join(', ');
 
         if (address.isNotEmpty) {
-          // Automatically fill the Pickup Address text field.
+          
           _addressController.text = address;
 
           _showMessage('Pickup address filled successfully.');
@@ -365,7 +365,7 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
               padding: const EdgeInsets.all(21),
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
-                  colors: [Color(0xFF246F96), Color(0xFF8DB8F5)],
+                  colors: [Color.fromARGB(255, 8, 42, 60), Color(0xFF8DB8F5)],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),

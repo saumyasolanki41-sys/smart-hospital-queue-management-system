@@ -20,11 +20,11 @@ class DepartmentScreen extends StatefulWidget {
 }
 
 class _DepartmentScreenState extends State<DepartmentScreen> {
-  static const Color _primary = Color(0xFF246F96);
+  static const Color _primary = Color.fromARGB(255, 14, 18, 33);
+  static const Color _skyBlue = Color(0xFF8DB8F5);
   static const Color _background = Color(0xFFE6EFFF);
-  static const Color _heading = Color(0xFF173B5E);
-  static const Color _lightBlue = Color(0xFFB7D2F8);
-  static const Color _muted = Color(0xFF7892B0);
+  static const Color _heading = Color.fromARGB(255, 5, 26, 37);
+  static const Color _muted = Color(0xFF60758A);
 
   final TextEditingController _searchController =
       TextEditingController();
@@ -34,20 +34,30 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
 
   final List<Color> _cardColors = const [
     Color(0xFFE8F0FF),
-    Color(0xFFF0F6FF),
-    Color(0xFFEAF5FF),
-    Color(0xFFF3F7FF),
-    Color(0xFFE8F0FF),
-    Color(0xFFF0F6FF),
+    Color(0xFFFFEEEE),
+    Color(0xFFF0EAFF),
+    Color(0xFFFFF0F4),
+    Color(0xFFE8F7EF),
+    Color(0xFFFFF4E5),
   ];
 
   final List<IconData> _departmentIcons = const [
     Icons.medical_services_rounded,
     Icons.favorite_rounded,
-    Icons.child_care_rounded,
-    Icons.accessibility_new_rounded,
+    Icons.psychology_rounded,
     Icons.health_and_safety_rounded,
-    Icons.face_rounded,
+    Icons.child_care_rounded,
+    Icons.medication_rounded,
+    Icons.hearing_rounded,
+    Icons.accessibility_new_rounded,
+    Icons.local_hospital_rounded,
+    Icons.biotech_rounded,
+    Icons.science_rounded,
+  Icons.medical_services_rounded,
+    Icons.bloodtype_rounded,
+    Icons.monitor_heart_rounded,
+    Icons.healing_rounded,
+    Icons.remove_red_eye_rounded,
   ];
 
   @override
@@ -72,10 +82,7 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
       DepartmentModel? selectedDepartment;
 
       for (final department in departmentController.departments) {
-        final departmentName =
-            _normalizeDepartmentName(department.name);
-
-        if (departmentName == selectedName) {
+        if (_normalizeDepartmentName(department.name) == selectedName) {
           selectedDepartment = department;
           break;
         }
@@ -194,15 +201,17 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
     return Scaffold(
       backgroundColor: _background,
       body: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFFE6EFFF),
-              Color(0xFFF5F8FF),
-              Colors.white,
-            ],
+            colors: isDark
+                ? [colors.surface, colors.surface]
+                : const [
+                    Color(0xFFE6EFFF),
+                    Color(0xFFF5F8FF),
+                    Colors.white,
+                  ],
           ),
         ),
         child: SafeArea(
@@ -213,16 +222,16 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
               physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.fromLTRB(20, 12, 20, 30),
               children: [
-                // Top navigation row
+                // Header
                 Row(
                   children: [
                     Container(
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(13),
+                        borderRadius: BorderRadius.circular(14),
                         boxShadow: [
                           BoxShadow(
-                            color: _heading.withValues(alpha: 0.05),
+                            color: _primary.withValues(alpha: 0.06),
                             blurRadius: 8,
                             offset: const Offset(0, 3),
                           ),
@@ -238,18 +247,18 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
                         },
                         icon: const Icon(
                           Icons.arrow_back_rounded,
-                          color: _heading,
+                          color: _primary,
                           size: 25,
                         ),
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 13),
                     const Expanded(
                       child: Text(
                         'Departments',
                         style: TextStyle(
-                          color: _heading,
-                          fontSize: 23,
+                          color: _primary,
+                          fontSize: 24,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -257,7 +266,7 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
                     Container(
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(13),
+                        borderRadius: BorderRadius.circular(14),
                       ),
                       child: IconButton(
                         tooltip: 'Refresh departments',
@@ -273,97 +282,19 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
                   ],
                 ),
 
-                const SizedBox(height: 22),
+                const SizedBox(height: 24),
 
-                // Gradient header banner
-                Container(
-                  padding: const EdgeInsets.all(22),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        Color(0xFF246F96),
-                        Color(0xFF8DB8F5),
-                      ],
-                    ),
-                    borderRadius: BorderRadius.circular(22),
-                    boxShadow: [
-                      BoxShadow(
-                        color: _primary.withValues(alpha: 0.18),
-                        blurRadius: 14,
-                        offset: const Offset(0, 5),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    children: [
-                      const Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Find Your Department',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 21,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            SizedBox(height: 9),
-                            Text(
-                              'Choose a medical department to explore available doctors.',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 13,
-                                height: 1.5,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Container(
-                        padding: const EdgeInsets.all(13),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.18),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: const Icon(
-                          Icons.local_hospital_rounded,
-                          color: Colors.white,
-                          size: 36,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 25),
-
-                // Search heading
-                const Text(
-                  'Search Departments',
-                  style: TextStyle(
-                    color: _heading,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-
-                const SizedBox(height: 12),
-
-                // Search field
+                // Search bar, similar to the reference image
                 Container(
                   decoration: BoxDecoration(
                     color: isDark ? colors.surface : Colors.white,
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(30),
                     border: Border.all(
-                      color: _lightBlue.withValues(alpha: 0.7),
+                      color: _skyBlue.withValues(alpha: 0.25),
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: _heading.withValues(alpha: 0.05),
+                        color: _primary.withValues(alpha: 0.04),
                         blurRadius: 10,
                         offset: const Offset(0, 3),
                       ),
@@ -378,18 +309,18 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
                     },
                     style: TextStyle(
                       color: isDark ? colors.onSurface : _heading,
-                      fontSize: 15,
+                      fontSize: 14,
                     ),
                     decoration: InputDecoration(
-                      hintText: 'Search by department name',
+                      hintText: 'Search departments...',
                       hintStyle: const TextStyle(
                         color: _muted,
                         fontSize: 14,
                       ),
                       prefixIcon: const Icon(
                         Icons.search_rounded,
-                        color: _primary,
-                        size: 23,
+                        color: _muted,
+                        size: 22,
                       ),
                       suffixIcon: _searchQuery.isEmpty
                           ? null
@@ -405,23 +336,23 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
                             ),
                       border: InputBorder.none,
                       contentPadding: const EdgeInsets.symmetric(
-                        vertical: 17,
                         horizontal: 16,
+                        vertical: 16,
                       ),
                     ),
                   ),
                 ),
 
-                const SizedBox(height: 26),
+                const SizedBox(height: 23),
 
-                // Department list heading
+                // Grid heading and department count
                 Row(
                   children: [
-                    const Expanded(
+                    Expanded(
                       child: Text(
-                        'Available Departments',
+                        'All Departments',
                         style: TextStyle(
-                          color: _heading,
+                          color: isDark ? colors.onSurface : _heading,
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                         ),
@@ -429,22 +360,11 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
                     ),
                     if (!departmentController.isLoading &&
                         departments.isNotEmpty)
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 11,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFE8F0FF),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          '${departments.length} found',
-                          style: const TextStyle(
-                            color: _primary,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                          ),
+                      Text(
+                        '${departments.length} found',
+                        style: const TextStyle(
+                          color: _muted,
+                          fontSize: 12,
                         ),
                       ),
                   ],
@@ -456,7 +376,7 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
                 if (departmentController.isLoading &&
                     departmentController.departments.isEmpty)
                   const Padding(
-                    padding: EdgeInsets.all(35),
+                    padding: EdgeInsets.symmetric(vertical: 65),
                     child: Center(
                       child: CircularProgressIndicator(
                         color: _primary,
@@ -471,12 +391,10 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
                     icon: Icons.cloud_off_rounded,
                     message: departmentController.error!,
                     actionLabel: 'Try Again',
-                    onAction: () {
-                      departmentController.refreshDepartments();
-                    },
+                    onAction: _refreshData,
                   )
 
-                // Empty search or empty department list
+                // Empty state
                 else if (departments.isEmpty)
                   _StatusMessage(
                     icon: Icons.search_off_rounded,
@@ -493,24 +411,43 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
                         : null,
                   )
 
-                // Department cards
+                // Three-column department grid
                 else
-                  ...departments.asMap().entries.map((entry) {
-                    final index = entry.key;
-                    final department = entry.value;
-                    final isOpening =
-                        _openingDepartmentId == department.id;
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      final columns =
+                          constraints.maxWidth >= 600 ? 4 : 3;
 
-                    return _DepartmentCard(
-                      department: department,
-                      backgroundColor:
-                          _cardColors[index % _cardColors.length],
-                      icon: _departmentIcons[
-                          index % _departmentIcons.length],
-                      isLoading: isOpening,
-                      onTap: () => _selectDepartment(department),
-                    );
-                  }),
+                      return GridView.builder(
+                        shrinkWrap: true,
+                        physics:
+                            const NeverScrollableScrollPhysics(),
+                        itemCount: departments.length,
+                        gridDelegate:
+                            SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: columns,
+                          crossAxisSpacing: 12,
+                          mainAxisSpacing: 12,
+                          childAspectRatio: 0.78,
+                        ),
+                        itemBuilder: (context, index) {
+                          final department = departments[index];
+
+                          return _DepartmentCard(
+                            department: department,
+                            backgroundColor: _cardColors[
+                                index % _cardColors.length],
+                            icon: _departmentIcons[
+                                index % _departmentIcons.length],
+                            isLoading:
+                                _openingDepartmentId == department.id,
+                            onTap: () =>
+                                _selectDepartment(department),
+                          );
+                        },
+                      );
+                    },
+                  ),
               ],
             ),
           ),
@@ -527,8 +464,8 @@ class _DepartmentCard extends StatelessWidget {
   final bool isLoading;
   final VoidCallback onTap;
 
-  static const Color _primary = Color(0xFF246F96);
-  static const Color _heading = Color(0xFF173B5E);
+  static const Color _primary = Color.fromARGB(255, 14, 18, 33);
+  static const Color _muted = Color(0xFF60758A);
 
   const _DepartmentCard({
     required this.department,
@@ -544,89 +481,97 @@ class _DepartmentCard extends StatelessWidget {
         Theme.of(context).brightness == Brightness.dark;
     final colors = Theme.of(context).colorScheme;
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 14),
-      decoration: BoxDecoration(
-        color: isDark ? colors.surface : Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: const Color(0xFFB7D2F8).withValues(alpha: 0.65),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: _heading.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+    return Material(
+      color: isDark ? colors.surface : Colors.white,
+      borderRadius: BorderRadius.circular(18),
+      child: InkWell(
+        onTap: isLoading ? null : onTap,
+        borderRadius: BorderRadius.circular(18),
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(10, 13, 10, 12),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(
+              color: const Color(0xFF8DB8F5)
+                  .withValues(alpha: 0.20),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: _primary.withValues(alpha: 0.035),
+                blurRadius: 8,
+                offset: const Offset(0, 3),
+              ),
+            ],
           ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(20),
-        child: InkWell(
-          onTap: isLoading ? null : onTap,
-          borderRadius: BorderRadius.circular(20),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 17,
-            ),
-            child: Row(
-              children: [
-                Container(
-                  height: 53,
-                  width: 53,
-                  decoration: BoxDecoration(
-                    color: backgroundColor,
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Icon(
-                    icon,
-                    color: _primary,
-                    size: 28,
-                  ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Medical icon
+              Container(
+                height: 43,
+                width: 43,
+                decoration: BoxDecoration(
+                  color: backgroundColor,
+                  borderRadius: BorderRadius.circular(13),
                 ),
-
-                const SizedBox(width: 15),
-
-                Expanded(
-                  child: Text(
-                    department.name,
-                    style: TextStyle(
-                      color: isDark ? colors.onSurface : _heading,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                child: Icon(
+                  icon,
+                  color: _primary,
+                  size: 27,
                 ),
+              ),
 
-                const SizedBox(width: 8),
+              const Spacer(),
 
-                if (isLoading)
-                  const SizedBox(
-                    height: 23,
-                    width: 23,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2.3,
-                      color: _primary,
-                    ),
-                  )
-                else
-                  Container(
-                    height: 34,
-                    width: 34,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFE8F0FF),
-                      borderRadius: BorderRadius.circular(11),
-                    ),
-                    child: const Icon(
-                      Icons.chevron_right_rounded,
-                      color: _primary,
-                      size: 25,
+              // Department name
+              Text(
+                department.name,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: isDark
+                      ? colors.onSurface
+                      : const Color.fromARGB(255, 5, 26, 37),
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  height: 1.25,
+                ),
+              ),
+
+              const SizedBox(height: 7),
+
+              // Open department indicator
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'View doctors',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: _muted,
+                        fontSize: 10,
+                      ),
                     ),
                   ),
-              ],
-            ),
+                  if (isLoading)
+                    const SizedBox(
+                      height: 13,
+                      width: 13,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 1.8,
+                        color: _primary,
+                      ),
+                    )
+                  else
+                    const Icon(
+                      Icons.arrow_forward_rounded,
+                      color: _primary,
+                      size: 14,
+                    ),
+                ],
+              ),
+            ],
           ),
         ),
       ),
@@ -640,6 +585,9 @@ class _StatusMessage extends StatelessWidget {
   final String? actionLabel;
   final VoidCallback? onAction;
 
+  static const Color _primary = Color.fromARGB(255, 14, 18, 33);
+  static const Color _heading = Color.fromARGB(255, 5, 26, 37);
+
   const _StatusMessage({
     required this.icon,
     required this.message,
@@ -647,15 +595,10 @@ class _StatusMessage extends StatelessWidget {
     this.onAction,
   });
 
-  static const Color _primary = Color(0xFF246F96);
-  static const Color _heading = Color(0xFF173B5E);
-  // static const Color _muted = Color(0xFF7892B0);
-
   @override
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      margin: const EdgeInsets.only(top: 8),
       padding: const EdgeInsets.symmetric(
         vertical: 30,
         horizontal: 18,
@@ -664,7 +607,8 @@ class _StatusMessage extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: const Color(0xFFB7D2F8).withValues(alpha: 0.65),
+          color: const Color(0xFF8DB8F5)
+              .withValues(alpha: 0.3),
         ),
       ),
       child: Column(
@@ -673,7 +617,7 @@ class _StatusMessage extends StatelessWidget {
             height: 65,
             width: 65,
             decoration: BoxDecoration(
-              color: const Color(0xFFE8F0FF),
+              color: const Color(0xFFE6EFFF),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Icon(
@@ -682,9 +626,7 @@ class _StatusMessage extends StatelessWidget {
               size: 34,
             ),
           ),
-
           const SizedBox(height: 15),
-
           Text(
             message,
             textAlign: TextAlign.center,
@@ -694,7 +636,6 @@ class _StatusMessage extends StatelessWidget {
               height: 1.5,
             ),
           ),
-
           if (actionLabel != null && onAction != null) ...[
             const SizedBox(height: 16),
             OutlinedButton(
@@ -705,17 +646,8 @@ class _StatusMessage extends StatelessWidget {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 22,
-                  vertical: 11,
-                ),
               ),
-              child: Text(
-                actionLabel!,
-                style: const TextStyle(
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
+              child: Text(actionLabel!),
             ),
           ],
         ],

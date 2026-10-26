@@ -35,27 +35,44 @@ class TokenModel {
     DateTime? parseDate(dynamic value) {
       if (value == null) return null;
 
-      if (value is DateTime) return value;
+      if (value is DateTime) {
+        return value;
+      }
 
-      if (value is int || value is double) {
-        final timestamp = value is int ? value : value.toInt();
+      // Handle Unix timestamps in seconds or milliseconds.
+      if (value is num) {
+        final timestamp = value.toInt();
 
-        // Support Unix timestamps in seconds or milliseconds.
-        final milliseconds =
-            timestamp.abs() < 1000000000000
-                ? timestamp * 1000
-                : timestamp;
+        final milliseconds = timestamp.abs() < 1000000000000
+            ? timestamp * 1000
+            : timestamp;
 
         return DateTime.fromMillisecondsSinceEpoch(milliseconds);
       }
 
-      final text = value.toString().trim();
+      // Handle API date strings.
+      if (value is String) {
+        final text = value.trim();
 
-      if (text.isEmpty || text.toLowerCase() == 'null') {
-        return null;
+        if (text.isEmpty || text.toLowerCase() == 'null') {
+          return null;
+        }
+
+        return DateTime.tryParse(text);
       }
 
-      return DateTime.tryParse(text);
+      // Handle Firebase-style timestamp objects.
+      if (value is Map) {
+        if (value['_seconds'] != null) {
+          return parseDate(value['_seconds']);
+        }
+
+        if (value['seconds'] != null) {
+          return parseDate(value['seconds']);
+        }
+      }
+
+      return null;
     }
 
     final appointmentValue =
@@ -66,7 +83,9 @@ class TokenModel {
         json['appointmentDate'] ??
         json['appointment_date'] ??
         json['dateTime'] ??
-        json['date_time'];
+        json['date_time'] ??
+        json['appointmentDateTime'] ??
+        json['appointment_date_time'];
 
     return TokenModel(
       id: (
@@ -91,13 +110,15 @@ class TokenModel {
 
       doctorId: (
         json['doctorId'] ??
-        (doctor is Map ? doctor['_id'] : null) ??
+        (doctor is Map ? doctor['_id'] ?? doctor['id'] : null) ??
         ''
       ).toString(),
 
       departmentId: (
         json['departmentId'] ??
-        (department is Map ? department['_id'] : null) ??
+        (department is Map
+            ? department['_id'] ?? department['id']
+            : null) ??
         ''
       ).toString(),
 
@@ -130,10 +151,7 @@ class TokenModel {
           ) ??
           0,
 
-      status: (
-        json['status'] ??
-        'waiting'
-      ).toString(),
+      status: (json['status'] ?? 'waiting').toString(),
 
       appointmentTime: parseDate(appointmentValue),
 

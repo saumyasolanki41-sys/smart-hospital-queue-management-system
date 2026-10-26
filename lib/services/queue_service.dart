@@ -1,4 +1,3 @@
-
 import '../models/token_model.dart';
 import 'api_service.dart';
 
@@ -10,15 +9,23 @@ class QueueService {
 
   Future<TokenModel> bookToken({
     required String doctorId,
+    required String selectedSlot,
   }) async {
     if (doctorId.trim().isEmpty) {
       throw const ApiException('Please select a doctor.');
+    }
+
+    if (selectedSlot.trim().isEmpty) {
+      throw const ApiException(
+        'Please select an appointment time.',
+      );
     }
 
     final response = await _apiService.post(
       '/api/queue/tokens',
       body: {
         'doctorId': doctorId.trim(),
+        'selectedSlot': selectedSlot.trim(),
       },
       authenticated: true,
     );
