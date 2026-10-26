@@ -26,9 +26,10 @@ export default function Login() {
   const location = useLocation();
   const { user, signIn } = useAuth();
   const registeredEmail = location.state?.registeredEmail;
+  const passwordReset = location.state?.passwordReset; 
 
   const [step, setStep] = useState("credentials"); 
-  const [role, setRole] = useState("patient"); 
+  const [role, setRole] = useState("patient");
   const [form, setForm] = useState({ email: registeredEmail ?? "", password: "" });
   const [challengeId, setChallengeId] = useState("");
   const [otp, setOtp] = useState("");
@@ -86,13 +87,14 @@ export default function Login() {
     try {
       const data = await verifyLogin({ challengeId, otp });
       if (!roleMatches(role, data.user.role)) {
+        
         setRole(optionForRole(data.user.role));
         setServerError(roleMismatchMessage(data.user.role));
         setStep("credentials");
         setLoading(false);
         return;
       }
-      signIn(data);
+      signIn(data); 
     } catch (err) {
       setServerError(errorMessage(err));
       setLoading(false);
@@ -162,7 +164,9 @@ export default function Login() {
       <form onSubmit={handleCredentials} className="space-y-4" noValidate>
         <RoleSelector value={role} onChange={setRole} />
         {registeredEmail && !serverError && (
-          <Banner type="success">Account created. Log in to continue.</Banner>
+          <Banner type="success">
+            {passwordReset ? "Password updated. Log in with your new password." : "Account created. Log in to continue."}
+          </Banner>
         )}
         {serverError && <Banner>{serverError}</Banner>}
         <TextField
@@ -182,6 +186,15 @@ export default function Login() {
           error={errors.password}
           autoComplete="current-password"
         />
+        <div className="-mt-2 text-right">
+          <Link
+            to="/forgot-password"
+            state={{ email: form.email }}
+            className="text-sm font-medium text-primary/70 hover:underline"
+          >
+            Forgot password?
+          </Link>
+        </div>
         <SubmitButton loading={loading}>Send login code</SubmitButton>
       </form>
       <GoogleButton role={role} onWrongRole={(actual) => setRole(optionForRole(actual))} />

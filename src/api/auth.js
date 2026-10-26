@@ -1,4 +1,3 @@
-
 import { request } from "./client";
 
 // ---- Endpoints -------------------------------------------------------------
@@ -12,6 +11,10 @@ export const verifyLogin = (payload) =>
 export const getMe = (token) => request("/api/auth/me", { token });
 export const googleLogin = (idToken) =>
   request("/api/auth/google", { method: "POST", body: { idToken } });
+export const forgotPassword = (payload) =>
+  request("/api/auth/forgot-password", { method: "POST", body: payload });
+export const resetPassword = (payload) =>
+  request("/api/auth/reset-password", { method: "POST", body: payload });
 
 // ---- Friendly error text ---------------------------------------------------
 
@@ -32,6 +35,8 @@ export function errorMessage(err) {
       return "This email already has a password account. Please log in with your email and password instead.";
     case "EMAIL_VERIFICATION_REQUIRED":
       return "We couldn't verify this Google account's email. Please use another sign-in method.";
+    case "EMAIL_UNAVAILABLE":
+      return "We couldn't send the email right now. Please try again in a few minutes.";
     default:
       return err.message || "Something went wrong. Please try again.";
   }

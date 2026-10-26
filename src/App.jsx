@@ -7,6 +7,7 @@ import LandingPage from "./pages/LandingPage";
 import About from "./pages/About";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import ForgotPassword from "./pages/ForgotPassword";
 import Departments from "./pages/Departments";
 import DoctorProfile from "./pages/DoctorProfile";
 import Home from "./pages/Home";
@@ -26,6 +27,7 @@ export default function App() {
           {/* These two have their own centered layout */}
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
 
           {/* Everything else: logged-in users get the left sidebar, visitors get the top navbar */}
           <Route element={<AppShell />}>
