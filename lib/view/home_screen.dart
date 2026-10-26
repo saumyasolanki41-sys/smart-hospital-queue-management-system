@@ -422,14 +422,14 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               )
             else
-              const Text(
-                'Appointment time unavailable',
-                style: TextStyle(
-                  color: _darkText,
-                  fontSize: 15,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+              // const Text(
+              //   'Appointment time unavailable',
+              //   style: TextStyle(
+              //     color: _darkText,
+              //     fontSize: 15,
+              //     fontWeight: FontWeight.bold,
+              //   ),
+              // ),
 
             const SizedBox(height: 15),
 

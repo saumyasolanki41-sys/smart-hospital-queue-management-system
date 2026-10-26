@@ -1,4 +1,3 @@
-
 import 'dart:async';
 import 'package:flutter/material.dart';
 
@@ -146,3 +145,4 @@ class _IntroSplashScreenState extends State<IntroSplashScreen> {
     );
   }
 }
+ 
