@@ -11,3 +11,9 @@ export function timeAgo(iso) {
 export const STALE_AFTER_MINUTES = 30;
 
 export const isStale = (iso) => !iso || Date.now() - new Date(iso).getTime() > STALE_AFTER_MINUTES * 60000;
+
+export function formatWait(minutes) {
+  if (minutes == null) return "Not available";
+  if (minutes <= 0) return "No delay expected";
+  return `About ${Math.ceil(minutes)} min`;
+}

@@ -25,6 +25,7 @@ const NAV_BY_ROLE = {
     { label: "Home", to: "/home", icon: LayoutDashboard },
     { label: "Departments", to: "/departments", icon: Stethoscope },
     { label: "My Queue", to: "/queue", icon: Ticket },
+    { label: "Ambulance", to: "/request-ambulance", icon: Ambulance },
     { label: "About", to: "/about", icon: Info },
   ],
   doctor: [

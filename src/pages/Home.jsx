@@ -8,9 +8,10 @@ import Pagination from "../components/common/Pagination";
 import { useAuth } from "../components/context/AuthContext";
 import { getMyTokens, getTokenStatus } from "../api/queue";
 import { getDepartments } from "../api/hospital";
+import { formatWait } from "../utils/time";
 
 const REFRESH_MS = 15000;
-const DEPARTMENTS_PER_PAGE = 8;
+const DEPARTMENTS_PER_PAGE = 8; 
 
 function greeting() {
   const hour = new Date().getHours();
@@ -33,7 +34,7 @@ function MiniStat({ icon: Icon, label, value }) {
 
 function ActiveTokenCard({ token, detail }) {
   const est = detail?.estimatedWaitMinutes;
-  const waitText = est == null ? "Not available" : est === 0 ? "No delay expected" : `About ${est} min`;
+  const waitText = formatWait(est);
 
   return (
     <article className="rounded-3xl bg-white/95 p-6 shadow-xl">
@@ -64,7 +65,7 @@ function ActiveTokenCard({ token, detail }) {
               <MiniStat icon={Hourglass} label="Estimated wait" value={waitText} />
             </div>
             <p className="mt-3 text-xs text-slate-500">
-              An estimate based on the doctor's average consultation time, not an exact appointment time.
+              An estimate, not an exact appointment time.
             </p>
           </>
         )

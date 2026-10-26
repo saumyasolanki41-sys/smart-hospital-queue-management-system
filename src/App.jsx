@@ -14,6 +14,7 @@ import MyQueue from "./pages/MyQueue";
 import QueueStatus from "./pages/QueueStatus";
 import QueueDashboard from "./pages/QueueDashboard";
 import AmbulanceDashboard from "./pages/AmbulanceDashboard";
+import RequestAmbulance from "./pages/RequestAmbulance";
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID ?? "";
 
@@ -40,6 +41,7 @@ export default function App() {
               <Route path="/home" element={<Home />} />
               <Route path="/queue" element={<MyQueue />} />
               <Route path="/queue/:tokenId" element={<QueueStatus />} />
+              <Route path="/request-ambulance" element={<RequestAmbulance />} />
             </Route>
 
             {/* Staff (admin, receptionist) manage any doctor's queue and the ambulances */}

@@ -1,4 +1,3 @@
-// src/pages/QueueStatus.jsx — one token: position, estimated wait, cancel. Refreshes automatically.
 import { useCallback, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { Users, Hourglass, RefreshCw, Info } from "lucide-react";
@@ -7,6 +6,7 @@ import StatusBadge from "../components/queue/StatusBadge";
 import { useAuth } from "../components/context/AuthContext";
 import { getTokenStatus, cancelToken } from "../api/queue";
 import { getDoctor } from "../api/hospital";
+import { formatWait } from "../utils/time";
 
 const REFRESH_MS = 15000;
 
@@ -37,7 +37,7 @@ export default function QueueStatus() {
   const { tokenId } = useParams();
   const { token: accessToken, signOut } = useAuth();
 
-  const [data, setData] = useState(null); // { token, peopleAhead, estimatedWaitMinutes, ... }
+  const [data, setData] = useState(null); 
   const [doctor, setDoctor] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -53,7 +53,7 @@ export default function QueueStatus() {
       setError("");
     } catch (err) {
       if (err.code === "UNAUTHORIZED") {
-        signOut(); // session expired: ProtectedRoute sends the user to login
+        signOut(); 
         return;
       }
       setError(err.status === 404 ? "We couldn't find that token." : err.message);
@@ -66,7 +66,6 @@ export default function QueueStatus() {
     load();
   }, [load]);
 
-  // Keep refreshing while the token is still live (waiting or called).
   const live = data?.token.status === "waiting" || data?.token.status === "called";
   useEffect(() => {
     if (!live) return;
@@ -74,7 +73,6 @@ export default function QueueStatus() {
     return () => clearInterval(timer);
   }, [live, load]);
 
-  // The status response only has the doctor's ID, so fetch the profile for the name.
   const doctorId = data?.token.doctor;
   useEffect(() => {
     if (!doctorId) return;
@@ -99,7 +97,7 @@ export default function QueueStatus() {
         return;
       }
       setError(err.message);
-      if (err.code === "TOKEN_NOT_CANCELLABLE") await load(); // e.g. you were just called
+      if (err.code === "TOKEN_NOT_CANCELLABLE") await load();
     } finally {
       setConfirming(false);
       setCancelling(false);
@@ -109,7 +107,8 @@ export default function QueueStatus() {
   const t = data?.token;
   const end = t ? END_MESSAGES[t.status] : null;
   const est = data?.estimatedWaitMinutes;
-  const waitText = est == null ? "Not available" : est === 0 ? "No delay expected" : `About ${est} min`;
+  const waitText = formatWait(est);
+  const mlEstimate = data?.prediction?.source === "ml"; 
   const date = t
     ? new Date(`${t.queueDate}T00:00:00`).toLocaleDateString("en-IN", {
         day: "numeric",
@@ -184,7 +183,9 @@ export default function QueueStatus() {
                     label="Estimated wait"
                     value={waitText}
                     hint={
-                      data.averageConsultationMinutes
+                      mlEstimate
+                        ? "Predicted from today's queue"
+                        : data.averageConsultationMinutes
                         ? `Based on about ${data.averageConsultationMinutes} min per patient`
                         : undefined
                     }
@@ -199,8 +200,10 @@ export default function QueueStatus() {
 
                 <p className="mt-4 flex items-start gap-2 text-xs text-slate-500">
                   <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-                  This is an estimate based on the doctor's average consultation time, not an exact
-                  appointment time. It refreshes automatically every 15 seconds.
+                  {mlEstimate
+                    ? "This is an estimate from our prediction model, based on today's queue, not an exact appointment time."
+                    : "This is an estimate based on the doctor's average consultation time, not an exact appointment time."}{" "}
+                  It refreshes automatically every 15 seconds.
                 </p>
               </>
             )}

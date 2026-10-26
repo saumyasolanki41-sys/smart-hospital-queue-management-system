@@ -32,7 +32,15 @@ function popup(lines) {
 const isNumber = (n) => typeof n === "number" && Number.isFinite(n);
 
 
-export default function AmbulanceMap({ ambulances, requests, focus, pickMode, onPick, pickedPoint }) {
+export default function AmbulanceMap({
+  ambulances,
+  requests,
+  focus,
+  pickMode,
+  onPick,
+  pickedPoint,
+  className = "h-[28rem]",
+}) {
   const containerRef = useRef(null);
   const mapRef = useRef(null);
   const layerRef = useRef(null);
@@ -108,7 +116,10 @@ export default function AmbulanceMap({ ambulances, requests, focus, pickMode, on
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !pickMode) return;
-    const handler = (e) => onPick?.(e.latlng.lat, e.latlng.lng);
+    const handler = (e) => {
+      const { lat, lng } = e.latlng.wrap(); 
+      onPick?.(lat, lng);
+    };
     map.on("click", handler);
     map.getContainer().style.cursor = "crosshair";
     return () => {
@@ -131,5 +142,5 @@ export default function AmbulanceMap({ ambulances, requests, focus, pickMode, on
     }
   }, [pickedPoint]);
 
-  return <div ref={containerRef} className="isolate z-0 h-[28rem] w-full rounded-3xl shadow-xl" />;
+  return <div ref={containerRef} className={`isolate z-0 w-full rounded-3xl shadow-xl ${className}`} />;
 }
