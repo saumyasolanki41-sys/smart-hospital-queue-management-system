@@ -111,11 +111,19 @@ export default function About() {
 
         {/* Departments */}
         <section className="mx-auto max-w-6xl px-6 pb-16">
-          <h2 className="mb-6 text-2xl font-semibold text-slate-900">
-            Departments we cover
-          </h2>
+          <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+            <h2 className="text-2xl font-semibold text-slate-900">
+              Departments we cover
+            </h2>
+            <Link
+              to="/departments"
+              className="text-sm font-semibold text-primary/70 transition-colors hover:text-primary"
+            >
+              View all departments
+            </Link>
+          </div>
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {DEPARTMENTS.map(({ icon: Icon, name, text }) => (
+            {DEPARTMENTS.slice(0, 6).map(({ icon: Icon, name, text }) => (
               <div
                 key={name}
                 className="flex items-center gap-4 rounded-2xl bg-white/90 p-5 shadow-md"
