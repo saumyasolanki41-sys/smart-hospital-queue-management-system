@@ -1,14 +1,11 @@
-
 import 'controller/auth_controller.dart';
 import 'controller/queue_controller.dart';
 import 'controller/department_controller.dart';
 import 'controller/doctor_controller.dart';
 import 'controller/token_controller.dart';
 import 'controller/ambulance_controller.dart';
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
 import 'view/intro_splash_screen.dart';
 import 'view/splash_screen.dart';
 import 'view/login_screen.dart';

@@ -1,7 +1,5 @@
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
 import '../controller/auth_controller.dart';
 import 'login_screen.dart';
 import 'otp_verification_screen.dart';
