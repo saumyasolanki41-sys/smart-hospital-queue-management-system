@@ -50,7 +50,7 @@ class _IntroSplashScreenState extends State<IntroSplashScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // Medical heart logo
+              
                 Container(
                   width: 175,
                   height: 175,
@@ -103,7 +103,7 @@ class _IntroSplashScreenState extends State<IntroSplashScreen> {
 
                 const SizedBox(height: 30),
 
-                // App name
+            
                 const Text(
                   'Smart Hospital',
                   style: TextStyle(
@@ -116,7 +116,6 @@ class _IntroSplashScreenState extends State<IntroSplashScreen> {
 
                 const SizedBox(height: 10),
 
-                // Tagline
                 const Text(
                   'Your Health, Our Priority',
                   style: TextStyle(
@@ -128,7 +127,6 @@ class _IntroSplashScreenState extends State<IntroSplashScreen> {
 
                 const SizedBox(height: 45),
 
-                // Loading indicator
                 const SizedBox(
                   height: 25,
                   width: 25,

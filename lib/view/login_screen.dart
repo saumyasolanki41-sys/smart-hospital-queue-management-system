@@ -20,6 +20,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
   bool _obscurePassword = true;
   bool _googleInitialized = false;
+  bool _isGoogleLoading = false;
+  bool _isLoginLoading = false;
 
   static const String _webClientId =
       '575895479049-o8m7g8o39db8013ctntip67uh96rit64.apps.googleusercontent.com';
@@ -37,51 +39,82 @@ class _LoginScreenState extends State<LoginScreen> {
   void _showMessage(String message, {bool isError = true}) {
     if (!mounted) return;
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor:
-            isError ? Colors.red.shade700 : Colors.green.shade700,
-      ),
-    );
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor:
+              isError ? Colors.red.shade700 : Colors.green.shade700,
+        ),
+      );
   }
 
   Future<void> _login() async {
+    if (_isLoginLoading || _isGoogleLoading) return;
+
     FocusScope.of(context).unfocus();
 
     if (!_formKey.currentState!.validate()) return;
 
-    final auth = context.read<AuthController>();
+    setState(() {
+      _isLoginLoading = true;
+    });
 
-    final success = await auth.login(
-      email: _emailController.text.trim(),
-      password: _passwordController.text,
-    );
+    try {
+      final auth = context.read<AuthController>();
 
-    if (!mounted) return;
-
-    if (success) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => OtpVerificationScreen(
-            email: _emailController.text.trim(),
-            isRegistration: false,
-          ),
-        ),
+      final success = await auth.login(
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
       );
-    } else {
-      _showMessage(auth.error ?? 'Login failed. Please try again.');
+
+      if (!mounted) return;
+
+      if (success) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => OtpVerificationScreen(
+              email: _emailController.text.trim(),
+              isRegistration: false,
+            ),
+          ),
+        );
+      } else {
+        debugPrint('Login failed: ${auth.error ?? 'No error details'}');
+
+        _showMessage(
+          'Login failed. Please check your credentials and try again.',
+        );
+      }
+    } catch (error, stackTrace) {
+      debugPrint('Login error: $error');
+      debugPrintStack(stackTrace: stackTrace);
+
+      _showMessage('Unable to login. Please try again.');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoginLoading = false;
+        });
+      }
     }
   }
 
   Future<void> _loginWithGoogle() async {
-    final auth = context.read<AuthController>();
+    if (_isGoogleLoading || _isLoginLoading) return;
 
     FocusScope.of(context).unfocus();
-    auth.clearError();
+
+    setState(() {
+      _isGoogleLoading = true;
+    });
 
     try {
+      final auth = context.read<AuthController>();
+      auth.clearError();
+
       final googleSignIn = GoogleSignIn.instance;
 
       if (!_googleInitialized) {
@@ -95,9 +128,12 @@ class _LoginScreenState extends State<LoginScreen> {
       final idToken = account.authentication.idToken;
 
       if (idToken == null || idToken.isEmpty) {
-        throw Exception(
-          'Google returned no ID token. Check the OAuth client configuration.',
+        debugPrint('Google sign-in returned an empty ID token.');
+
+        _showMessage(
+          'Google sign-in could not be completed. Please try again.',
         );
+        return;
       }
 
       if (!mounted) return;
@@ -117,8 +153,13 @@ class _LoginScreenState extends State<LoginScreen> {
           (route) => false,
         );
       } else {
+        debugPrint(
+          'Google authentication failed: '
+          '${auth.error ?? 'No error details'}',
+        );
+
         _showMessage(
-          auth.error ?? 'Google login failed. Please try again.',
+          'Google login failed. Please try again.',
         );
       }
     } on GoogleSignInException catch (error, stackTrace) {
@@ -130,13 +171,21 @@ class _LoginScreenState extends State<LoginScreen> {
       }
 
       _showMessage(
-        'Google sign-in failed: '
-        '${error.description ?? error.code.name}',
+        'Google sign-in failed. Please try again.',
       );
     } catch (error, stackTrace) {
       debugPrint('Google login error: $error');
       debugPrintStack(stackTrace: stackTrace);
-      _showMessage('Google login failed: $error');
+
+      _showMessage(
+        'Google login failed. Please try again.',
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isGoogleLoading = false;
+        });
+      }
     }
   }
 
@@ -200,6 +249,8 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthController>();
+    final isLoading =
+        _isLoginLoading || _isGoogleLoading || auth.isLoading;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -276,12 +327,13 @@ class _LoginScreenState extends State<LoginScreen> {
                             fontSize: 15,
                           ),
                         ),
-                        const SizedBox(height: 28), 
+                        const SizedBox(height: 28),
                         TextFormField(
                           controller: _emailController,
                           keyboardType: TextInputType.emailAddress,
                           textInputAction: TextInputAction.next,
                           autocorrect: false,
+                          enabled: !isLoading,
                           style: const TextStyle(
                             color: _navy,
                             fontSize: 15,
@@ -311,6 +363,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           controller: _passwordController,
                           obscureText: _obscurePassword,
                           textInputAction: TextInputAction.done,
+                          enabled: !isLoading,
                           style: const TextStyle(
                             color: _navy,
                             fontSize: 15,
@@ -320,12 +373,14 @@ class _LoginScreenState extends State<LoginScreen> {
                             label: 'Password',
                             hint: 'Enter your password',
                             suffixIcon: IconButton(
-                              onPressed: () {
-                                setState(() {
-                                  _obscurePassword =
-                                      !_obscurePassword;
-                                });
-                              },
+                              onPressed: isLoading
+                                  ? null
+                                  : () {
+                                      setState(() {
+                                        _obscurePassword =
+                                            !_obscurePassword;
+                                      });
+                                    },
                               icon: Icon(
                                 _obscurePassword
                                     ? Icons.visibility_outlined
@@ -347,7 +402,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         Align(
                           alignment: Alignment.centerRight,
                           child: TextButton(
-                            onPressed: auth.isLoading
+                            onPressed: isLoading
                                 ? null
                                 : () => _showMessage(
                                       'Password recovery is not connected yet.',
@@ -367,7 +422,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         SizedBox(
                           height: 52,
                           child: ElevatedButton(
-                            onPressed: auth.isLoading ? null : _login,
+                            onPressed: isLoading ? null : _login,
                             style: ElevatedButton.styleFrom(
                               backgroundColor:
                                   const Color.fromARGB(255, 14, 18, 33),
@@ -377,7 +432,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 borderRadius: BorderRadius.zero,
                               ),
                             ),
-                            child: auth.isLoading
+                            child: isLoading
                                 ? const SizedBox(
                                     height: 22,
                                     width: 22,
@@ -426,7 +481,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         SizedBox(
                           height: 50,
                           child: OutlinedButton(
-                            onPressed: auth.isLoading
+                            onPressed: isLoading
                                 ? null
                                 : _loginWithGoogle,
                             style: OutlinedButton.styleFrom(
@@ -439,7 +494,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 borderRadius: BorderRadius.zero,
                               ),
                             ),
-                            child: auth.isLoading
+                            child: isLoading
                                 ? const SizedBox(
                                     height: 22,
                                     width: 22,
@@ -481,7 +536,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                             ),
                             TextButton(
-                              onPressed: auth.isLoading
+                              onPressed: isLoading
                                   ? null
                                   : () {
                                       Navigator.push(
@@ -521,7 +576,6 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 }
-
 
 class LoginMedicalLogo extends StatelessWidget {
   const LoginMedicalLogo({super.key});

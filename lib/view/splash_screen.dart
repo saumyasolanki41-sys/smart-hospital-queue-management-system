@@ -3,6 +3,30 @@ import 'package:flutter/material.dart';
 class SplashScreen extends StatelessWidget {
   const SplashScreen({super.key});
 
+  static const Color _primary = Color(0xFF123477);
+  static const Color _muted = Color(0xFF526A87);
+
+  Future<void> _navigate(BuildContext context, String route) async {
+    final navigator = Navigator.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+
+    try {
+      await navigator.pushNamed(route);
+    } catch (error, stackTrace) {
+      debugPrint('Navigation failed for $route: $error');
+      debugPrintStack(stackTrace: stackTrace);
+
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          const SnackBar(
+            content: Text('Unable to open this page. Please try again.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -27,7 +51,6 @@ class SplashScreen extends StatelessWidget {
         ),
         child: Stack(
           children: [
-      
             Positioned(
               top: -100,
               right: -100,
@@ -38,23 +61,18 @@ class SplashScreen extends StatelessWidget {
                   shape: BoxShape.circle,
                   gradient: RadialGradient(
                     colors: [
-                      const Color(0xFF669BE8)
-                          .withValues(alpha: 0.85),
-                      const Color(0xFF8FB8F2)
-                          .withValues(alpha: 0.55),
+                      const Color(0xFF669BE8).withValues(alpha: 0.85),
+                      const Color(0xFF8FB8F2).withValues(alpha: 0.55),
                       Colors.white.withValues(alpha: 0),
                     ],
                   ),
                 ),
               ),
             ),
-
-       
             SafeArea(
               child: Column(
                 children: [
                   const Spacer(flex: 3),
-
                   SizedBox(
                     width: 125,
                     height: 125,
@@ -102,10 +120,7 @@ class SplashScreen extends StatelessWidget {
                       ],
                     ),
                   ),
-
                   const SizedBox(height: 24),
-
-              
                   const Text(
                     'Smart',
                     textAlign: TextAlign.center,
@@ -113,7 +128,7 @@ class SplashScreen extends StatelessWidget {
                       fontSize: 34,
                       fontWeight: FontWeight.w700,
                       fontFamily: 'sans-serif',
-                      color: Color(0xFF123477),
+                      color: _primary,
                       height: 1,
                     ),
                   ),
@@ -124,43 +139,32 @@ class SplashScreen extends StatelessWidget {
                       fontSize: 52,
                       fontWeight: FontWeight.w900,
                       fontFamily: 'sans-serif',
-                      color: Color(0xFF123477),
+                      color: _primary,
                       letterSpacing: -1.5,
                       height: 1,
                     ),
                   ),
-
                   const SizedBox(height: 12),
-
                   const Text(
                     'Less waiting. More care.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 17,
                       fontWeight: FontWeight.w400,
-                      color: Color(0xFF526A87),
+                      color: _muted,
                       letterSpacing: 0.3,
                     ),
                   ),
-
                   const Spacer(flex: 4),
-
                   Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 32,
-                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 32),
                     child: SizedBox(
                       width: double.infinity,
                       height: 52,
                       child: ElevatedButton(
-                        onPressed: () {
-                          Navigator.pushNamed(
-                            context,
-                            '/signup',
-                          );
-                        },
+                        onPressed: () => _navigate(context, '/signup'),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF123477),
+                          backgroundColor: _primary,
                           foregroundColor: Colors.white,
                           elevation: 0,
                           shape: RoundedRectangleBorder(
@@ -177,10 +181,7 @@ class SplashScreen extends StatelessWidget {
                       ),
                     ),
                   ),
-
                   const SizedBox(height: 20),
-
-           
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -188,29 +189,23 @@ class SplashScreen extends StatelessWidget {
                         'Already have an account? ',
                         style: TextStyle(
                           fontSize: 14,
-                          color: Color(0xFF526A87),
+                          color: _muted,
                         ),
                       ),
                       GestureDetector(
-                        onTap: () {
-                          Navigator.pushNamed(
-                            context,
-                            '/login',
-                          );
-                        },
+                        onTap: () => _navigate(context, '/login'),
                         child: const Text(
                           'Login',
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF123477),
+                            color: _primary,
                             decoration: TextDecoration.underline,
                           ),
                         ),
                       ),
                     ],
                   ),
-
                   const SizedBox(height: 28),
                 ],
               ),

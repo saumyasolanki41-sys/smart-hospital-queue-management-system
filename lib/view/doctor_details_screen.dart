@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import '../models/doctor_model.dart';
 import '../controller/token_controller.dart';
 import 'booking_confirmation_screen.dart';
-import 'doctor_slots_screen.dart';
 
 class DoctorDetailsScreen extends StatefulWidget {
   final DoctorModel doctor;
@@ -24,51 +23,6 @@ class _DoctorDetailsScreenState extends State<DoctorDetailsScreen> {
   static const Color _background = Color(0xFFE6EFFF);
   static const Color _darkText = Color.fromARGB(255, 5, 26, 37);
   static const Color _muted = Color(0xFF60758A);
-  // static const Color _lightCard = Color(0xFFF5F8FF);
-
-  String? _selectedSlot;
-  bool _isSelectingSlot = false;
-
-  Future<void> _checkSlots() async {
-    if (_isSelectingSlot) return;
-
-    setState(() {
-      _isSelectingSlot = true;
-    });
-
-    try {
-      final selectedSlot = await Navigator.push<String>(
-        context,
-        MaterialPageRoute(
-          builder: (_) => DoctorSlotsScreen(
-            doctor: widget.doctor,
-          ),
-        ),
-      );
-
-      if (!mounted) return;
-
-      if (selectedSlot != null && selectedSlot.trim().isNotEmpty) {
-        setState(() {
-          _selectedSlot = selectedSlot;
-        });
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Selected time: $selectedSlot'),
-            backgroundColor: _primary,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isSelectingSlot = false;
-        });
-      }
-    }
-  }
 
   Future<void> _bookToken() async {
     final tokenController = context.read<TokenController>();
@@ -82,28 +36,17 @@ class _DoctorDetailsScreenState extends State<DoctorDetailsScreen> {
       return;
     }
 
-    if (_selectedSlot == null || _selectedSlot!.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select an available time slot first.'),
-        ),
-      );
-      return;
-    }
-
     final token = await tokenController.bookToken(
       doctorId: widget.doctor.id,
-      selectedSlot: _selectedSlot!,
     );
 
     if (!mounted) return;
 
     if (token == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        const SnackBar(
           content: Text(
-            tokenController.error ??
-                'Unable to book your token. Please try again.',
+            'Unable to book your token. Please try again.',
           ),
         ),
       );
@@ -158,7 +101,7 @@ class _DoctorDetailsScreenState extends State<DoctorDetailsScreen> {
                 child: ListView(
                   padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
                   children: [
-                  
+                    
                     Row(
                       children: [
                         _HeaderButton(
@@ -201,6 +144,7 @@ class _DoctorDetailsScreenState extends State<DoctorDetailsScreen> {
 
                     const SizedBox(height: 24),
 
+              
                     Container(
                       padding: const EdgeInsets.all(22),
                       decoration: BoxDecoration(
@@ -230,7 +174,7 @@ class _DoctorDetailsScreenState extends State<DoctorDetailsScreen> {
                                 ),
                                 SizedBox(height: 8),
                                 Text(
-                                  'View doctor details and choose a time for your visit.',
+                                  'View doctor details and book your queue token.',
                                   style: TextStyle(
                                     color: Colors.white70,
                                     fontSize: 13,
@@ -252,6 +196,7 @@ class _DoctorDetailsScreenState extends State<DoctorDetailsScreen> {
 
                     const SizedBox(height: 24),
 
+                 
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.all(24),
@@ -383,6 +328,7 @@ class _DoctorDetailsScreenState extends State<DoctorDetailsScreen> {
 
                     const SizedBox(height: 24),
 
+               
                     Container(
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
@@ -444,17 +390,6 @@ class _DoctorDetailsScreenState extends State<DoctorDetailsScreen> {
                             label: 'Qualification',
                             value: qualification,
                           ),
-
-                          if (_selectedSlot != null) ...[
-                            const SizedBox(height: 20),
-                            const Divider(color: _background),
-                            const SizedBox(height: 18),
-                            _InfoRow(
-                              icon: Icons.access_time_rounded,
-                              label: 'Selected Slot',
-                              value: _selectedSlot!,
-                            ),
-                          ],
                         ],
                       ),
                     ),
@@ -474,14 +409,16 @@ class _DoctorDetailsScreenState extends State<DoctorDetailsScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Icon(
-                            Icons.calendar_month_rounded,
+                            Icons.confirmation_number_outlined,
                             color: _primary,
                             size: 23,
                           ),
                           SizedBox(width: 12),
                           Expanded(
                             child: Text(
-                              'Choose an available time slot before booking your token.',
+                              'Book your token to join today’s queue. '
+                              'Your token number will help you track your '
+                              'position in the queue.',
                               style: TextStyle(
                                 color: _darkText,
                                 fontSize: 13,
@@ -513,99 +450,49 @@ class _DoctorDetailsScreenState extends State<DoctorDetailsScreen> {
                 ),
                 child: SafeArea(
                   top: false,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      SizedBox(
-                        width: double.infinity,
-                        height: 52,
-                        child: OutlinedButton.icon(
-                          onPressed: _isSelectingSlot ||
-                                  tokenController.isBooking
-                              ? null
-                              : _checkSlots,
-                          icon: _isSelectingSlot
-                              ? const SizedBox(
-                                  width: 19,
-                                  height: 19,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: _primary,
-                                  ),
-                                )
-                              : const Icon(
-                                  Icons.calendar_month_rounded,
-                                ),
-                          label: Text(
-                            _selectedSlot == null
-                                ? 'Available Slots'
-                                : 'Change Time Slot',
-                            style: const TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: _primary,
-                            side: const BorderSide(
-                              color: _skyBlue,
-                              width: 1.4,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(15),
-                            ),
-                          ),
+                  child: SizedBox(
+                    width: double.infinity,
+                    height: 55,
+                    child: ElevatedButton(
+                      onPressed: !doctor.isAvailable ||
+                              tokenController.isBooking
+                          ? null
+                          : _bookToken,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _primary,
+                        foregroundColor: Colors.white,
+                        disabledBackgroundColor: Colors.grey.shade400,
+                        elevation: 2,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(15),
                         ),
                       ),
-
-                      const SizedBox(height: 11),
-
-                      SizedBox(
-                        width: double.infinity,
-                        height: 55,
-                        child: ElevatedButton(
-                          onPressed: !doctor.isAvailable ||
-                                  tokenController.isBooking ||
-                                  _isSelectingSlot
-                              ? null
-                              : _bookToken,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: _primary,
-                            foregroundColor: Colors.white,
-                            disabledBackgroundColor: Colors.grey.shade400,
-                            elevation: 2,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(15),
-                            ),
-                          ),
-                          child: tokenController.isBooking
-                              ? const SizedBox(
-                                  height: 24,
-                                  width: 24,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2.5,
-                                    color: Colors.white,
-                                  ),
-                                )
-                              : const Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      Icons.confirmation_number_outlined,
-                                    ),
-                                    SizedBox(width: 10),
-                                    Text(
-                                      'Book Token',
-                                      style: TextStyle(
-                                        fontSize: 17,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ],
+                      child: tokenController.isBooking
+                          ? const SizedBox(
+                              height: 24,
+                              width: 24,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.5,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.confirmation_number_outlined,
                                 ),
-                        ),
-                      ),
-                    ],
+                                SizedBox(width: 10),
+                                Text(
+                                  'Book Token',
+                                  style: TextStyle(
+                                    fontSize: 17,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                    ),
                   ),
                 ),
               ),
@@ -616,7 +503,6 @@ class _DoctorDetailsScreenState extends State<DoctorDetailsScreen> {
     );
   }
 }
-
 class _HeaderButton extends StatelessWidget {
   final IconData icon;
   final VoidCallback onPressed;

@@ -21,9 +21,7 @@ class _TokenDetailsScreenState extends State<TokenDetailsScreen> {
   static const Color primaryBlue = Color.fromARGB(255, 14, 18, 33);
   static const Color darkBlue = Color.fromARGB(255, 5, 26, 37);
   static const Color backgroundColor = Color(0xFFE8F0FF);
-  // static const Color mutedColor = Color(0xFF60758A);
   static const Color accentBlue = Color(0xFF315B91);
-  // static const Color borderColor = Color(0xFFE2E8F0);
 
   String _displayValue(
     dynamic value, [
@@ -38,6 +36,22 @@ class _TokenDetailsScreenState extends State<TokenDetailsScreen> {
     }
 
     return text;
+  }
+
+  void _showMessage(
+    String message, {
+    bool isError = false,
+  }) {
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: isError ? Colors.red : Colors.green,
+      ),
+    );
   }
 
   Color _statusColor(String status) {
@@ -67,6 +81,8 @@ class _TokenDetailsScreenState extends State<TokenDetailsScreen> {
   }
 
   Future<void> _confirmCancellation() async {
+    if (_isCancelling) return;
+
     final shouldCancel = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
@@ -122,33 +138,36 @@ class _TokenDetailsScreenState extends State<TokenDetailsScreen> {
 
     setState(() => _isCancelling = true);
 
-    final tokenController = context.read<TokenController>();
+    try {
+      final tokenController = context.read<TokenController>();
 
-    final success = await tokenController.cancelToken(widget.token.id);
+      final success =
+          await tokenController.cancelToken(widget.token.id);
 
-    if (!mounted) return;
+      if (!mounted) return;
 
-    setState(() => _isCancelling = false);
+      if (success) {
+        _showMessage('Token cancelled successfully.');
 
-    if (success) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Token cancelled successfully.'),
-          backgroundColor: Colors.green,
-        ),
+        Navigator.pop(context, true);
+      } else {
+        _showMessage(
+          'Unable to cancel your token. Please try again.',
+          isError: true,
+        );
+      }
+    } catch (error, stackTrace) {
+      debugPrint('Token cancellation failed: $error');
+      debugPrintStack(stackTrace: stackTrace);
+
+      _showMessage(
+        'Something went wrong. Please try again later.',
+        isError: true,
       );
-
-      Navigator.pop(context, true);
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            tokenController.error ??
-                'Unable to cancel your token. Please try again.',
-          ),
-          backgroundColor: Colors.red,
-        ),
-      );
+    } finally {
+      if (mounted) {
+        setState(() => _isCancelling = false);
+      }
     }
   }
 
@@ -202,7 +221,6 @@ class _TokenDetailsScreenState extends State<TokenDetailsScreen> {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
           children: [
-          
             Container(
               padding: const EdgeInsets.all(26),
               decoration: BoxDecoration(
@@ -294,9 +312,7 @@ class _TokenDetailsScreenState extends State<TokenDetailsScreen> {
                 ],
               ),
             ),
-
             const SizedBox(height: 28),
-
             const Row(
               children: [
                 Icon(
@@ -317,43 +333,36 @@ class _TokenDetailsScreenState extends State<TokenDetailsScreen> {
                 ),
               ],
             ),
-
             const SizedBox(height: 16),
-
             _InfoCard(
               icon: Icons.person_outline,
               title: 'Doctor',
               value: _displayValue(widget.token.doctorName),
             ),
-
             _InfoCard(
               icon: Icons.local_hospital_outlined,
               title: 'Department',
               value: _displayValue(widget.token.departmentName),
             ),
-
             _InfoCard(
               icon: Icons.people_outline,
               title: 'Patients Ahead',
               value: _displayValue(widget.token.patientsAhead, '0'),
             ),
-
             _InfoCard(
               icon: Icons.schedule_outlined,
               title: 'Estimated Waiting Time',
               value:
                   '${_displayValue(widget.token.estimatedWaitMinutes, '0')} minutes',
             ),
-
             const SizedBox(height: 18),
-
-       
             if (canCancel) ...[
               SizedBox(
                 width: double.infinity,
                 height: 54,
                 child: FilledButton.icon(
-                  onPressed: isCancelling ? null : _confirmCancellation,
+                  onPressed:
+                      isCancelling ? null : _confirmCancellation,
                   icon: isCancelling
                       ? const SizedBox(
                           height: 20,
@@ -383,8 +392,6 @@ class _TokenDetailsScreenState extends State<TokenDetailsScreen> {
               ),
               const SizedBox(height: 14),
             ],
-
-     
             SizedBox(
               width: double.infinity,
               height: 52,
@@ -430,7 +437,6 @@ class _InfoCard extends StatelessWidget {
     required this.value,
   });
 
-  // static const Color primaryBlue = Color.fromARGB(255, 14, 18, 33);
   static const Color darkBlue = Color.fromARGB(255, 5, 26, 37);
   static const Color accentBlue = Color(0xFF315B91);
 
@@ -450,7 +456,9 @@ class _InfoCard extends StatelessWidget {
         color: isDark ? colors.surfaceContainer : Colors.white,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: isDark ? colors.outlineVariant : const Color(0xFFE2E8F0),
+          color: isDark
+              ? colors.outlineVariant
+              : const Color(0xFFE2E8F0),
         ),
         boxShadow: [
           BoxShadow(

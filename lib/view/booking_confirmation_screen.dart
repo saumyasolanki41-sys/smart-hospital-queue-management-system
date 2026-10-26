@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import '../models/token_model.dart';
 import 'home_screen.dart';
@@ -91,7 +90,7 @@ class BookingConfirmationScreen extends StatelessWidget {
             child: ListView(
               padding: const EdgeInsets.fromLTRB(22, 24, 22, 28),
               children: [
-                // Success banner
+            
                 Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 22,
@@ -160,7 +159,7 @@ class BookingConfirmationScreen extends StatelessWidget {
 
                 const SizedBox(height: 25),
 
-                // Token details card
+             
                 Container(
                   padding: const EdgeInsets.all(22),
                   decoration: BoxDecoration(
@@ -292,7 +291,7 @@ class BookingConfirmationScreen extends StatelessWidget {
 
                 const SizedBox(height: 22),
 
-                // Information card
+             
                 Container(
                   padding: const EdgeInsets.all(17),
                   decoration: BoxDecoration(
@@ -330,7 +329,7 @@ class BookingConfirmationScreen extends StatelessWidget {
 
                 const SizedBox(height: 26),
 
-                // Back to Home button
+             
                 SizedBox(
                   height: 56,
                   child: ElevatedButton(

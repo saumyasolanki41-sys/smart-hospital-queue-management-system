@@ -20,6 +20,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   String? _age;
   String? _gender;
+  bool _isUpdatingProfile = false;
+  bool _isLoggingOut = false;
 
   String _getInitials(String name) {
     final words = name
@@ -27,15 +29,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
         .split(RegExp(r'\s+'))
         .where((word) => word.isNotEmpty)
         .where(
-          (word) =>
-              !{
-                'dr',
-                'dr.',
-                'doctor',
-                'prof',
-                'prof.',
-                'professor',
-              }.contains(word.toLowerCase()),
+          (word) => !{
+            'dr',
+            'dr.',
+            'doctor',
+            'prof',
+            'prof.',
+            'professor',
+          }.contains(word.toLowerCase()),
         )
         .toList();
 
@@ -48,11 +49,32 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return '${words.first[0]}${words.last[0]}'.toUpperCase();
   }
 
+  void _showMessage(String message, {bool isError = false}) {
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: isError ? Colors.red.shade700 : _primary,
+        ),
+      );
+  }
+
   Future<void> _editProfile() async {
+    if (_isUpdatingProfile) return;
+
     final auth = context.read<AuthController>();
     final user = auth.user;
 
-    if (user == null) return;
+    if (user == null) {
+      _showMessage(
+        'Unable to load your profile. Please sign in again.',
+        isError: true,
+      );
+      return;
+    }
 
     final result = await Navigator.push<Map<String, String>>(
       context,
@@ -67,37 +89,51 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     if (!mounted || result == null) return;
 
-    final success = auth.updateProfile(
-      fullName: result['fullName'] ?? '',
-      age: result['age'] ?? '',
-      gender: result['gender'] ?? '',
-    );
+    setState(() => _isUpdatingProfile = true);
 
-    if (!mounted) return;
-
-    if (success) {
-      setState(() {
-        _age = result['age'];
-        _gender = result['gender'];
-      });
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Profile updated successfully'),
-          backgroundColor: _primary,
+    try {
+      final success = await Future<bool>.sync(
+        () => auth.updateProfile(
+          fullName: result['fullName'] ?? '',
+          age: result['age'] ?? '',
+          gender: result['gender'] ?? '',
         ),
       );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(auth.error ?? 'Unable to update profile'),
-          backgroundColor: Colors.red.shade700,
-        ),
+
+      if (!mounted) return;
+
+      if (success) {
+        setState(() {
+          _age = result['age'];
+          _gender = result['gender'];
+        });
+
+        _showMessage('Profile updated successfully');
+      } else {
+        debugPrint('Profile update failed.');
+        _showMessage(
+          'Unable to update profile. Please try again.',
+          isError: true,
+        );
+      }
+    } catch (error, stackTrace) {
+      debugPrint('Profile update exception: $error');
+      debugPrintStack(stackTrace: stackTrace);
+
+      _showMessage(
+        'Something went wrong. Please try again.',
+        isError: true,
       );
+    } finally {
+      if (mounted) {
+        setState(() => _isUpdatingProfile = false);
+      }
     }
   }
 
   Future<void> _logout() async {
+    if (_isLoggingOut) return;
+
     final confirm = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
@@ -143,18 +179,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     if (confirm != true || !mounted) return;
 
-    await context.read<AuthController>().logout();
+    setState(() => _isLoggingOut = true);
 
-    if (!mounted) return;
+    try {
+      await context.read<AuthController>().logout();
 
-    Navigator.pushNamedAndRemoveUntil(
-      context,
-      '/login',
-      (route) => false,
-    );
+      if (!mounted) return;
+
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        '/login',
+        (route) => false,
+      );
+    } catch (error, stackTrace) {
+      debugPrint('Logout exception: $error');
+      debugPrintStack(stackTrace: stackTrace);
+
+      _showMessage(
+        'Unable to logout. Please try again.',
+        isError: true,
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isLoggingOut = false);
+      }
+    }
   }
 
-  void _openTokens() {
+  void _openAppointments() {
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -168,41 +220,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       context,
       MaterialPageRoute(
         builder: (_) => const AmbulanceScreen(),
-      ),
-    );
-  }
-
-  void _showInformationDialog({
-    required String title,
-    required String message,
-  }) {
-    showDialog<void>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
-        title: Text(
-          title,
-          style: const TextStyle(
-            color: _textColor,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        content: Text(
-          message,
-          style: const TextStyle(color: _muted),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: const Text(
-              'Close',
-              style: TextStyle(color: _primary),
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -284,9 +301,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             style: TextStyle(
                               fontSize: 25,
                               fontWeight: FontWeight.bold,
-                              color: isDark
-                                  ? colors.onSurface
-                                  : _textColor,
+                              color: isDark ? colors.onSurface : _textColor,
                             ),
                           ),
                           const SizedBox(height: 3),
@@ -373,12 +388,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                       const SizedBox(height: 18),
                       OutlinedButton.icon(
-                        onPressed: _editProfile,
-                        icon: const Icon(
-                          Icons.edit_outlined,
-                          size: 18,
+                        onPressed: _isUpdatingProfile ? null : _editProfile,
+                        icon: _isUpdatingProfile
+                            ? const SizedBox(
+                                height: 18,
+                                width: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : const Icon(
+                                Icons.edit_outlined,
+                                size: 18,
+                              ),
+                        label: Text(
+                          _isUpdatingProfile ? 'Saving...' : 'Edit Profile',
                         ),
-                        label: const Text('Edit Profile'),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: Colors.white,
                           side: const BorderSide(
@@ -466,15 +492,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   child: Column(
                     children: [
                       _ProfileMenuRow(
-                        icon: Icons.confirmation_number_outlined,
-                        title: 'My Tokens',
-                        subtitle: 'View your booked appointments',
-                        onTap: _openTokens,
-                        isDark: isDark,
-                        colors: colors,
-                      ),
-                      const _SoftDivider(),
-                      _ProfileMenuRow(
                         icon: Icons.local_hospital_outlined,
                         title: 'Ambulance Services',
                         subtitle: 'Access ambulance information',
@@ -484,54 +501,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                       const _SoftDivider(),
                       _ProfileMenuRow(
-                        icon: Icons.medical_information_outlined,
-                        title: 'Medical History',
-                        subtitle: 'Your health information',
-                        isDark: isDark,
-                        colors: colors,
-                        onTap: () => _showInformationDialog(
-                          title: 'Medical History',
-                          message:
-                              'Your medical history feature can be connected '
-                              'to your hospital records when available.',
-                        ),
-                      ),
-                      const _SoftDivider(),
-                      _ProfileMenuRow(
-                        icon: Icons.notifications_none_rounded,
-                        title: 'Notifications',
-                        subtitle: 'Appointment and queue updates',
-                        isDark: isDark,
-                        colors: colors,
-                        onTap: () => _showInformationDialog(
-                          title: 'Notifications',
-                          message:
-                              'Appointment and queue notifications will appear '
-                              'here when notifications are configured.',
-                        ),
-                      ),
-                      const _SoftDivider(),
-                      _ProfileMenuRow(
                         icon: Icons.calendar_month_outlined,
                         title: 'Appointments',
                         subtitle: 'Manage your appointments',
-                        onTap: _openTokens,
+                        onTap: _openAppointments,
                         isDark: isDark,
                         colors: colors,
-                      ),
-                      const _SoftDivider(),
-                      _ProfileMenuRow(
-                        icon: Icons.help_outline_rounded,
-                        title: 'Help & Support',
-                        subtitle: 'Get help using CareQueue',
-                        isDark: isDark,
-                        colors: colors,
-                        onTap: () => _showInformationDialog(
-                          title: 'Help & Support',
-                          message:
-                              'For help with your appointment or token, '
-                              'please contact the hospital.',
-                        ),
                       ),
                     ],
                   ),
@@ -542,8 +517,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 SizedBox(
                   width: double.infinity,
                   child: OutlinedButton.icon(
-                    onPressed: auth.isLoading ? null : _logout,
-                    icon: auth.isLoading
+                    onPressed: (_isLoggingOut || auth.isLoading)
+                        ? null
+                        : _logout,
+                    icon: _isLoggingOut || auth.isLoading
                         ? const SizedBox(
                             height: 18,
                             width: 18,
@@ -554,7 +531,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           )
                         : const Icon(Icons.logout_rounded),
                     label: Text(
-                      auth.isLoading ? 'Please wait...' : 'Logout',
+                      _isLoggingOut || auth.isLoading
+                          ? 'Please wait...'
+                          : 'Logout',
                     ),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: Colors.red.shade700,
@@ -877,15 +856,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         .split(RegExp(r'\s+'))
         .where((word) => word.isNotEmpty)
         .where(
-          (word) =>
-              !{
-                'dr',
-                'dr.',
-                'doctor',
-                'prof',
-                'prof.',
-                'professor',
-              }.contains(word.toLowerCase()),
+          (word) => !{
+            'dr',
+            'dr.',
+            'doctor',
+            'prof',
+            'prof.',
+            'professor',
+          }.contains(word.toLowerCase()),
         )
         .toList();
 
@@ -910,9 +888,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       text: widget.age,
     );
 
-    _gender = _genders.contains(widget.gender)
-        ? widget.gender
-        : null;
+    _gender = _genders.contains(widget.gender) ? widget.gender : null;
   }
 
   @override

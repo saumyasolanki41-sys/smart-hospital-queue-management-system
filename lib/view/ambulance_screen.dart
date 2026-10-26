@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:provider/provider.dart';
-
 import '../models/ambulance_request_model.dart';
 import '../controller/ambulance_controller.dart';
 
@@ -33,6 +32,7 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
+
       context.read<AmbulanceController>().fetchMyRequests(refresh: true);
     });
   }
@@ -50,16 +50,20 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
     setState(() => _isGettingLocation = true);
 
     try {
-      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      final serviceEnabled =
+          await Geolocator.isLocationServiceEnabled();
 
       if (!serviceEnabled) {
         if (mounted) {
-          _showMessage('Please turn on Location/GPS on your device.');
+          _showMessage(
+            'Please turn on Location/GPS on your device.',
+          );
         }
         return false;
       }
 
-      LocationPermission permission = await Geolocator.checkPermission();
+      LocationPermission permission =
+          await Geolocator.checkPermission();
 
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
@@ -80,6 +84,7 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
             'Location permission is permanently denied. '
             'Enable it in your app settings.',
           );
+
           await Geolocator.openAppSettings();
         }
         return false;
@@ -104,7 +109,8 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
       try {
         final geocoding = Geocoding();
 
-        final placemarks = await geocoding.placemarkFromCoordinates(
+        final placemarks =
+            await geocoding.placemarkFromCoordinates(
           position.latitude,
           position.longitude,
         );
@@ -122,27 +128,28 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
         final place = placemarks.first;
 
         // Build an address using the available location details.
-        final addressParts =
-            <String?>[
-                  place.name,
-                  place.street,
-                  place.subLocality,
-                  place.locality,
-                  place.subAdministrativeArea,
-                  place.administrativeArea,
-                  place.postalCode,
-                  place.country,
-                ]
-                .whereType<String>()
-                .map((part) => part.trim())
-                .where((part) => part.isNotEmpty)
-                .toList();
+        final addressParts = <String?>[
+          place.name,
+          place.street,
+          place.subLocality,
+          place.locality,
+          place.subAdministrativeArea,
+          place.administrativeArea,
+          place.postalCode,
+          place.country,
+        ]
+            .whereType<String>()
+            .map((part) => part.trim())
+            .where((part) => part.isNotEmpty)
+            .toList();
 
         // Remove repeated address parts.
         final uniqueParts = <String>[];
+
         for (final part in addressParts) {
           if (!uniqueParts.any(
-            (existing) => existing.toLowerCase() == part.toLowerCase(),
+            (existing) =>
+                existing.toLowerCase() == part.toLowerCase(),
           )) {
             uniqueParts.add(part);
           }
@@ -151,7 +158,6 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
         final address = uniqueParts.join(', ');
 
         if (address.isNotEmpty) {
-          
           _addressController.text = address;
 
           _showMessage('Pickup address filled successfully.');
@@ -161,7 +167,10 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
             'Please enter the address manually.',
           );
         }
-      } catch (_) {
+      } catch (e) {
+        // Keep technical geocoding errors out of the UI.
+        debugPrint('Address lookup failed: $e');
+
         if (mounted) {
           _showMessage(
             'GPS detected, but the address could not be retrieved. '
@@ -171,10 +180,16 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
       }
 
       return true;
-    } catch (_) {
+    } catch (e) {
+      // Keep technical location errors out of the UI.
+      debugPrint('Getting current location failed: $e');
+
       if (mounted) {
-        _showMessage('Could not get location. Please try again.');
+        _showMessage(
+          'Could not get location. Please try again.',
+        );
       }
+
       return false;
     } finally {
       if (mounted) {
@@ -201,6 +216,7 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
 
     if (_latitude == null || _longitude == null) {
       final locationObtained = await _getCurrentLocation();
+
       if (!locationObtained || !mounted) return;
     }
 
@@ -214,67 +230,119 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
 
     final controller = context.read<AmbulanceController>();
 
-    await controller.requestAmbulance(
-      pickupAddress: _addressController.text.trim(),
-      latitude: latitude,
-      longitude: longitude,
-      contactPhone: phone,
-    );
+    try {
+      await controller.requestAmbulance(
+        pickupAddress: _addressController.text.trim(),
+        latitude: latitude,
+        longitude: longitude,
+        contactPhone: phone,
+      );
 
-    if (!mounted) return;
+      if (!mounted) return;
 
-    if (controller.error == null && controller.selectedRequest != null) {
-      _addressController.clear();
-      _phoneController.clear();
+      if (controller.error == null &&
+          controller.selectedRequest != null) {
+        _addressController.clear();
+        _phoneController.clear();
 
-      setState(() {
-        _latitude = null;
-        _longitude = null;
-      });
+        setState(() {
+          _latitude = null;
+          _longitude = null;
+        });
 
-      _showMessage('Ambulance request submitted successfully.');
-    } else {
-      _showMessage(controller.error ?? 'Unable to submit ambulance request.');
+        _showMessage(
+          'Ambulance request submitted successfully.',
+        );
+      } else {
+        // Never display the raw backend error.
+        _showMessage(
+          'Unable to submit ambulance request. Please try again.',
+        );
+      }
+    } catch (e) {
+      debugPrint('Ambulance request failed: $e');
+
+      if (mounted) {
+        _showMessage(
+          'Unable to submit ambulance request. Please try again.',
+        );
+      }
     }
   }
 
   Future<void> _refreshRequests() async {
-    await context.read<AmbulanceController>().fetchMyRequests(refresh: true);
-  }
+    try {
+      await context
+          .read<AmbulanceController>()
+          .fetchMyRequests(refresh: true);
+    } catch (e) {
+      debugPrint('Refreshing ambulance requests failed: $e');
 
-  Future<void> _refreshEta(AmbulanceRequestModel request) async {
-    final controller = context.read<AmbulanceController>();
-    await controller.refreshEta(request.id);
-
-    if (!mounted) return;
-
-    if (controller.error != null) {
-      _showMessage(controller.error!);
-    } else {
-      _showMessage('ETA refreshed.');
+      if (mounted) {
+        _showMessage(
+          'Unable to refresh requests. Please try again.',
+        );
+      }
     }
   }
 
-  Future<void> _cancelRequest(AmbulanceRequestModel request) async {
+  Future<void> _refreshEta(
+    AmbulanceRequestModel request,
+  ) async {
+    final controller = context.read<AmbulanceController>();
+
+    try {
+      await controller.refreshEta(request.id);
+
+      if (!mounted) return;
+
+      if (controller.error != null) {
+        // Never display the raw backend error.
+        _showMessage(
+          'Unable to refresh ETA. Please try again.',
+        );
+      } else {
+        _showMessage('ETA refreshed.');
+      }
+    } catch (e) {
+      debugPrint('Refreshing ambulance ETA failed: $e');
+
+      if (mounted) {
+        _showMessage(
+          'Unable to refresh ETA. Please try again.',
+        );
+      }
+    }
+  }
+
+  Future<void> _cancelRequest(
+    AmbulanceRequestModel request,
+  ) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
         backgroundColor: _cardColor,
-        title: const Text('Cancel Request', style: TextStyle(color: _heading)),
+        title: const Text(
+          'Cancel Request',
+          style: TextStyle(color: _heading),
+        ),
         content: const Text(
           'Are you sure you want to cancel this ambulance request?',
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(dialogContext, false),
+            onPressed: () =>
+                Navigator.pop(dialogContext, false),
             child: const Text('Keep Request'),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color.fromARGB(255, 14, 18, 33),
+              backgroundColor:
+                  const Color.fromARGB(255, 14, 18, 33),
               foregroundColor: Colors.white,
             ),
-            onPressed: () => Navigator.pop(dialogContext, true),
+            onPressed: () =>
+                Navigator.pop(dialogContext, true),
             child: const Text('Cancel Request'),
           ),
         ],
@@ -284,15 +352,29 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
     if (confirmed != true || !mounted) return;
 
     final controller = context.read<AmbulanceController>();
-    await controller.cancelRequest(request.id);
 
-    if (!mounted) return;
+    try {
+      await controller.cancelRequest(request.id);
 
-    if (controller.error == null) {
-      _showMessage('Cancellation request processed.');
-      await _refreshRequests();
-    } else {
-      _showMessage(controller.error!);
+      if (!mounted) return;
+
+      if (controller.error == null) {
+        _showMessage('Cancellation request processed.');
+        await _refreshRequests();
+      } else {
+        // Never display the raw backend error.
+        _showMessage(
+          'Unable to cancel the request. Please try again.',
+        );
+      }
+    } catch (e) {
+      debugPrint('Cancelling ambulance request failed: $e');
+
+      if (mounted) {
+        _showMessage(
+          'Unable to cancel the request. Please try again.',
+        );
+      }
     }
   }
 
@@ -310,7 +392,10 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
       );
   }
 
-  String _display(dynamic value, [String fallback = 'Not available']) {
+  String _display(
+    dynamic value, [
+    String fallback = 'Not available',
+  ]) {
     if (value == null) return fallback;
 
     final text = value.toString().trim();
@@ -347,7 +432,8 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
         actions: [
           IconButton(
             tooltip: 'Refresh requests',
-            onPressed: controller.isLoading ? null : _refreshRequests,
+            onPressed:
+                controller.isLoading ? null : _refreshRequests,
             icon: const Icon(Icons.refresh_rounded),
           ),
           const SizedBox(width: 6),
@@ -365,7 +451,10 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
               padding: const EdgeInsets.all(21),
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
-                  colors: [Color.fromARGB(255, 8, 42, 60), Color(0xFF8DB8F5)],
+                  colors: [
+                    Color.fromARGB(255, 8, 42, 60),
+                    Color(0xFF8DB8F5),
+                  ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -485,7 +574,9 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
                                 color: _primary,
                               ),
                             )
-                          : const Icon(Icons.my_location_rounded),
+                          : const Icon(
+                              Icons.my_location_rounded,
+                            ),
                       label: Text(
                         _isGettingLocation
                             ? 'Getting Current Location...'
@@ -493,8 +584,12 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
                       ),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: _primary,
-                        side: const BorderSide(color: Color(0xFF9DBDF2)),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        side: const BorderSide(
+                          color: Color(0xFF9DBDF2),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 14,
+                        ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(13),
                         ),
@@ -502,7 +597,8 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
                     ),
                   ),
 
-                  if (_latitude != null && _longitude != null) ...[
+                  if (_latitude != null &&
+                      _longitude != null) ...[
                     const SizedBox(height: 14),
                     Container(
                       padding: const EdgeInsets.all(13),
@@ -520,7 +616,8 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
                           const SizedBox(width: 10),
                           Expanded(
                             child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                              crossAxisAlignment:
+                                  CrossAxisAlignment.start,
                               children: [
                                 const Text(
                                   'GPS Location Detected',
@@ -562,9 +659,11 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton.icon(
-                      onPressed: controller.isRequesting || _isGettingLocation
-                          ? null
-                          : _submitRequest,
+                      onPressed:
+                          controller.isRequesting ||
+                                  _isGettingLocation
+                              ? null
+                              : _submitRequest,
                       icon: controller.isRequesting
                           ? const SizedBox(
                               height: 19,
@@ -574,17 +673,22 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
                                 color: Colors.white,
                               ),
                             )
-                          : const Icon(Icons.airport_shuttle_rounded),
+                          : const Icon(
+                              Icons.airport_shuttle_rounded,
+                            ),
                       label: Text(
                         controller.isRequesting
                             ? 'Submitting Request...'
                             : 'Request Ambulance',
                       ),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color.fromARGB(255, 14, 18, 33),
+                        backgroundColor:
+                            const Color.fromARGB(255, 14, 18, 33),
                         foregroundColor: Colors.white,
                         disabledBackgroundColor: _muted,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 16,
+                        ),
                         elevation: 2,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),
@@ -617,8 +721,12 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
                   ),
                   child: IconButton(
                     tooltip: 'Refresh requests',
-                    onPressed: controller.isLoading ? null : _refreshRequests,
-                    icon: const Icon(Icons.refresh_rounded, color: _primary),
+                    onPressed:
+                        controller.isLoading ? null : _refreshRequests,
+                    icon: const Icon(
+                      Icons.refresh_rounded,
+                      color: _primary,
+                    ),
                   ),
                 ),
               ],
@@ -626,18 +734,23 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
 
             const SizedBox(height: 14),
 
-            if (controller.isLoading && controller.requests.isEmpty)
+            if (controller.isLoading &&
+                controller.requests.isEmpty)
               const Padding(
                 padding: EdgeInsets.all(28),
                 child: Center(
-                  child: CircularProgressIndicator(color: _primary),
+                  child: CircularProgressIndicator(
+                    color: _primary,
+                  ),
                 ),
               )
-            else if (controller.error != null && controller.requests.isEmpty)
+            else if (controller.error != null &&
+                controller.requests.isEmpty)
               _EmptyState(
                 icon: Icons.cloud_off_rounded,
                 title: 'Unable to load requests',
-                message: controller.error!,
+                message:
+                    'Unable to load requests. Please try again.',
                 buttonLabel: 'Try Again',
                 onPressed: _refreshRequests,
               )
@@ -645,7 +758,8 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
               const _EmptyState(
                 icon: Icons.airport_shuttle_rounded,
                 title: 'No requests yet',
-                message: 'Your ambulance requests will appear here.',
+                message:
+                    'Your ambulance requests will appear here.',
               )
             else
               ...controller.requests.map(
@@ -673,21 +787,34 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
       hintText: hint,
       prefixIcon: Icon(icon, color: _primary),
       labelStyle: const TextStyle(color: _heading),
-      hintStyle: const TextStyle(color: _muted, fontSize: 13),
+      hintStyle: const TextStyle(
+        color: _muted,
+        fontSize: 13,
+      ),
       filled: true,
       fillColor: Colors.white,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 17),
+      contentPadding: const EdgeInsets.symmetric(
+        horizontal: 15,
+        vertical: 17,
+      ),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: Color(0xFFD6E3F8)),
+        borderSide: const BorderSide(
+          color: Color(0xFFD6E3F8),
+        ),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: Color(0xFFD6E3F8)),
+        borderSide: const BorderSide(
+          color: Color(0xFFD6E3F8),
+        ),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: _primary, width: 1.5),
+        borderSide: const BorderSide(
+          color: _primary,
+          width: 1.5,
+        ),
       ),
     );
   }
@@ -697,7 +824,10 @@ class _SectionHeading extends StatelessWidget {
   final String title;
   final String subtitle;
 
-  const _SectionHeading({required this.title, required this.subtitle});
+  const _SectionHeading({
+    required this.title,
+    required this.subtitle,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -715,7 +845,10 @@ class _SectionHeading extends StatelessWidget {
         const SizedBox(height: 5),
         Text(
           subtitle,
-          style: const TextStyle(color: Color(0xFF7892B0), fontSize: 13),
+          style: const TextStyle(
+            color: Color(0xFF7892B0),
+            fontSize: 13,
+          ),
         ),
       ],
     );
@@ -743,12 +876,15 @@ class _RequestCard extends StatelessWidget {
     final eta = request.estimatedArrivalMinutes;
 
     final normalizedStatus = status.toLowerCase();
+
     final statusColor =
-        normalizedStatus == 'completed' || normalizedStatus == 'served'
-        ? const Color(0xFF268566)
-        : normalizedStatus == 'cancelled' || normalizedStatus == 'canceled'
-        ? const Color(0xFFB94D58)
-        : const Color(0xFF246F96);
+        normalizedStatus == 'completed' ||
+                normalizedStatus == 'served'
+            ? const Color(0xFF268566)
+            : normalizedStatus == 'cancelled' ||
+                    normalizedStatus == 'canceled'
+                ? const Color(0xFFB94D58)
+                : const Color(0xFF246F96);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
@@ -756,10 +892,13 @@ class _RequestCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: const Color(0xFFFFFFFF),
         borderRadius: BorderRadius.circular(21),
-        border: Border.all(color: const Color(0xFFD6E3F8)),
+        border: Border.all(
+          color: const Color(0xFFD6E3F8),
+        ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF173B5E).withValues(alpha: 0.07),
+            color: const Color(0xFF173B5E)
+                .withValues(alpha: 0.07),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -819,7 +958,10 @@ class _RequestCard extends StatelessWidget {
           ),
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 16),
-            child: Divider(color: Color(0xFFD6E3F8), height: 1),
+            child: Divider(
+              color: Color(0xFFD6E3F8),
+              height: 1,
+            ),
           ),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -833,7 +975,10 @@ class _RequestCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   display(request.pickupAddress),
-                  style: const TextStyle(color: Color(0xFF526D8C), height: 1.4),
+                  style: const TextStyle(
+                    color: Color(0xFF526D8C),
+                    height: 1.4,
+                  ),
                 ),
               ),
             ],
@@ -856,7 +1001,10 @@ class _RequestCard extends StatelessWidget {
                 const Expanded(
                   child: Text(
                     'Estimated arrival',
-                    style: TextStyle(color: Color(0xFF526D8C), fontSize: 13),
+                    style: TextStyle(
+                      color: Color(0xFF526D8C),
+                      fontSize: 13,
+                    ),
                   ),
                 ),
                 Text(
@@ -877,11 +1025,16 @@ class _RequestCard extends StatelessWidget {
             children: [
               OutlinedButton.icon(
                 onPressed: onRefreshEta,
-                icon: const Icon(Icons.schedule_rounded, size: 18),
+                icon: const Icon(
+                  Icons.schedule_rounded,
+                  size: 18,
+                ),
                 label: const Text('Refresh ETA'),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: const Color(0xFF246F96),
-                  side: const BorderSide(color: Color(0xFF9DBDF2)),
+                  side: const BorderSide(
+                    color: Color(0xFF9DBDF2),
+                  ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -890,7 +1043,10 @@ class _RequestCard extends StatelessWidget {
               if (canCancel(status))
                 TextButton.icon(
                   onPressed: onCancel,
-                  icon: const Icon(Icons.close_rounded, size: 18),
+                  icon: const Icon(
+                    Icons.close_rounded,
+                    size: 18,
+                  ),
                   label: const Text('Cancel Request'),
                   style: TextButton.styleFrom(
                     foregroundColor: const Color(0xFFB94D58),
@@ -929,7 +1085,11 @@ class _EmptyState extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Icon(icon, size: 43, color: const Color(0xFF8DB8F5)),
+          Icon(
+            icon,
+            size: 43,
+            color: const Color(0xFF8DB8F5),
+          ),
           const SizedBox(height: 12),
           Text(
             title,
@@ -944,11 +1104,17 @@ class _EmptyState extends StatelessWidget {
           Text(
             message,
             textAlign: TextAlign.center,
-            style: const TextStyle(color: Color(0xFF7892B0), height: 1.45),
+            style: const TextStyle(
+              color: Color(0xFF7892B0),
+              height: 1.45,
+            ),
           ),
           if (buttonLabel != null && onPressed != null) ...[
             const SizedBox(height: 12),
-            TextButton(onPressed: onPressed, child: Text(buttonLabel!)),
+            TextButton(
+              onPressed: onPressed,
+              child: Text(buttonLabel!),
+            ),
           ],
         ],
       ),

@@ -1,3 +1,5 @@
+
+import 'package:flutter/foundation.dart';
 import '../models/token_model.dart';
 import 'api_service.dart';
 
@@ -9,74 +11,88 @@ class QueueService {
 
   Future<TokenModel> bookToken({
     required String doctorId,
-    required String selectedSlot,
   }) async {
     if (doctorId.trim().isEmpty) {
       throw const ApiException('Please select a doctor.');
     }
 
-    if (selectedSlot.trim().isEmpty) {
+    try {
+      final response = await _apiService.post(
+        '/api/queue/tokens',
+        body: {
+          'doctorId': doctorId.trim(),
+        },
+        authenticated: true,
+      );
+
+      final data = response['data'];
+
+      if (data is! Map || data['token'] is! Map) {
+        throw const ApiException(
+          'Unable to complete token booking. Please try again.',
+        );
+      }
+
+      final tokenData = Map<String, dynamic>.from(
+        data['token'] as Map,
+      );
+
+      return TokenModel.fromJson(tokenData);
+    } on ApiException {
+      rethrow;
+    } catch (e) {
+      debugPrint('Book token processing failed: $e');
+
       throw const ApiException(
-        'Please select an appointment time.',
+        'Unable to book your token. Please try again.',
       );
     }
-
-    final response = await _apiService.post(
-      '/api/queue/tokens',
-      body: {
-        'doctorId': doctorId.trim(),
-        'selectedSlot': selectedSlot.trim(),
-      },
-      authenticated: true,
-    );
-
-    final data = response['data'];
-
-    if (data is! Map || data['token'] is! Map) {
-      throw const ApiException(
-        'Unexpected token booking response from the server.',
-      );
-    }
-
-    return TokenModel.fromJson(
-      Map<String, dynamic>.from(data['token'] as Map),
-    );
   }
 
   Future<List<TokenModel>> getMyTokens() async {
-    final response = await _apiService.get(
-      '/api/queue/tokens/mine',
-      authenticated: true,
-    );
+    try {
+      final response = await _apiService.get(
+        '/api/queue/tokens/mine',
+        authenticated: true,
+      );
 
-    final data = response['data'];
+      final data = response['data'];
 
-    dynamic tokens;
+      dynamic tokens;
 
-    if (data is List) {
-      tokens = data;
-    } else if (data is Map) {
-      tokens = data['tokens'] ??
-          data['items'] ??
-          data['results'];
-    }
+      if (data is List) {
+        tokens = data;
+      } else if (data is Map) {
+        tokens = data['tokens'] ??
+            data['items'] ??
+            data['results'];
+      }
 
-    tokens ??= response['tokens'];
+      tokens ??= response['tokens'];
 
-    if (tokens is! List) {
+      if (tokens is! List) {
+        throw const ApiException(
+          'Unable to load your tokens. Please try again.',
+        );
+      }
+
+      return tokens
+          .whereType<Map>()
+          .map(
+            (token) => TokenModel.fromJson(
+              Map<String, dynamic>.from(token),
+            ),
+          )
+          .toList();
+    } on ApiException {
+      rethrow;
+    } catch (e) {
+      debugPrint('Fetch tokens processing failed: $e');
+
       throw const ApiException(
-        'Unexpected queue tokens response from the server.',
+        'Unable to load your tokens. Please try again.',
       );
     }
-
-    return tokens
-        .whereType<Map>()
-        .map(
-          (token) => TokenModel.fromJson(
-            Map<String, dynamic>.from(token),
-          ),
-        )
-        .toList();
   }
 
   Future<TokenModel> getTokenStatus(String tokenId) async {
@@ -84,33 +100,43 @@ class QueueService {
       throw const ApiException('Token ID is required.');
     }
 
-    final encodedTokenId =
-        Uri.encodeComponent(tokenId.trim());
+    try {
+      final encodedTokenId =
+          Uri.encodeComponent(tokenId.trim());
 
-    final response = await _apiService.get(
-      '/api/queue/tokens/$encodedTokenId',
-      authenticated: true,
-    );
+      final response = await _apiService.get(
+        '/api/queue/tokens/$encodedTokenId',
+        authenticated: true,
+      );
 
-    final data = response['data'];
+      final data = response['data'];
 
-    dynamic token;
+      dynamic token;
 
-    if (data is Map) {
-      token = data['token'] ?? data;
-    }
+      if (data is Map) {
+        token = data['token'] ?? data;
+      }
 
-    token ??= response['token'];
+      token ??= response['token'];
 
-    if (token is! Map) {
+      if (token is! Map) {
+        throw const ApiException(
+          'Unable to fetch token status. Please try again.',
+        );
+      }
+
+      return TokenModel.fromJson(
+        Map<String, dynamic>.from(token),
+      );
+    } on ApiException {
+      rethrow;
+    } catch (e) {
+      debugPrint('Token status processing failed: $e');
+
       throw const ApiException(
-        'Unexpected token status response from the server.',
+        'Unable to fetch token status. Please try again.',
       );
     }
-
-    return TokenModel.fromJson(
-      Map<String, dynamic>.from(token),
-    );
   }
 
   Future<void> cancelToken(String tokenId) async {
@@ -118,12 +144,22 @@ class QueueService {
       throw const ApiException('Token ID is required.');
     }
 
-    final encodedTokenId =
-        Uri.encodeComponent(tokenId.trim());
+    try {
+      final encodedTokenId =
+          Uri.encodeComponent(tokenId.trim());
 
-    await _apiService.patch(
-      '/api/queue/tokens/$encodedTokenId/cancel',
-      authenticated: true,
-    );
+      await _apiService.patch(
+        '/api/queue/tokens/$encodedTokenId/cancel',
+        authenticated: true,
+      );
+    } on ApiException {
+      rethrow;
+    } catch (e) {
+      debugPrint('Cancel token processing failed: $e');
+
+      throw const ApiException(
+        'Unable to cancel your token. Please try again.',
+      );
+    }
   }
 }

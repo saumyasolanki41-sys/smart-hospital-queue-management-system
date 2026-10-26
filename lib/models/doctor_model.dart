@@ -1,4 +1,3 @@
-
 class DoctorModel {
   final String id;
   final String name;
@@ -20,63 +19,45 @@ class DoctorModel {
     this.isAvailable = true,
   });
 
-  factory DoctorModel.fromJson(
-    Map<String, dynamic> json,
-  ) {
-    final dynamic department =
-        json['department'] ?? json['departmentId'];
+  factory DoctorModel.fromJson(Map<String, dynamic> json) {
+    final dynamic department = json['department'] ?? json['departmentId'];
 
     String? extractedDepartmentId;
     String? extractedDepartmentName;
 
     if (department is Map<String, dynamic>) {
-      extractedDepartmentId = (
-        department['_id'] ??
-        department['id'] ??
-        department['departmentId']
-      )?.toString();
+      extractedDepartmentId =
+          (department['_id'] ?? department['id'] ?? department['departmentId'])
+              ?.toString();
 
-      extractedDepartmentName = (
-        department['name'] ??
-        department['departmentName']
-      )?.toString();
+      extractedDepartmentName =
+          (department['name'] ?? department['departmentName'])?.toString();
     } else if (department != null) {
       extractedDepartmentId = department.toString();
     }
 
     return DoctorModel(
-      id: (
-        json['_id'] ??
-        json['id'] ??
-        json['doctorId'] ??
-        ''
-      ).toString(),
-      name: (
-        json['name'] ??
-        json['fullName'] ??
-        json['doctorName'] ??
-        'Unknown Doctor'
-      ).toString(),
-      departmentId: (
-        json['departmentId'] ??
-        extractedDepartmentId
-      )?.toString(),
-      departmentName: (
-        json['departmentName'] ??
-        extractedDepartmentName
-      )?.toString(),
-      specialization: (
-        json['specialization'] ??
-        json['speciality']
-      )?.toString(),
-      qualification: json['qualification']?.toString(),
-      imageUrl: (
-        json['imageUrl'] ??
-        json['photoUrl'] ??
-        json['image']
-      )?.toString(),
-      isAvailable: json['isAvailable'] != false &&
-          json['isAvailable'] != 0,
+      id: (json['_id'] ?? json['id'] ?? json['doctorId'] ?? '').toString(),
+      name:
+          (json['name'] ??
+                  json['fullName'] ??
+                  json['doctorName'] ??
+                  'Unknown Doctor')
+              .toString(),
+      departmentId: (json['departmentId'] ?? extractedDepartmentId)?.toString(),
+      departmentName: (json['departmentName'] ?? extractedDepartmentName)
+          ?.toString(),
+      specialization: (json['specialization'] ?? json['speciality'])
+          ?.toString(),
+      qualification:
+          (json['qualification'] ??
+                  json['qualifications'] ??
+                  json['degree'] ??
+                  json['education'])
+              ?.toString(),
+      imageUrl: (json['imageUrl'] ?? json['photoUrl'] ?? json['image'])
+          ?.toString(),
+      isAvailable: json['isAvailable'] != false && json['isAvailable'] != 0,
     );
   }
 

@@ -304,13 +304,13 @@ class AuthController extends ChangeNotifier {
     notifyListeners();
   }
 
- String _messageFrom(Object error) {
-  debugPrint('Authentication error: $error');
+  String _messageFrom(Object error) {
+    debugPrint('Authentication error: $error');
 
-  if (error is ApiException) {
-    return error.message;
+    if (error is ApiException) {
+      return error.message;
+    }
+
+    return 'Something went wrong. Please try again.';
   }
-
-  return error.toString();
-}
 }

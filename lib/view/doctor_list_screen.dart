@@ -122,7 +122,6 @@ class _DoctorListScreenState extends State<DoctorListScreen> {
               physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
               children: [
-              
                 Row(
                   children: [
                     Container(
@@ -177,7 +176,6 @@ class _DoctorListScreenState extends State<DoctorListScreen> {
 
                 const SizedBox(height: 22),
 
-         
                 Container(
                   padding: const EdgeInsets.all(21),
                   decoration: BoxDecoration(
@@ -355,7 +353,6 @@ class _DoctorListScreenState extends State<DoctorListScreen> {
 
                 const SizedBox(height: 15),
 
-             
                 if (controller.isLoading && controller.doctors.isEmpty)
                   const Padding(
                     padding: EdgeInsets.all(32),
@@ -370,12 +367,12 @@ class _DoctorListScreenState extends State<DoctorListScreen> {
                     controller.doctors.isEmpty)
                   _DoctorMessage(
                     icon: Icons.cloud_off_rounded,
-                    message: controller.error!,
+                    message:
+                        'Unable to load doctors. Please try again.',
                     actionLabel: 'Try Again',
                     onAction: _refreshDoctors,
                   )
 
-           
                 else if (doctors.isEmpty)
                   _DoctorMessage(
                     icon: Icons.person_search_rounded,

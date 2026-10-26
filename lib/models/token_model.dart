@@ -1,4 +1,3 @@
-
 class TokenModel {
   final String id;
   final String tokenNumber;
@@ -28,52 +27,85 @@ class TokenModel {
     this.createdAt,
   });
 
+  static String? _readName(dynamic value) {
+    if (value is Map) {
+      final name = value['name'] ??
+          value['departmentName'] ??
+          value['department_name'] ??
+          value['title'];
+
+      if (name != null && name.toString().trim().isNotEmpty) {
+        return name.toString().trim();
+      }
+    }
+
+    if (value is String && value.trim().isNotEmpty) {
+      return value.trim();
+    }
+
+    return null;
+  }
+
+  static String _readId(dynamic value) {
+    if (value is Map) {
+      return (value['_id'] ?? value['id'] ?? '').toString();
+    }
+
+    return value?.toString() ?? '';
+  }
+
+  static String _parseTokenNumber(Map<String, dynamic> json) {
+    return (
+      json['tokenNumber'] ??
+      json['tokenNo'] ??
+      json['number'] ??
+      'N/A'
+    ).toString();
+  }
+
+  static DateTime? _parseDate(dynamic value) {
+    if (value == null) return null;
+
+    if (value is DateTime) return value;
+
+    if (value is num) {
+      final timestamp = value.toInt();
+      final milliseconds = timestamp.abs() < 1000000000000
+          ? timestamp * 1000
+          : timestamp;
+
+      return DateTime.fromMillisecondsSinceEpoch(milliseconds);
+    }
+
+    if (value is String) {
+      final text = value.trim();
+
+      if (text.isEmpty || text.toLowerCase() == 'null') {
+        return null;
+      }
+
+      return DateTime.tryParse(text);
+    }
+
+    if (value is Map) {
+      if (value['_seconds'] != null) {
+        return _parseDate(value['_seconds']);
+      }
+
+      if (value['seconds'] != null) {
+        return _parseDate(value['seconds']);
+      }
+    }
+
+    return null;
+  }
+
   factory TokenModel.fromJson(Map<String, dynamic> json) {
     final dynamic doctor = json['doctor'];
     final dynamic department = json['department'];
 
-    DateTime? parseDate(dynamic value) {
-      if (value == null) return null;
-
-      if (value is DateTime) {
-        return value;
-      }
-
-      // Handle Unix timestamps in seconds or milliseconds.
-      if (value is num) {
-        final timestamp = value.toInt();
-
-        final milliseconds = timestamp.abs() < 1000000000000
-            ? timestamp * 1000
-            : timestamp;
-
-        return DateTime.fromMillisecondsSinceEpoch(milliseconds);
-      }
-
-      // Handle API date strings.
-      if (value is String) {
-        final text = value.trim();
-
-        if (text.isEmpty || text.toLowerCase() == 'null') {
-          return null;
-        }
-
-        return DateTime.tryParse(text);
-      }
-
-      // Handle Firebase-style timestamp objects.
-      if (value is Map) {
-        if (value['_seconds'] != null) {
-          return parseDate(value['_seconds']);
-        }
-
-        if (value['seconds'] != null) {
-          return parseDate(value['seconds']);
-        }
-      }
-
-      return null;
-    }
+    final dynamic doctorDepartment =
+        doctor is Map ? doctor['department'] : null;
 
     final appointmentValue =
         json['appointmentTime'] ??
@@ -87,6 +119,24 @@ class TokenModel {
         json['appointmentDateTime'] ??
         json['appointment_date_time'];
 
+    final patient = json['patient'];
+
+    final departmentId = (
+      json['departmentId'] ??
+      json['department_id'] ??
+      (department is Map
+          ? department['_id'] ?? department['id']
+          : department is String
+              ? department
+              : null) ??
+      (doctor is Map
+          ? doctor['departmentId'] ??
+              doctor['department_id'] ??
+              _readId(doctorDepartment)
+          : null) ??
+      ''
+    ).toString();
+
     return TokenModel(
       id: (
         json['_id'] ??
@@ -95,42 +145,35 @@ class TokenModel {
         ''
       ).toString(),
 
-      tokenNumber: (
-        json['tokenNumber'] ??
-        json['tokenNo'] ??
-        json['number'] ??
-        ''
-      ).toString(),
+      tokenNumber: _parseTokenNumber(json),
 
       patientId: (
         json['patientId'] ??
         json['userId'] ??
+        (patient is Map ? patient['_id'] ?? patient['id'] : null) ??
         ''
       ).toString(),
 
       doctorId: (
         json['doctorId'] ??
-        (doctor is Map ? doctor['_id'] ?? doctor['id'] : null) ??
-        ''
+        json['doctor_id'] ??
+        _readId(doctor)
       ).toString(),
 
-      departmentId: (
-        json['departmentId'] ??
-        (department is Map
-            ? department['_id'] ?? department['id']
-            : null) ??
-        ''
-      ).toString(),
+      departmentId: departmentId,
 
       doctorName: (
-        json['doctorName'] ??
-        (doctor is Map ? doctor['name'] : null)
-      )?.toString(),
+        _readName(json['doctorName']) ??
+        _readName(doctor)
+      ),
 
       departmentName: (
-        json['departmentName'] ??
-        (department is Map ? department['name'] : null)
-      )?.toString(),
+        _readName(json['departmentName']) ??
+        _readName(json['department_name']) ??
+        _readName(department) ??
+        _readName(doctorDepartment) ??
+        _readName(doctor is Map ? doctor['departmentName'] : null)
+      ),
 
       patientsAhead: int.tryParse(
             (
@@ -153,9 +196,9 @@ class TokenModel {
 
       status: (json['status'] ?? 'waiting').toString(),
 
-      appointmentTime: parseDate(appointmentValue),
+      appointmentTime: _parseDate(appointmentValue),
 
-      createdAt: parseDate(
+      createdAt: _parseDate(
         json['createdAt'] ?? json['created_at'],
       ),
     );

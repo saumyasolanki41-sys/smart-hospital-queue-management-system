@@ -30,7 +30,23 @@ class _LiveQueueScreenState extends State<LiveQueueScreen> {
   }
 
   Future<void> _refreshQueue() async {
-    await context.read<TokenController>().fetchMyTokens(refresh: true);
+    try {
+      await context.read<TokenController>().fetchMyTokens(
+            refresh: true,
+          );
+    } catch (error) {
+      debugPrint('Error refreshing queue: $error');
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Unable to refresh your queue. Please try again.',
+          ),
+        ),
+      );
+    }
   }
 
   Future<void> _cancelToken(TokenModel token) async {
@@ -94,13 +110,31 @@ class _LiveQueueScreenState extends State<LiveQueueScreen> {
         ),
       );
 
-      await viewModel.fetchMyTokens(refresh: true);
+      try {
+        await viewModel.fetchMyTokens(refresh: true);
+      } catch (error) {
+        debugPrint('Error refreshing queue after cancellation: $error');
+
+        if (!mounted) return;
+
+        messenger.showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Token cancelled, but the queue could not be refreshed.',
+            ),
+          ),
+        );
+      }
     } catch (error) {
+      debugPrint('Error cancelling token: $error');
+
       if (!mounted) return;
 
       messenger.showSnackBar(
-        SnackBar(
-          content: Text('Unable to cancel token: $error'),
+        const SnackBar(
+          content: Text(
+            'Unable to cancel token. Please try again.',
+          ),
         ),
       );
     }
@@ -310,7 +344,8 @@ class _LiveQueueScreenState extends State<LiveQueueScreen> {
                 _QueueMessage(
                   icon: Icons.cloud_off_outlined,
                   title: 'Could not load queue',
-                  subtitle: viewModel.error.toString(),
+                  subtitle:
+                      'Unable to load your appointments. Please try again.',
                   buttonText: 'Try Again',
                   onPressed: _refreshQueue,
                 )

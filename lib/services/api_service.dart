@@ -1,9 +1,7 @@
-
 import 'dart:async';
 import 'dart:convert';
-
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
-
 import 'storage_service.dart';
 
 class ApiService {
@@ -71,8 +69,8 @@ class ApiService {
           break;
 
         default:
-          throw ApiException(
-            'Unsupported HTTP method: $method',
+          throw const ApiException(
+            'Unable to process your request. Please try again.',
           );
       }
 
@@ -85,7 +83,7 @@ class ApiService {
           result = Map<String, dynamic>.from(decoded);
         } else {
           throw const ApiException(
-            'The server returned an unexpected response format.',
+            'The server returned an unexpected response. Please try again.',
           );
         }
       }
@@ -93,19 +91,8 @@ class ApiService {
       if (response.statusCode < 200 ||
           response.statusCode >= 300 ||
           result['success'] == false) {
-        final errorData = result['error'];
-
-        String message = 'Request failed. Please try again.';
-
-        if (errorData is Map &&
-            errorData['message'] is String) {
-          message = errorData['message'] as String;
-        } else if (result['message'] is String) {
-          message = result['message'] as String;
-        }
-
         throw ApiException(
-          message,
+          _getSafeErrorMessage(response.statusCode),
           statusCode: response.statusCode,
         );
       }
@@ -124,8 +111,43 @@ class ApiService {
       );
     } on FormatException {
       throw const ApiException(
-        'The server returned invalid JSON.',
+        'The server returned an invalid response. Please try again.',
       );
+    } catch (e) {
+      debugPrint('API request failed: $e');
+
+      throw const ApiException(
+        'Something went wrong. Please try again.',
+      );
+    }
+  }
+
+  String _getSafeErrorMessage(int statusCode) {
+    switch (statusCode) {
+      case 400:
+        return 'Invalid request. Please check your details and try again.';
+      case 401:
+        return 'Your session may have expired. Please log in again.';
+      case 403:
+        return 'You do not have permission to perform this action.';
+      case 404:
+        return 'The requested information could not be found.';
+      case 408:
+        return 'The request timed out. Please try again.';
+      case 409:
+        return 'This action conflicts with the current information.';
+      case 422:
+        return 'Some details are invalid. Please check and try again.';
+      case 429:
+        return 'Too many requests. Please wait and try again.';
+      case 500:
+      case 501:
+      case 502:
+      case 503:
+      case 504:
+        return 'The hospital server is temporarily unavailable. Please try again later.';
+      default:
+        return 'Unable to complete your request. Please try again.';
     }
   }
 
@@ -205,8 +227,7 @@ class ApiService {
 
     if (token == null) {
       throw const ApiException(
-        'Login verification succeeded, but the server response '
-        'did not contain an access token. Check the backend response.',
+        'Unable to complete login verification. Please try again.',
       );
     }
 
@@ -231,7 +252,7 @@ class ApiService {
 
     if (token == null) {
       throw const ApiException(
-        'Google login response did not contain an access token.',
+        'Unable to complete Google login. Please try again.',
       );
     }
 

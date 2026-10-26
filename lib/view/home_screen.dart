@@ -34,11 +34,14 @@ class _HomeScreenState extends State<HomeScreen> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      context.read<TokenController>().fetchMyTokens(refresh: true);
+      _refreshBackend();
     });
   }
 
-  Future<void> _logout(BuildContext context) async {
+ 
+  Future<void> _logout() async {
+    if (!mounted) return;
+
     final shouldLogout = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
@@ -77,36 +80,94 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
 
-    if (shouldLogout != true || !context.mounted) return;
+    if (!mounted || shouldLogout != true) return;
 
-    await context.read<AuthController>().logout();
-
-    if (!context.mounted) return;
-
-    context.read<TokenController>().clearTokens();
-
-    Navigator.pushNamedAndRemoveUntil(
-      context,
-      '/login',
-      (route) => false,
-    );
-  }
-
-  Future<void> _refreshBackend(BuildContext context) async {
-    await context.read<TokenController>().fetchMyTokens(refresh: true);
-  }
-
-  Future<void> _navigate(BuildContext context, Widget screen) async {
+    final authController = context.read<AuthController>();
     final tokenController = context.read<TokenController>();
+    final messenger = ScaffoldMessenger.of(context);
 
-    await Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => screen),
-    );
+    try {
+      await authController.logout();
 
+      if (!mounted) return;
+
+      tokenController.clearTokens();
+
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        '/login',
+        (route) => false,
+      );
+    } catch (error, stackTrace) {
+      debugPrint('Logout failed: $error');
+      debugPrintStack(stackTrace: stackTrace);
+
+      if (!mounted) return;
+
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text('Unable to logout. Please try again.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  Future<void> _refreshBackend() async {
     if (!mounted) return;
 
-    await tokenController.fetchMyTokens(refresh: true);
+    final tokenController = context.read<TokenController>();
+    final messenger = ScaffoldMessenger.of(context);
+
+    try {
+      await tokenController.fetchMyTokens(refresh: true);
+    } catch (error, stackTrace) {
+      debugPrint('Appointment refresh failed: $error');
+      debugPrintStack(stackTrace: stackTrace);
+
+      if (!mounted) return;
+
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Unable to refresh appointments. Please try again.',
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  Future<void> _navigate(Widget screen) async {
+    if (!mounted) return;
+
+    final tokenController = context.read<TokenController>();
+    final messenger = ScaffoldMessenger.of(context);
+
+    try {
+      await Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => screen),
+      );
+
+      if (!mounted) return;
+
+      await tokenController.fetchMyTokens(refresh: true);
+    } catch (error, stackTrace) {
+      debugPrint('Navigation or appointment refresh failed: $error');
+      debugPrintStack(stackTrace: stackTrace);
+
+      if (!mounted) return;
+
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Unable to refresh appointments. Please try again.',
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   void _openDepartment(
@@ -114,21 +175,23 @@ class _HomeScreenState extends State<HomeScreen> {
     String departmentName,
   ) {
     _navigate(
-      context,
-      DepartmentScreen(selectedDepartmentName: departmentName),
+      DepartmentScreen(
+        selectedDepartmentName: departmentName,
+      ),
     );
   }
 
   Future<void> _openDoctorProfile(TokenModel token) async {
-    if (_openingDoctorProfile) return;
+    if (_openingDoctorProfile || !mounted) return;
 
     setState(() {
       _openingDoctorProfile = true;
     });
 
-    try {
-      final doctorController = context.read<DoctorController>();
+    final doctorController = context.read<DoctorController>();
+    final messenger = ScaffoldMessenger.of(context);
 
+    try {
       await doctorController.fetchDoctors(
         departmentId: token.departmentId,
         refresh: true,
@@ -146,15 +209,12 @@ class _HomeScreenState extends State<HomeScreen> {
       }
 
       if (matchedDoctor == null) {
-        final error = doctorController.error;
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+        messenger.showSnackBar(
+          const SnackBar(
             content: Text(
-              error != null
-                  ? 'Unable to load doctor details. $error'
-                  : 'Doctor details could not be found. Please try again.',
+              'Doctor details could not be found. Please try again.',
             ),
+            backgroundColor: Colors.red,
           ),
         );
         return;
@@ -168,14 +228,18 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
       );
-    } catch (_) {
+    } catch (error, stackTrace) {
+      debugPrint('Opening doctor profile failed: $error');
+      debugPrintStack(stackTrace: stackTrace);
+
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
+      messenger.showSnackBar(
         const SnackBar(
           content: Text(
             'Unable to open doctor profile. Please try again.',
           ),
+          backgroundColor: Colors.red,
         ),
       );
     } finally {
@@ -420,19 +484,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ],
                 ),
-              )
-            else
-              // const Text(
-              //   'Appointment time unavailable',
-              //   style: TextStyle(
-              //     color: _darkText,
-              //     fontSize: 15,
-              //     fontWeight: FontWeight.bold,
-              //   ),
-              // ),
-
+              ),
             const SizedBox(height: 15),
-
             Row(
               children: [
                 Container(
@@ -482,7 +535,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ],
             ),
-
             if (tokenNumber != null && tokenNumber.isNotEmpty) ...[
               const SizedBox(height: 14),
               Container(
@@ -516,9 +568,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
             ],
-
             const SizedBox(height: 16),
-
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
@@ -554,16 +604,11 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
             ),
-
             const SizedBox(height: 9),
-
             SizedBox(
               width: double.infinity,
               child: OutlinedButton(
-                onPressed: () => _navigate(
-                  context,
-                  const MyTokensScreen(),
-                ),
+                onPressed: () => _navigate(const MyTokensScreen()),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: _primary,
                   backgroundColor: Colors.white,
@@ -584,7 +629,8 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Container(
                 padding: const EdgeInsets.all(15),
                 decoration: BoxDecoration(
-                  color: const Color.fromARGB(255, 124, 124, 146).withValues(alpha: 0.8),
+                  color: const Color.fromARGB(255, 124, 124, 146)
+                      .withValues(alpha: 0.8),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
@@ -626,10 +672,7 @@ class _HomeScreenState extends State<HomeScreen> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () => _navigate(
-                  context,
-                  const DepartmentScreen(),
-                ),
+                onPressed: () => _navigate(const DepartmentScreen()),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: _primary,
                   foregroundColor: const Color.fromARGB(255, 128, 135, 150),
@@ -690,25 +733,20 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
             ),
-
             RefreshIndicator(
               color: _primary,
-              onRefresh: () => _refreshBackend(context),
+              onRefresh: _refreshBackend,
               child: ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.fromLTRB(20, 20, 20, 30),
                 children: [
-             
                   Row(
                     children: [
                       Material(
                         color: Colors.white,
                         shape: const CircleBorder(),
                         child: InkWell(
-                          onTap: () => _navigate(
-                            context,
-                            const ProfileScreen(),
-                          ),
+                          onTap: () => _navigate(const ProfileScreen()),
                           customBorder: const CircleBorder(),
                           child: SizedBox(
                             height: 48,
@@ -736,7 +774,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               style: const TextStyle(
                                 color: Color.fromARGB(255, 6, 16, 26),
                                 fontSize: 25,
-                                   fontWeight: FontWeight.bold,
+                                fontWeight: FontWeight.bold,
                               ),
                             ),
                             const SizedBox(height: 3),
@@ -753,27 +791,9 @@ class _HomeScreenState extends State<HomeScreen> {
                           ],
                         ),
                       ),
-                      const SizedBox(width: 8),
-                      Material(
-                        color: Colors.white,
-                        shape: const CircleBorder(),
-                        child: IconButton(
-                          onPressed: () => _navigate(
-                            context,
-                            const MyTokensScreen(),
-                          ),
-                          icon: const Icon(
-                            Icons.notifications_none_rounded,
-                            color: _primary,
-                          ),
-                          tooltip: 'My appointments',
-                        ),
-                      ),
                     ],
                   ),
-
                   const SizedBox(height: 28),
-
                   const Text(
                     'How are you feeling\ntoday?',
                     style: TextStyle(
@@ -784,18 +804,12 @@ class _HomeScreenState extends State<HomeScreen> {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-
                   const SizedBox(height: 20),
-
-       
                   Material(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(18),
                     child: InkWell(
-                      onTap: () => _navigate(
-                        context,
-                        const DepartmentScreen(),
-                      ),
+                      onTap: () => _navigate(const DepartmentScreen()),
                       borderRadius: BorderRadius.circular(18),
                       child: Padding(
                         padding: const EdgeInsets.symmetric(
@@ -829,10 +843,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                   ),
-
                   const SizedBox(height: 28),
-
-             
                   Row(
                     children: [
                       const Expanded(
@@ -846,10 +857,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
                       TextButton(
-                        onPressed: () => _navigate(
-                          context,
-                          const MyTokensScreen(),
-                        ),
+                        onPressed: () => _navigate(const MyTokensScreen()),
                         child: const Text(
                           'View All',
                           style: TextStyle(
@@ -860,18 +868,14 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ],
                   ),
-
                   const SizedBox(height: 10),
-
                   _buildAppointmentCard(
                     context,
                     tokenController: tokenController,
                     isDark: isDark,
                     colors: colors,
                   ),
-
                   const SizedBox(height: 28),
-
                   Text(
                     'Quick Actions',
                     style: TextStyle(
@@ -880,9 +884,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-
                   const SizedBox(height: 14),
-
                   Row(
                     children: [
                       Expanded(
@@ -890,10 +892,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           title: 'Book Token',
                           subtitle: 'Book a doctor visit',
                           icon: Icons.add_circle_outline_rounded,
-                          onTap: () => _navigate(
-                            context,
-                            const DepartmentScreen(),
-                          ),
+                          onTap: () => _navigate(const DepartmentScreen()),
                         ),
                       ),
                       const SizedBox(width: 14),
@@ -902,17 +901,12 @@ class _HomeScreenState extends State<HomeScreen> {
                           title: 'Track Queue',
                           subtitle: 'Check your queue',
                           icon: Icons.access_time_rounded,
-                          onTap: () => _navigate(
-                            context,
-                            const LiveQueueScreen(),
-                          ),
+                          onTap: () => _navigate(const LiveQueueScreen()),
                         ),
                       ),
                     ],
                   ),
-
                   const SizedBox(height: 29),
-
                   Row(
                     children: [
                       Expanded(
@@ -926,10 +920,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
                       TextButton(
-                        onPressed: () => _navigate(
-                          context,
-                          const DepartmentScreen(),
-                        ),
+                        onPressed: () => _navigate(const DepartmentScreen()),
                         child: const Text(
                           'View All',
                           style: TextStyle(
@@ -940,9 +931,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ],
                   ),
-
                   const SizedBox(height: 12),
-
                   GridView.count(
                     crossAxisCount: 3,
                     shrinkWrap: true,
@@ -1001,17 +990,12 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ],
                   ),
-
                   const SizedBox(height: 15),
-
                   Material(
                     color: isDark ? colors.surfaceContainer : Colors.white,
                     borderRadius: BorderRadius.circular(20),
                     child: InkWell(
-                      onTap: () => _navigate(
-                        context,
-                        const AmbulanceScreen(),
-                      ),
+                      onTap: () => _navigate(const AmbulanceScreen()),
                       borderRadius: BorderRadius.circular(20),
                       child: Padding(
                         padding: const EdgeInsets.all(17),
@@ -1071,7 +1055,6 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
       ),
-
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: isDark ? colors.surfaceContainer : Colors.white,
@@ -1107,22 +1090,16 @@ class _HomeScreenState extends State<HomeScreen> {
                   icon: Icons.confirmation_number_outlined,
                   label: 'My Tokens',
                   isDark: isDark,
-                  onTap: () => _navigate(
-                    context,
-                    const MyTokensScreen(),
-                  ),
+                  onTap: () => _navigate(const MyTokensScreen()),
                 ),
                 _BottomNavItem(
                   icon: Icons.airport_shuttle_rounded,
                   label: 'Ambulance',
                   isDark: isDark,
-                  onTap: () => _navigate(
-                    context,
-                    const AmbulanceScreen(),
-                  ),
+                  onTap: () => _navigate(const AmbulanceScreen()),
                 ),
                 InkWell(
-                  onTap: () => _logout(context),
+                  onTap: _logout,
                   borderRadius: BorderRadius.circular(15),
                   child: Padding(
                     padding: const EdgeInsets.symmetric(

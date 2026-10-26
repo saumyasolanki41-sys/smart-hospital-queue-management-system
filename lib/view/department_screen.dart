@@ -1,7 +1,5 @@
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
 import '../models/department_model.dart';
 import '../controller/department_controller.dart';
 import '../controller/doctor_controller.dart';
@@ -53,7 +51,7 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
     Icons.local_hospital_rounded,
     Icons.biotech_rounded,
     Icons.science_rounded,
-  Icons.medical_services_rounded,
+    Icons.medical_services_rounded,
     Icons.bloodtype_rounded,
     Icons.monitor_heart_rounded,
     Icons.healing_rounded,
@@ -160,11 +158,15 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
         ),
       );
     } catch (error) {
+      debugPrint('Error loading doctors: $error');
+
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Unable to load doctors: $error'),
+          content: const Text(
+            'Unable to load doctors. Please try again.',
+          ),
           backgroundColor: Colors.red.shade700,
         ),
       );
@@ -222,7 +224,7 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
               physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.fromLTRB(20, 12, 20, 30),
               children: [
-                // Header
+          
                 Row(
                   children: [
                     Container(
@@ -284,7 +286,6 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
 
                 const SizedBox(height: 24),
 
-                // Search bar, similar to the reference image
                 Container(
                   decoration: BoxDecoration(
                     color: isDark ? colors.surface : Colors.white,
@@ -345,7 +346,7 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
 
                 const SizedBox(height: 23),
 
-                // Grid heading and department count
+            
                 Row(
                   children: [
                     Expanded(
@@ -372,7 +373,7 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
 
                 const SizedBox(height: 15),
 
-                // Loading state
+             
                 if (departmentController.isLoading &&
                     departmentController.departments.isEmpty)
                   const Padding(
@@ -384,7 +385,7 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
                     ),
                   )
 
-                // Error state
+             
                 else if (departmentController.error != null &&
                     departmentController.departments.isEmpty)
                   _StatusMessage(
@@ -394,7 +395,6 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
                     onAction: _refreshData,
                   )
 
-                // Empty state
                 else if (departments.isEmpty)
                   _StatusMessage(
                     icon: Icons.search_off_rounded,
@@ -411,7 +411,7 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
                         : null,
                   )
 
-                // Three-column department grid
+             
                 else
                   LayoutBuilder(
                     builder: (context, constraints) {
@@ -506,7 +506,7 @@ class _DepartmentCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Medical icon
+           
               Container(
                 height: 43,
                 width: 43,
@@ -523,7 +523,6 @@ class _DepartmentCard extends StatelessWidget {
 
               const Spacer(),
 
-              // Department name
               Text(
                 department.name,
                 maxLines: 2,
@@ -540,7 +539,6 @@ class _DepartmentCard extends StatelessWidget {
 
               const SizedBox(height: 7),
 
-              // Open department indicator
               Row(
                 children: [
                   Expanded(

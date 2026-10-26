@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/token_model.dart';
+import '../models/doctor_model.dart';
 import '../controller/token_controller.dart';
+import '../controller/doctor_controller.dart';
 import 'token_details_screen.dart';
 import 'ambulance_screen.dart';
 import 'profile_screen.dart';
@@ -19,6 +21,7 @@ class _MyTokensScreenState extends State<MyTokensScreen> {
   static const Color _textColor = Color.fromARGB(255, 5, 26, 37);
 
   int _selectedTab = 0;
+  bool _isRefreshing = false;
 
   @override
   void initState() {
@@ -26,12 +29,41 @@ class _MyTokensScreenState extends State<MyTokensScreen> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      context.read<TokenController>().fetchMyTokens(refresh: true);
+      _refreshTokens();
     });
   }
 
   Future<void> _refreshTokens() async {
-    await context.read<TokenController>().fetchMyTokens(refresh: true);
+    if (_isRefreshing || !mounted) return;
+
+    setState(() {
+      _isRefreshing = true;
+    });
+
+    try {
+      await context.read<TokenController>().fetchMyTokens(
+        refresh: true,
+      );
+    } catch (error, stackTrace) {
+      debugPrint('Refresh tokens error: $error');
+      debugPrintStack(stackTrace: stackTrace);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Unable to load appointments. Please try again.',
+            ),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isRefreshing = false;
+        });
+      }
+    }
   }
 
   String _safeText(dynamic value, [String fallback = 'Not available']) {
@@ -39,9 +71,38 @@ class _MyTokensScreenState extends State<MyTokensScreen> {
 
     final text = value.toString().trim();
 
-    if (text.isEmpty || text == 'null') return fallback;
+    if (text.isEmpty || text.toLowerCase() == 'null') {
+      return fallback;
+    }
 
     return text;
+  }
+
+  String _getDepartmentName(
+    TokenModel token,
+    List<DoctorModel> doctors,
+  ) {
+    final tokenDepartment = token.departmentName?.trim();
+
+    if (tokenDepartment != null &&
+        tokenDepartment.isNotEmpty &&
+        tokenDepartment.toLowerCase() != 'null') {
+      return tokenDepartment;
+    }
+
+    for (final doctor in doctors) {
+      if (doctor.id.trim() == token.doctorId.trim()) {
+        final departmentName = doctor.departmentName?.trim();
+
+        if (departmentName != null &&
+            departmentName.isNotEmpty &&
+            departmentName.toLowerCase() != 'null') {
+          return departmentName;
+        }
+      }
+    }
+
+    return 'Department not available';
   }
 
   bool _isPast(TokenModel token) {
@@ -81,6 +142,9 @@ class _MyTokensScreenState extends State<MyTokensScreen> {
   @override
   Widget build(BuildContext context) {
     final tokenController = context.watch<TokenController>();
+    final doctorController = context.watch<DoctorController>();
+    final doctors = doctorController.doctors;
+
     final colors = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -112,7 +176,7 @@ class _MyTokensScreenState extends State<MyTokensScreen> {
               physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.fromLTRB(20, 12, 20, 30),
               children: [
-              
+             
                 Row(
                   children: [
                     Container(
@@ -174,21 +238,13 @@ class _MyTokensScreenState extends State<MyTokensScreen> {
                             : Colors.white,
                         borderRadius: BorderRadius.circular(14),
                       ),
-                      // child: IconButton(
-                      //   tooltip: 'Refresh appointments',
-                      //  onPressed: _refreshTokens,
-                      //   icon: const Icon(
-                      //     Icons.refresh_rounded,
-                      //     color: _primary,
-                      //   ),
-                      // ),
                     ),
                   ],
                 ),
 
                 const SizedBox(height: 24),
 
-                // Summary banner
+             
                 Container(
                   padding: const EdgeInsets.all(21),
                   decoration: BoxDecoration(
@@ -277,7 +333,7 @@ class _MyTokensScreenState extends State<MyTokensScreen> {
 
                 const SizedBox(height: 25),
 
-           
+             
                 Container(
                   height: 57,
                   padding: const EdgeInsets.all(5),
@@ -370,7 +426,7 @@ class _MyTokensScreenState extends State<MyTokensScreen> {
                   _HistoryMessage(
                     icon: Icons.cloud_off_rounded,
                     message: 'Unable to load appointments',
-                    subtitle: tokenController.error.toString(),
+                    subtitle: 'Please check your connection and try again.',
                     buttonText: 'Try Again',
                     onPressed: _refreshTokens,
                   )
@@ -405,6 +461,7 @@ class _MyTokensScreenState extends State<MyTokensScreen> {
                     (token) => _AppointmentCard(
                       token: token,
                       safeText: _safeText,
+                      departmentName: _getDepartmentName(token, doctors),
                       statusColor: _statusColor(
                         _safeText(token.status, 'pending'),
                       ),
@@ -419,6 +476,7 @@ class _MyTokensScreenState extends State<MyTokensScreen> {
         ),
       ),
 
+    
       bottomNavigationBar: Container(
         decoration: const BoxDecoration(
           color: Color.fromARGB(255, 24, 33, 66),
@@ -485,56 +543,10 @@ class _MyTokensScreenState extends State<MyTokensScreen> {
   }
 }
 
-class _HistoryTab extends StatelessWidget {
-  final String title;
-  final IconData icon;
-  final bool selected;
-  final VoidCallback onTap;
-
-  const _HistoryTab({
-    required this.title,
-    required this.icon,
-    required this.selected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: selected
-          ? const Color.fromARGB(255, 14, 18, 33)
-          : Colors.transparent,
-      borderRadius: BorderRadius.circular(14),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              icon,
-              size: 19,
-              color: selected ? Colors.white : const Color(0xFF60758A),
-            ),
-            const SizedBox(width: 7),
-            Text(
-              title,
-              style: TextStyle(
-                color: selected ? Colors.white : const Color(0xFF60758A),
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 class _AppointmentCard extends StatelessWidget {
   final TokenModel token;
   final String Function(dynamic, [String]) safeText;
+  final String departmentName;
   final Color statusColor;
   final bool isPast;
   final VoidCallback onTap;
@@ -542,6 +554,7 @@ class _AppointmentCard extends StatelessWidget {
   const _AppointmentCard({
     required this.token,
     required this.safeText,
+    required this.departmentName,
     required this.statusColor,
     required this.isPast,
     required this.onTap,
@@ -552,9 +565,12 @@ class _AppointmentCard extends StatelessWidget {
     final colors = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    final doctor = safeText(token.doctorName, 'Doctor not available');
-    final department =
-        safeText(token.departmentName, 'Department not available');
+    final doctor = safeText(
+      token.doctorName,
+      'Doctor not available',
+    );
+
+    final department = departmentName;
     final status = safeText(token.status, 'Pending');
 
     return Container(
@@ -608,7 +624,9 @@ class _AppointmentCard extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            isPast ? 'Previous Appointment' : 'Appointment',
+                            isPast
+                                ? 'Previous Appointment'
+                                : 'Appointment',
                             style: const TextStyle(
                               color: Color(0xFF60758A),
                               fontSize: 12,
@@ -772,6 +790,57 @@ class _AppointmentCard extends StatelessWidget {
   }
 }
 
+class _HistoryTab extends StatelessWidget {
+  final String title;
+  final IconData icon;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _HistoryTab({
+    required this.title,
+    required this.icon,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: selected
+          ? const Color.fromARGB(255, 14, 18, 33)
+          : Colors.transparent,
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              size: 19,
+              color: selected
+                  ? Colors.white
+                  : const Color(0xFF60758A),
+            ),
+            const SizedBox(width: 7),
+            Text(
+              title,
+              style: TextStyle(
+                color: selected
+                    ? Colors.white
+                    : const Color(0xFF60758A),
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _HistoryMessage extends StatelessWidget {
   final IconData icon;
   final String message;
@@ -909,7 +978,8 @@ class _BottomNavItem extends StatelessWidget {
               style: TextStyle(
                 color: Colors.white,
                 fontSize: 10,
-                fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
+                fontWeight:
+                    selected ? FontWeight.w600 : FontWeight.normal,
               ),
             ),
           ],

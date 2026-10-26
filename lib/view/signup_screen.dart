@@ -20,6 +20,7 @@ class _SignupScreenState extends State<SignupScreen> {
 
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
+  bool _isSigningUp = false;
 
   static const Color _navy = Color(0xFF173B5E);
   static const Color _blue = Color(0xFF246F96);
@@ -34,49 +35,71 @@ class _SignupScreenState extends State<SignupScreen> {
   }
 
   void _showMessage(String message, {bool isError = true}) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor:
-            isError ? Colors.red.shade700 : Colors.green.shade700,
-      ),
-    );
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor:
+              isError ? Colors.red.shade700 : Colors.green.shade700,
+        ),
+      );
   }
 
   Future<void> _signup() async {
+    if (_isSigningUp) return;
+
     FocusScope.of(context).unfocus();
 
     if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _isSigningUp = true);
 
     final auth = context.read<AuthController>();
     final email = _emailController.text.trim();
     final password = _passwordController.text;
 
-    final success = await auth.register(
-      name: _nameController.text.trim(),
-      email: email,
-      password: password,
-    );
-
-    if (!mounted) return;
-
-    if (!success) {
-      _showMessage(
-        auth.error ?? 'Registration failed. Please try again.',
+    try {
+      final success = await auth.register(
+        name: _nameController.text.trim(),
+        email: email,
+        password: password,
       );
-      return;
-    }
 
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => OtpVerificationScreen(
-          email: email,
-          isRegistration: true,
-          registrationPassword: password,
+      if (!mounted) return;
+
+      if (!success) {
+        debugPrint('Registration failed.');
+        _showMessage(
+          'Unable to create your account. Please check your details and try again.',
+        );
+        return;
+      }
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => OtpVerificationScreen(
+            email: email,
+            isRegistration: true,
+            registrationPassword: password,
+          ),
         ),
-      ),
-    );
+      );
+    } catch (error, stackTrace) {
+      debugPrint('Registration exception: $error');
+      debugPrintStack(stackTrace: stackTrace);
+
+      _showMessage(
+        'Something went wrong. Please try again.',
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isSigningUp = false);
+      }
+    }
   }
 
   InputDecoration _decoration({
@@ -156,6 +179,7 @@ class _SignupScreenState extends State<SignupScreen> {
       autofillHints: autofillHints,
       autocorrect: false,
       enableSuggestions: !obscureText,
+      enabled: !_isSigningUp,
       style: const TextStyle(
         color: _navy,
         fontSize: 15,
@@ -187,7 +211,7 @@ class _SignupScreenState extends State<SignupScreen> {
       validator: validator,
       autofillHints: const [AutofillHints.newPassword],
       suffixIcon: IconButton(
-        onPressed: onToggle,
+        onPressed: _isSigningUp ? null : onToggle,
         icon: Icon(
           obscure
               ? Icons.visibility_outlined
@@ -288,8 +312,7 @@ class _SignupScreenState extends State<SignupScreen> {
                           hint: 'Enter your full name',
                           autofillHints: const [AutofillHints.name],
                           validator: (value) {
-                            if (value == null ||
-                                value.trim().isEmpty) {
+                            if (value == null || value.trim().isEmpty) {
                               return 'Please enter your full name';
                             }
                             return null;
@@ -374,8 +397,9 @@ class _SignupScreenState extends State<SignupScreen> {
                         SizedBox(
                           height: 52,
                           child: ElevatedButton(
-                            onPressed:
-                                auth.isLoading ? null : _signup,
+                            onPressed: (_isSigningUp || auth.isLoading)
+                                ? null
+                                : _signup,
                             style: ElevatedButton.styleFrom(
                               backgroundColor:
                                   const Color.fromARGB(255, 14, 18, 33),
@@ -385,7 +409,7 @@ class _SignupScreenState extends State<SignupScreen> {
                                 borderRadius: BorderRadius.zero,
                               ),
                             ),
-                            child: auth.isLoading
+                            child: _isSigningUp || auth.isLoading
                                 ? const SizedBox(
                                     height: 22,
                                     width: 22,
@@ -436,12 +460,11 @@ class _SignupScreenState extends State<SignupScreen> {
                         SizedBox(
                           height: 50,
                           child: OutlinedButton(
-                            onPressed: auth.isLoading
+                            onPressed: (_isSigningUp || auth.isLoading)
                                 ? null
                                 : () {
                                     _showMessage(
-                                      'Google sign-in must be '
-                                      'connected to your login flow.',
+                                      'Google sign-in is not available yet.',
                                     );
                                   },
                             style: OutlinedButton.styleFrom(
@@ -489,7 +512,7 @@ class _SignupScreenState extends State<SignupScreen> {
                               ),
                             ),
                             TextButton(
-                              onPressed: auth.isLoading
+                              onPressed: (_isSigningUp || auth.isLoading)
                                   ? null
                                   : () {
                                       Navigator.pushReplacement(
@@ -501,7 +524,8 @@ class _SignupScreenState extends State<SignupScreen> {
                                       );
                                     },
                               style: TextButton.styleFrom(
-                                foregroundColor: const Color.fromARGB(255, 5, 7, 26),
+                                foregroundColor:
+                                    const Color.fromARGB(255, 5, 7, 26),
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 2,
                                 ),

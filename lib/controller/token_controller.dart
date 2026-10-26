@@ -1,6 +1,5 @@
 
 import 'package:flutter/foundation.dart';
-
 import '../models/token_model.dart';
 import '../services/api_service.dart';
 import '../services/queue_service.dart';
@@ -23,26 +22,23 @@ class TokenController extends ChangeNotifier {
   String? _error;
 
   List<TokenModel> get tokens => List.unmodifiable(_tokens);
+
   TokenModel? get selectedToken => _selectedToken;
 
   bool get isLoading => _isLoading;
+
   bool get isBooking => _isBooking;
+
   bool get isCancelling => _isCancelling;
 
   String? get error => _error;
+
   bool get hasTokens => _tokens.isNotEmpty;
 
   Future<TokenModel?> bookToken({
     required String doctorId,
-    required String selectedSlot,
   }) async {
     if (_isBooking) return null;
-
-    if (selectedSlot.trim().isEmpty) {
-      _error = 'Please select a time slot before booking.';
-      notifyListeners();
-      return null;
-    }
 
     _isBooking = true;
     _error = null;
@@ -51,14 +47,13 @@ class TokenController extends ChangeNotifier {
     try {
       final token = await _queueService.bookToken(
         doctorId: doctorId,
-        selectedSlot: selectedSlot,
       );
 
       _selectedToken = token;
 
+      // Refresh the patient's token list.
       await fetchMyTokens(refresh: true);
 
-      // Select the latest version of the booked token.
       final matchingTokens = _tokens.where(
         (item) => item.id == token.id,
       );
@@ -69,10 +64,11 @@ class TokenController extends ChangeNotifier {
 
       return _selectedToken;
     } on ApiException catch (exception) {
-      _error = exception.message;
+      debugPrint('Book token failed: ${exception.message}');
+      _error = 'Unable to book your token. Please try again.';
       return null;
     } catch (e) {
-      debugPrint('Book token error: $e');
+      debugPrint('Book token failed: $e');
       _error = 'Unable to book your token. Please try again.';
       return null;
     } finally {
@@ -81,7 +77,9 @@ class TokenController extends ChangeNotifier {
     }
   }
 
-  Future<void> fetchMyTokens({bool refresh = false}) async {
+  Future<void> fetchMyTokens({
+    bool refresh = false,
+  }) async {
     if (_isLoading) {
       if (refresh) {
         _refreshRequested = true;
@@ -98,11 +96,12 @@ class TokenController extends ChangeNotifier {
         _refreshRequested = false;
 
         try {
-          final fetchedTokens = await _queueService.getMyTokens();
+          final fetchedTokens =
+              await _queueService.getMyTokens();
 
           _tokens = fetchedTokens;
 
-          // Print appointment times for debugging.
+          // Print token information for debugging.
           for (final token in fetchedTokens) {
             debugPrint(
               'Token: ${token.id}, '
@@ -124,13 +123,14 @@ class TokenController extends ChangeNotifier {
 
           _error = null;
         } on ApiException catch (exception) {
-          _error = exception.message;
+          debugPrint('Fetch tokens failed: ${exception.message}');
+          _error = 'Unable to load your tokens. Please try again.';
 
           if (!refresh && _tokens.isEmpty) {
             _tokens = [];
           }
         } catch (e) {
-          debugPrint('Fetch tokens error: $e');
+          debugPrint('Fetch tokens failed: $e');
           _error = 'Unable to load your tokens. Please try again.';
 
           if (!refresh && _tokens.isEmpty) {
@@ -146,11 +146,14 @@ class TokenController extends ChangeNotifier {
     }
   }
 
-  Future<TokenModel?> fetchTokenStatus(String tokenId) async {
+  Future<TokenModel?> fetchTokenStatus(
+    String tokenId,
+  ) async {
     _error = null;
 
     try {
-      final token = await _queueService.getTokenStatus(tokenId);
+      final token =
+          await _queueService.getTokenStatus(tokenId);
 
       _selectedToken = token;
 
@@ -165,15 +168,18 @@ class TokenController extends ChangeNotifier {
       }
 
       notifyListeners();
+
       return token;
     } on ApiException catch (exception) {
-      _error = exception.message;
+      debugPrint('Fetch token status failed: ${exception.message}');
+      _error = 'Unable to fetch token status. Please try again.';
     } catch (e) {
-      debugPrint('Fetch token status error: $e');
+      debugPrint('Fetch token status failed: $e');
       _error = 'Unable to fetch token status. Please try again.';
     }
 
     notifyListeners();
+
     return null;
   }
 
@@ -196,7 +202,9 @@ class TokenController extends ChangeNotifier {
       await _queueService.cancelToken(normalizedId);
 
       _tokens = _tokens
-          .where((token) => token.id.trim() != normalizedId)
+          .where(
+            (token) => token.id.trim() != normalizedId,
+          )
           .toList();
 
       if (_selectedToken?.id.trim() == normalizedId) {
@@ -209,10 +217,11 @@ class TokenController extends ChangeNotifier {
 
       return true;
     } on ApiException catch (exception) {
-      _error = exception.message;
+      debugPrint('Cancel token failed: ${exception.message}');
+      _error = 'Unable to cancel your token. Please try again.';
       return false;
     } catch (e) {
-      debugPrint('Cancel token error: $e');
+      debugPrint('Cancel token failed: $e');
       _error = 'Unable to cancel your token. Please try again.';
       return false;
     } finally {
@@ -236,6 +245,7 @@ class TokenController extends ChangeNotifier {
     _selectedToken = null;
     _error = null;
     _refreshRequested = false;
+
     notifyListeners();
   }
 }

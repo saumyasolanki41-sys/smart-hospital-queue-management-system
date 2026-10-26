@@ -27,7 +27,8 @@ class _OtpVerificationScreenState
     extends State<OtpVerificationScreen> {
   static const Color _blue = Color(0xFF246F96);
   static const Color _navy = Color(0xFF173B5E);
-  static const Color _darkButton = Color.fromARGB(255, 14, 18, 33);
+  static const Color _darkButton =
+      Color.fromARGB(255, 14, 18, 33);
 
   static const int _resendCooldown = 60;
 
@@ -91,16 +92,22 @@ class _OtpVerificationScreenState
   String get _otp =>
       _controllers.map((controller) => controller.text).join();
 
-  void _showMessage(String message, {bool isError = true}) {
+  void _showMessage(
+    String message, {
+    bool isError = true,
+  }) {
     if (!mounted) return;
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor:
-            isError ? Colors.red.shade700 : const Color.fromARGB(255, 7, 22, 31),
-      ),
-    );
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: isError
+              ? Colors.red.shade700
+              : const Color.fromARGB(255, 7, 22, 31),
+        ),
+      );
   }
 
   Future<void> _resendOtp() async {
@@ -122,8 +129,10 @@ class _OtpVerificationScreenState
       if (!mounted) return;
 
       if (!success) {
+        debugPrint('Resend OTP failed: ${auth.error}');
+
         _showMessage(
-          auth.error ?? 'Unable to resend OTP. Please try again.',
+          'Unable to resend OTP. Please try again.',
         );
         return;
       }
@@ -137,12 +146,17 @@ class _OtpVerificationScreenState
       _startTimer();
 
       _showMessage(
-        'A new OTP request was accepted. Check your email.',
+        'OTP request accepted. Please check your email.',
         isError: false,
       );
-    } catch (_) {
+    } catch (error, stackTrace) {
+      debugPrint('Resend OTP exception: $error');
+      debugPrintStack(stackTrace: stackTrace);
+
       if (mounted) {
-        _showMessage('Unable to resend OTP. Please try again.');
+        _showMessage(
+          'Unable to resend OTP. Please try again.',
+        );
       }
     } finally {
       if (mounted) {
@@ -152,6 +166,8 @@ class _OtpVerificationScreenState
   }
 
   Future<void> _verifyOtp() async {
+    if (_isVerifying || _isResending) return;
+
     FocusScope.of(context).unfocus();
 
     if (_otp.length != 6 ||
@@ -166,6 +182,7 @@ class _OtpVerificationScreenState
 
     try {
       if (widget.isRegistration) {
+       
         final registrationSuccess =
             await auth.verifyRegistration(
           email: widget.email,
@@ -175,71 +192,43 @@ class _OtpVerificationScreenState
         if (!mounted) return;
 
         if (!registrationSuccess) {
+          debugPrint(
+            'Registration OTP verification failed: ${auth.error}',
+          );
+
           _showMessage(
-            auth.error ?? 'Registration OTP verification failed.',
+            'Registration verification failed. Please try again.',
           );
           return;
         }
 
-        final password = widget.registrationPassword;
-
-        if (password == null || password.isEmpty) {
-          _showMessage(
-            'Registration verified. Please log in to continue.',
-            isError: false,
-          );
-
-          Navigator.pushAndRemoveUntil(
-            context,
-            MaterialPageRoute(
-              builder: (_) => const LoginScreen(),
-            ),
-            (route) => false,
-          );
-          return;
-        }
-
-        final loginSuccess = await auth.login(
-          email: widget.email,
-          password: password,
+        _showMessage(
+          'Registration successful! Please log in to continue.',
+          isError: false,
         );
 
-        if (!mounted) return;
-
-        if (!loginSuccess) {
-          _showMessage(
-            auth.error ??
-                'Registration verified, but login could not start. '
-                    'Please log in again.',
-          );
-
-          Navigator.pushAndRemoveUntil(
-            context,
-            MaterialPageRoute(
-              builder: (_) => const LoginScreen(),
-            ),
-            (route) => false,
-          );
-          return;
-        }
-
-        Navigator.pushReplacement(
+        Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(
-            builder: (_) => OtpVerificationScreen(
-              email: widget.email,
-              isRegistration: false,
-            ),
+            builder: (_) => const LoginScreen(),
           ),
+          (route) => false,
         );
       } else {
-        final loginSuccess = await auth.verifyLogin(otp: _otp);
+       
+        final loginSuccess = await auth.verifyLogin(
+          otp: _otp,
+        );
 
         if (!mounted) return;
 
         if (!loginSuccess) {
+          debugPrint(
+            'Login OTP verification failed: ${auth.error}',
+          );
+
           _showMessage(
-            auth.error ?? 'Invalid OTP. Please try again.',
+            'OTP verification failed. Please check the code and try again.',
           );
           return;
         }
@@ -252,9 +241,14 @@ class _OtpVerificationScreenState
           (route) => false,
         );
       }
-    } catch (_) {
+    } catch (error, stackTrace) {
+      debugPrint('OTP verification exception: $error');
+      debugPrintStack(stackTrace: stackTrace);
+
       if (mounted) {
-        _showMessage('Something went wrong. Please try again.');
+        _showMessage(
+          'Something went wrong. Please try again.',
+        );
       }
     } finally {
       if (mounted) {
@@ -279,6 +273,7 @@ class _OtpVerificationScreenState
             keyboardType: TextInputType.number,
             textAlign: TextAlign.center,
             maxLength: 1,
+            enabled: !_isVerifying && !_isResending,
             style: const TextStyle(
               color: _navy,
               fontSize: 22,
@@ -430,9 +425,7 @@ class _OtpVerificationScreenState
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Center(child: _buildLogo()),
-
                     const SizedBox(height: 8),
-
                     Text(
                       heading,
                       textAlign: TextAlign.center,
@@ -442,9 +435,7 @@ class _OtpVerificationScreenState
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-
                     const SizedBox(height: 12),
-
                     Text(
                       description,
                       textAlign: TextAlign.center,
@@ -454,9 +445,7 @@ class _OtpVerificationScreenState
                         height: 1.5,
                       ),
                     ),
-
                     const SizedBox(height: 24),
-
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: const BoxDecoration(
@@ -484,15 +473,11 @@ class _OtpVerificationScreenState
                         ],
                       ),
                     ),
-
                     const SizedBox(height: 28),
-
                     Row(
                       children: List.generate(6, _buildOtpBox),
                     ),
-
                     const SizedBox(height: 24),
-
                     SizedBox(
                       width: double.infinity,
                       height: 50,
@@ -527,13 +512,9 @@ class _OtpVerificationScreenState
                               ),
                       ),
                     ),
-
                     const SizedBox(height: 20),
-
                     Center(child: _buildResendControl()),
-
                     const SizedBox(height: 12),
-
                     TextButton.icon(
                       onPressed: _isVerifying || _isResending
                           ? null
