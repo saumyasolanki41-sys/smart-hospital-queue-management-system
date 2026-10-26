@@ -1,7 +1,5 @@
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
 import '../models/token_model.dart';
 import '../controller/token_controller.dart';
 import 'token_details_screen.dart';
