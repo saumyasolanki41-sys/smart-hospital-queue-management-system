@@ -9,6 +9,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import ForgotPassword from "./pages/ForgotPassword";
 import Departments from "./pages/Departments";
+import Contact from "./pages/Contact";
 import DoctorProfile from "./pages/DoctorProfile";
 import Home from "./pages/Home";
 import MyQueue from "./pages/MyQueue";
@@ -36,6 +37,7 @@ export default function App() {
             <Route path="/about" element={<About />} />
             <Route path="/departments" element={<Departments />} />
             <Route path="/doctors/:doctorId" element={<DoctorProfile />} />
+            <Route path="/contact" element={<Contact />} />
             {/* Add your other public pages here, e.g. your "How it works" page */}
 
             {/* Patients only */}
