@@ -1,5 +1,4 @@
-
-import 'package:flutter/foundation.dart';
+// import 'package:flutter/foundation.dart';
 import '../models/token_model.dart';
 import 'api_service.dart';
 
@@ -19,9 +18,7 @@ class QueueService {
     try {
       final response = await _apiService.post(
         '/api/queue/tokens',
-        body: {
-          'doctorId': doctorId.trim(),
-        },
+        body: {'doctorId': doctorId.trim()},
         authenticated: true,
       );
 
@@ -29,20 +26,16 @@ class QueueService {
 
       if (data is! Map || data['token'] is! Map) {
         throw const ApiException(
-          'Unable to complete token booking. Please try again.',
+          'Unable to book your token. Please try again.',
         );
       }
 
-      final tokenData = Map<String, dynamic>.from(
-        data['token'] as Map,
+      return TokenModel.fromJson(
+        Map<String, dynamic>.from(data['token'] as Map),
       );
-
-      return TokenModel.fromJson(tokenData);
     } on ApiException {
       rethrow;
-    } catch (e) {
-      debugPrint('Book token processing failed: $e');
-
+    } catch (_) {
       throw const ApiException(
         'Unable to book your token. Please try again.',
       );
@@ -57,7 +50,6 @@ class QueueService {
       );
 
       final data = response['data'];
-
       dynamic tokens;
 
       if (data is List) {
@@ -86,9 +78,7 @@ class QueueService {
           .toList();
     } on ApiException {
       rethrow;
-    } catch (e) {
-      debugPrint('Fetch tokens processing failed: $e');
-
+    } catch (_) {
       throw const ApiException(
         'Unable to load your tokens. Please try again.',
       );
@@ -101,8 +91,7 @@ class QueueService {
     }
 
     try {
-      final encodedTokenId =
-          Uri.encodeComponent(tokenId.trim());
+      final encodedTokenId = Uri.encodeComponent(tokenId.trim());
 
       final response = await _apiService.get(
         '/api/queue/tokens/$encodedTokenId',
@@ -111,28 +100,44 @@ class QueueService {
 
       final data = response['data'];
 
-      dynamic token;
-
-      if (data is Map) {
-        token = data['token'] ?? data;
-      }
-
-      token ??= response['token'];
-
-      if (token is! Map) {
+      if (data is! Map || data['token'] is! Map) {
         throw const ApiException(
           'Unable to fetch token status. Please try again.',
         );
       }
 
-      return TokenModel.fromJson(
-        Map<String, dynamic>.from(token),
+      final tokenJson = Map<String, dynamic>.from(
+        data['token'] as Map,
       );
+
+      // Copy queue status values only when they exist in the response.
+      if (data.containsKey('peopleAhead')) {
+        tokenJson['peopleAhead'] = data['peopleAhead'];
+      }
+
+      if (data.containsKey('estimatedWaitMinutes')) {
+        tokenJson['estimatedWaitMinutes'] =
+            data['estimatedWaitMinutes'];
+      }
+
+      if (data.containsKey('averageConsultationMinutes')) {
+        tokenJson['averageConsultationMinutes'] =
+            data['averageConsultationMinutes'];
+      }
+
+      if (data.containsKey('consultationOverdue')) {
+        tokenJson['consultationOverdue'] =
+            data['consultationOverdue'];
+      }
+
+      if (data.containsKey('prediction')) {
+        tokenJson['prediction'] = data['prediction'];
+      }
+
+      return TokenModel.fromJson(tokenJson);
     } on ApiException {
       rethrow;
-    } catch (e) {
-      debugPrint('Token status processing failed: $e');
-
+    } catch (_) {
       throw const ApiException(
         'Unable to fetch token status. Please try again.',
       );
@@ -145,8 +150,7 @@ class QueueService {
     }
 
     try {
-      final encodedTokenId =
-          Uri.encodeComponent(tokenId.trim());
+      final encodedTokenId = Uri.encodeComponent(tokenId.trim());
 
       await _apiService.patch(
         '/api/queue/tokens/$encodedTokenId/cancel',
@@ -154,9 +158,7 @@ class QueueService {
       );
     } on ApiException {
       rethrow;
-    } catch (e) {
-      debugPrint('Cancel token processing failed: $e');
-
+    } catch (_) {
       throw const ApiException(
         'Unable to cancel your token. Please try again.',
       );

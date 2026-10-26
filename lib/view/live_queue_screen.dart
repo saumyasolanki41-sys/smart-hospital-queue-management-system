@@ -1,5 +1,7 @@
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import '../models/token_model.dart';
 import '../controller/token_controller.dart';
 
@@ -19,34 +21,59 @@ class LiveQueueScreen extends StatefulWidget {
 }
 
 class _LiveQueueScreenState extends State<LiveQueueScreen> {
+  bool _isRefreshingStatus = false;
+
   @override
   void initState() {
     super.initState();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      context.read<TokenController>().fetchMyTokens();
+      _loadQueueWithStatus();
     });
   }
 
-  Future<void> _refreshQueue() async {
+  Future<void> _loadQueueWithStatus({
+    bool refresh = false,
+  }) async {
+    if (_isRefreshingStatus) return;
+
+    _isRefreshingStatus = true;
+
+    final controller = context.read<TokenController>();
+
     try {
-      await context.read<TokenController>().fetchMyTokens(
-            refresh: true,
-          );
-    } catch (error) {
-      debugPrint('Error refreshing queue: $error');
+      await controller.fetchMyTokens(refresh: refresh);
 
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Unable to refresh your queue. Please try again.',
-          ),
-        ),
-      );
+      final activeTokens = controller.tokens.where((token) {
+        final status = token.status.toLowerCase().trim();
+
+        return status == 'waiting' ||
+            status == 'pending' ||
+            status == 'in-progress' ||
+            status == 'in progress';
+      }).toList();
+
+      for (final token in activeTokens) {
+        if (!mounted) return;
+
+        try {
+          await controller.fetchTokenStatus(token.id);
+        } catch (_) {
+          // Keep the screen usable if live status is unavailable.
+        }
+      }
+    } catch (_) {
+      // Display only a general message in the UI.
+    } finally {
+      _isRefreshingStatus = false;
     }
+  }
+
+  Future<void> _refreshQueue() async {
+    await _loadQueueWithStatus(refresh: true);
   }
 
   Future<void> _cancelToken(TokenModel token) async {
@@ -110,24 +137,8 @@ class _LiveQueueScreenState extends State<LiveQueueScreen> {
         ),
       );
 
-      try {
-        await viewModel.fetchMyTokens(refresh: true);
-      } catch (error) {
-        debugPrint('Error refreshing queue after cancellation: $error');
-
-        if (!mounted) return;
-
-        messenger.showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Token cancelled, but the queue could not be refreshed.',
-            ),
-          ),
-        );
-      }
-    } catch (error) {
-      debugPrint('Error cancelling token: $error');
-
+      await _loadQueueWithStatus(refresh: true);
+    } catch (_) {
       if (!mounted) return;
 
       messenger.showSnackBar(
@@ -148,7 +159,9 @@ class _LiveQueueScreenState extends State<LiveQueueScreen> {
 
     final result = value.toString().trim();
 
-    if (result.isEmpty || result == 'null') return fallback;
+    if (result.isEmpty || result == 'null') {
+      return fallback;
+    }
 
     return result;
   }
@@ -208,6 +221,7 @@ class _LiveQueueScreenState extends State<LiveQueueScreen> {
 
     final waitingCount = viewModel.tokens.where((token) {
       final status = token.status.toLowerCase().trim();
+
       return status == 'pending' || status == 'waiting';
     }).length;
 
@@ -236,7 +250,9 @@ class _LiveQueueScreenState extends State<LiveQueueScreen> {
         actions: [
           IconButton(
             tooltip: 'Refresh queue',
-            onPressed: viewModel.isLoading ? null : _refreshQueue,
+            onPressed: viewModel.isLoading || _isRefreshingStatus
+                ? null
+                : _refreshQueue,
             icon: const Icon(
               Icons.refresh_rounded,
               color: darkBlue,
@@ -318,7 +334,9 @@ class _LiveQueueScreenState extends State<LiveQueueScreen> {
                   ),
                   TextButton.icon(
                     onPressed:
-                        viewModel.isLoading ? null : _refreshQueue,
+                        viewModel.isLoading || _isRefreshingStatus
+                            ? null
+                            : _refreshQueue,
                     icon: const Icon(Icons.sync_rounded, size: 18),
                     label: const Text('Refresh'),
                     style: TextButton.styleFrom(
@@ -564,6 +582,9 @@ class _TokenCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final waitMinutes = token.estimatedWaitMinutes;
+    final patientsAhead = token.patientsAhead;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 18),
       padding: const EdgeInsets.all(19),
@@ -644,10 +665,7 @@ class _TokenCard extends StatelessWidget {
 
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 18),
-            child: Divider(
-              height: 1,
-              color: borderColor,
-            ),
+            child: Divider(height: 1, color: borderColor),
           ),
 
           _DetailRow(
@@ -672,10 +690,7 @@ class _TokenCard extends StatelessWidget {
                 child: _QueueStat(
                   icon: Icons.people_alt_outlined,
                   label: 'Patients ahead',
-                  value: displayText(
-                    token.patientsAhead,
-                    fallback: '0',
-                  ),
+                  value: displayText(patientsAhead),
                 ),
               ),
               const SizedBox(width: 12),
@@ -683,8 +698,9 @@ class _TokenCard extends StatelessWidget {
                 child: _QueueStat(
                   icon: Icons.access_time_rounded,
                   label: 'Est. waiting',
-                  value:
-                      '${displayText(token.estimatedWaitMinutes, fallback: '0')} min',
+                  value: waitMinutes == null
+                      ? 'Not available'
+                      : '$waitMinutes min',
                 ),
               ),
             ],
