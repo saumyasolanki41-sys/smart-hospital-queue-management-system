@@ -64,7 +64,7 @@ function AuthActions({ onNavigate, mobile = false }) {
         Login
       </Link>
       <Link
-        to="/login"
+        to="/Register"
         onClick={onNavigate}
         className={`${fill} rounded-lg bg-primary/70 px-5 py-2 text-center text-sm font-medium text-white shadow-sm transition-colors hover:bg-primary/80`}
       >

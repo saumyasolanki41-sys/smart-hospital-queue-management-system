@@ -61,7 +61,7 @@ function Hero() {
 
         <div className="mt-8 flex flex-wrap gap-4">
           <Link
-            to="/login"
+            to="/Register"
             className="rounded-xl bg-primary/70 px-7 py-3 font-medium text-white shadow-md transition-colors hover:bg-primary/80"
           >
             Get Started
