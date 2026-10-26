@@ -38,10 +38,8 @@ class HospitalQueueApp extends StatelessWidget {
         title: 'Smart Hospital',
         debugShowCheckedModeBanner: false,
 
-        // Start with the heart logo intro screen
         initialRoute: '/',
 
-        // App navigation routes
         routes: {
           '/': (context) => const IntroSplashScreen(),
           '/get-started': (context) => const SplashScreen(),
@@ -52,7 +50,6 @@ class HospitalQueueApp extends StatelessWidget {
 
         themeMode: ThemeMode.light,
 
-        // Light theme
         theme: ThemeData(
           useMaterial3: true,
           brightness: Brightness.light,
@@ -89,7 +86,6 @@ class HospitalQueueApp extends StatelessWidget {
           ),
         ),
 
-        // Keep your existing darkTheme configuration
         darkTheme: ThemeData(
           useMaterial3: true,
           brightness: Brightness.light,

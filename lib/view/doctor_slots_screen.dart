@@ -72,7 +72,7 @@ class _DoctorSlotsScreenState extends State<DoctorSlotsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Doctor information card
+              
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(24),
@@ -171,7 +171,7 @@ class _DoctorSlotsScreenState extends State<DoctorSlotsScreen> {
 
                   const SizedBox(height: 30),
 
-                  // Section heading
+              
                   Text(
                     'Select a Time Slot',
                     style: TextStyle(
@@ -193,7 +193,6 @@ class _DoctorSlotsScreenState extends State<DoctorSlotsScreen> {
 
                   const SizedBox(height: 22),
 
-                  // Available time slots
                   ..._slots.map((slot) {
                     final isSelected = _selectedSlot == slot;
 
@@ -295,7 +294,6 @@ class _DoctorSlotsScreenState extends State<DoctorSlotsScreen> {
 
                   const SizedBox(height: 10),
 
-                  // Confirm button
                   SizedBox(
                     width: double.infinity,
                     height: 56,
@@ -336,7 +334,7 @@ class _DoctorSlotsScreenState extends State<DoctorSlotsScreen> {
 
                   const SizedBox(height: 14),
 
-                  // Demo note
+          
                   Center(
                     child: Text(
                       'Sample slots for demonstration only.',

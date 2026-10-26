@@ -1,7 +1,5 @@
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
 import '../models/doctor_model.dart';
 import '../controller/token_controller.dart';
 import 'booking_confirmation_screen.dart';
@@ -160,7 +158,7 @@ class _DoctorDetailsScreenState extends State<DoctorDetailsScreen> {
                 child: ListView(
                   padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
                   children: [
-                    // Header matching HomeScreen
+                  
                     Row(
                       children: [
                         _HeaderButton(
@@ -203,7 +201,6 @@ class _DoctorDetailsScreenState extends State<DoctorDetailsScreen> {
 
                     const SizedBox(height: 24),
 
-                    // Doctor banner
                     Container(
                       padding: const EdgeInsets.all(22),
                       decoration: BoxDecoration(
@@ -255,7 +252,6 @@ class _DoctorDetailsScreenState extends State<DoctorDetailsScreen> {
 
                     const SizedBox(height: 24),
 
-                    // Doctor profile card
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.all(24),
@@ -387,7 +383,6 @@ class _DoctorDetailsScreenState extends State<DoctorDetailsScreen> {
 
                     const SizedBox(height: 24),
 
-                    // Doctor information
                     Container(
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
@@ -466,7 +461,6 @@ class _DoctorDetailsScreenState extends State<DoctorDetailsScreen> {
 
                     const SizedBox(height: 18),
 
-                    // Appointment reminder
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
@@ -502,7 +496,6 @@ class _DoctorDetailsScreenState extends State<DoctorDetailsScreen> {
                 ),
               ),
 
-              // Bottom booking buttons
               Container(
                 padding: const EdgeInsets.fromLTRB(20, 14, 20, 16),
                 decoration: BoxDecoration(

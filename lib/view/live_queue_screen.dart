@@ -1,11 +1,8 @@
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
 import '../models/token_model.dart';
 import '../controller/token_controller.dart';
 
-// Home Screen color theme
 const Color pageColor = Color(0xFFE6EFFF);
 const Color blue = Color(0xFF8DB8F5);
 const Color darkBlue = Color.fromARGB(255, 14, 18, 33);

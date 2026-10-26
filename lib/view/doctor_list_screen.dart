@@ -124,7 +124,7 @@ class _DoctorListScreenState extends State<DoctorListScreen> {
               physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
               children: [
-                // Top navigation
+              
                 Row(
                   children: [
                     Container(
@@ -179,7 +179,7 @@ class _DoctorListScreenState extends State<DoctorListScreen> {
 
                 const SizedBox(height: 22),
 
-                // Department banner
+         
                 Container(
                   padding: const EdgeInsets.all(21),
                   decoration: BoxDecoration(
@@ -260,7 +260,6 @@ class _DoctorListScreenState extends State<DoctorListScreen> {
 
                 const SizedBox(height: 12),
 
-                // Search field
                 Container(
                   decoration: BoxDecoration(
                     color: isDark ? colors.surface : Colors.white,
@@ -322,7 +321,6 @@ class _DoctorListScreenState extends State<DoctorListScreen> {
 
                 const SizedBox(height: 25),
 
-                // List heading
                 Row(
                   children: [
                     const Expanded(
@@ -359,7 +357,7 @@ class _DoctorListScreenState extends State<DoctorListScreen> {
 
                 const SizedBox(height: 15),
 
-                // Loading state
+             
                 if (controller.isLoading && controller.doctors.isEmpty)
                   const Padding(
                     padding: EdgeInsets.all(32),
@@ -370,7 +368,6 @@ class _DoctorListScreenState extends State<DoctorListScreen> {
                     ),
                   )
 
-                // Error state
                 else if (controller.error != null &&
                     controller.doctors.isEmpty)
                   _DoctorMessage(
@@ -380,7 +377,7 @@ class _DoctorListScreenState extends State<DoctorListScreen> {
                     onAction: _refreshDoctors,
                   )
 
-                // Empty state
+           
                 else if (doctors.isEmpty)
                   _DoctorMessage(
                     icon: Icons.person_search_rounded,
@@ -397,7 +394,6 @@ class _DoctorListScreenState extends State<DoctorListScreen> {
                         : null,
                   )
 
-                // Doctor cards
                 else
                   ...doctors.map(
                     (doctor) => _DoctorListCard(
@@ -426,7 +422,6 @@ class _DoctorListCard extends StatelessWidget {
     required this.onTap,
   });
 
-  // Generate initials while ignoring common doctor titles.
   String _getInitials(String name) {
     final words = name
         .trim()

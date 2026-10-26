@@ -28,7 +28,7 @@ class SplashScreen extends StatelessWidget {
         ),
         child: Stack(
           children: [
-            // Blue glow in the top-right corner
+      
             Positioned(
               top: -100,
               right: -100,
@@ -106,7 +106,7 @@ class SplashScreen extends StatelessWidget {
 
                   const SizedBox(height: 24),
 
-                  // App title
+              
                   const Text(
                     'Smart',
                     textAlign: TextAlign.center,
@@ -133,7 +133,6 @@ class SplashScreen extends StatelessWidget {
 
                   const SizedBox(height: 12),
 
-                  // Tagline
                   const Text(
                     'Less waiting. More care.',
                     textAlign: TextAlign.center,
@@ -147,7 +146,6 @@ class SplashScreen extends StatelessWidget {
 
                   const Spacer(flex: 4),
 
-                  // Register button
                   Padding(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 32,
@@ -183,7 +181,7 @@ class SplashScreen extends StatelessWidget {
 
                   const SizedBox(height: 20),
 
-                  // Login link
+           
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [

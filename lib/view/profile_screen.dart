@@ -306,7 +306,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                 const SizedBox(height: 25),
 
-                // Profile header with initials
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(23),
@@ -873,7 +872,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     'Prefer not to say',
   ];
 
-  // Use the same initials in the edit profile avatar.
   String _getInitials(String name) {
     final words = name
         .trim()

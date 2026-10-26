@@ -203,7 +203,7 @@ class _TokenDetailsScreenState extends State<TokenDetailsScreen> {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
           children: [
-            // Token number card
+          
             Container(
               padding: const EdgeInsets.all(26),
               decoration: BoxDecoration(
@@ -298,7 +298,6 @@ class _TokenDetailsScreenState extends State<TokenDetailsScreen> {
 
             const SizedBox(height: 28),
 
-            // Section heading
             const Row(
               children: [
                 Icon(
@@ -322,7 +321,6 @@ class _TokenDetailsScreenState extends State<TokenDetailsScreen> {
 
             const SizedBox(height: 16),
 
-            // Doctor information
             _InfoCard(
               icon: Icons.person_outline,
               title: 'Doctor',
@@ -350,7 +348,7 @@ class _TokenDetailsScreenState extends State<TokenDetailsScreen> {
 
             const SizedBox(height: 18),
 
-            // Cancellation button
+       
             if (canCancel) ...[
               SizedBox(
                 width: double.infinity,
@@ -387,7 +385,7 @@ class _TokenDetailsScreenState extends State<TokenDetailsScreen> {
               const SizedBox(height: 14),
             ],
 
-            // Back button
+     
             SizedBox(
               width: double.infinity,
               height: 52,

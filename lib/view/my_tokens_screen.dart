@@ -114,7 +114,7 @@ class _MyTokensScreenState extends State<MyTokensScreen> {
               physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.fromLTRB(20, 12, 20, 30),
               children: [
-                // Header
+              
                 Row(
                   children: [
                     Container(
@@ -279,7 +279,7 @@ class _MyTokensScreenState extends State<MyTokensScreen> {
 
                 const SizedBox(height: 25),
 
-                // Upcoming and Past tabs
+           
                 Container(
                   height: 57,
                   padding: const EdgeInsets.all(5),
@@ -421,7 +421,6 @@ class _MyTokensScreenState extends State<MyTokensScreen> {
         ),
       ),
 
-      // Bottom navigation
       bottomNavigationBar: Container(
         decoration: const BoxDecoration(
           color: _primary,
