@@ -119,7 +119,6 @@ export default function QueueDashboard({ mode }) {
   const [summary, setSummary] = useState(null); // hospital-wide counts (staff mode only)
   const [doctorSummary, setDoctorSummary] = useState(null);
 
-  // Staff can look at one doctor or all
   const selection = searchParams.get("doctor") || "all";
   const isAll = mode === "staff" && selection === "all";
   const doctorId = mode === "doctor" ? ownDoctorId : isAll ? null : selection;
@@ -411,7 +410,7 @@ export default function QueueDashboard({ mode }) {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-secondary/5 via-accent/5 to-white">
+    <div className="min-h-screen bg-gradient-to-br from-blue-300/5 via-accent-300/5 to-white">
       <Navbar />
 
       <main className="mx-auto max-w-6xl px-6 pb-20 pt-6">

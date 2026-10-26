@@ -161,7 +161,7 @@ export default function Home() {
   }, [hasActive, load]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-secondary/5 via-accent/5 to-white">
+    <div className="min-h-screen bg-gradient-to-br from-sky-500/5 via-accent-500/5 to-white">
       <Navbar />
 
       <main className="mx-auto max-w-6xl px-6 pb-20 pt-6">
