@@ -28,6 +28,12 @@ function checkDoctor(doctor) {
 }
 
 const selection = 'doctor queueDate tokenNumber status calledAt completedAt skippedAt createdAt';
+const doctorDetails = {
+  path: 'doctor',
+  select: 'name specialization department',
+  options: { lean: true },
+  populate: { path: 'department', select: 'name' },
+};
 
 async function joinQueue(patientId, body) {
   if (!body || typeof body !== 'object' || Array.isArray(body) ||
@@ -96,7 +102,7 @@ async function myTokens(patientId, query) {
     throw queueError(400, 'VALIDATION_ERROR', 'Send a page from 1 to 100000 and limit from 1 to 50.');
   }
   const tokens = await QueueToken.find({ patient: patientId, queueDate: date }).select(selection)
-    .populate('doctor', 'name specialization').sort({ createdAt: -1, _id: -1 })
+    .populate(doctorDetails).sort({ createdAt: -1, _id: -1 })
     .skip((Number(page) - 1) * Number(limit)).limit(Number(limit)).lean();
   return { tokens, date, page: Number(page), limit: Number(limit) };
 }
@@ -171,6 +177,7 @@ async function tokenStatus(patientId, id) {
       }
     }
   }
+  await QueueToken.populate(token, doctorDetails);
   return { token, peopleAhead, estimatedWaitMinutes, averageConsultationMinutes, consultationOverdue, prediction };
 }
 

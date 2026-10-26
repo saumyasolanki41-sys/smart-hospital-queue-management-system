@@ -79,10 +79,15 @@ fields are rejected. Responses contain `data.tokens`, `data.date`, `data.page`
 and `data.limit`. Only the signed-in patient's tokens are selected, including
 cancelled/history records. Empty lists return 200. Tokens sort newest first.
 
-For this list, `doctor` is populated as `{ _id, name, specialization }` rather
-than the plain ID returned by booking/detail/cancellation. No patient information
-is exposed. A profile removed through direct database administration may populate
-as null. There is no public list of patients in the queue.
+Both the list and token-status responses populate `doctor` as
+`{ _id, name, specialization, department: { _id, name } }`.
+Read department details from `data.tokens[i].doctor.department` in the list
+and `data.token.doctor.department` in token status. Token status previously
+returned a plain doctor ID; clients must now read `data.token.doctor._id`.
+Booking and cancellation still return the plain doctor ID. No patient information
+is exposed. A removed doctor profile populates as null; a removed department
+populates as null inside the doctor. Clients should show an unavailable label in
+those cases. There is no public list of patients in the queue.
 
 ## Token status
 
