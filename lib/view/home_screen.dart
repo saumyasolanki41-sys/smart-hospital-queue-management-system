@@ -584,7 +584,7 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Container(
                 padding: const EdgeInsets.all(15),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.8),
+                  color: const Color.fromARGB(255, 124, 124, 146).withValues(alpha: 0.8),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
@@ -632,7 +632,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: _primary,
-                  foregroundColor: Colors.white,
+                  foregroundColor: const Color.fromARGB(255, 128, 135, 150),
                   padding: const EdgeInsets.symmetric(vertical: 13),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),
@@ -676,7 +676,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       ? null
                       : const LinearGradient(
                           colors: [
-                            Color(0xFF8DB8F5),
+                            Color(0xFF9DBDF2),
                             Color(0xFFB7D2F8),
                             Color(0xFFE6EFFF),
                             Colors.white,
