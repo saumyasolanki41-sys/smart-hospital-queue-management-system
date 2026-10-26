@@ -14,7 +14,7 @@ class MyTokensScreen extends StatefulWidget {
 }
 
 class _MyTokensScreenState extends State<MyTokensScreen> {
-  static const Color _primary = Color.fromARGB(255, 14, 18, 33);
+  static const Color _primary = Color.fromARGB(255, 21, 28, 54);
   static const Color _background = Color(0xFFE8F0FF);
   static const Color _textColor = Color.fromARGB(255, 5, 26, 37);
 
@@ -421,7 +421,7 @@ class _MyTokensScreenState extends State<MyTokensScreen> {
 
       bottomNavigationBar: Container(
         decoration: const BoxDecoration(
-          color: _primary,
+          color: Color.fromARGB(255, 24, 33, 66),
           borderRadius: BorderRadius.vertical(
             top: Radius.circular(23),
           ),
