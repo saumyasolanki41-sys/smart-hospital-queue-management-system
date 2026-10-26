@@ -13,6 +13,7 @@ import {
   User,
 } from "lucide-react";
 import { useAuth, ROLE_HOME } from "../context/AuthContext";
+import { useOwnDoctorId } from "../../hooks/useOwnDoctorId";
 
 const STAFF_NAV = [
   { label: "Dashboard", to: "/staff", icon: LayoutDashboard },
@@ -54,10 +55,14 @@ function Logo({ onClick, to }) {
   );
 }
 
-function Panel({ onNavigate }) {
+function Panel({ onNavigate, ownDoctorId }) {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
-  const items = NAV_BY_ROLE[user.role] ?? [];
+  const base = NAV_BY_ROLE[user.role] ?? [];
+
+  const items = ownDoctorId
+    ? [base[0], { label: "My profile", to: `/doctors/${ownDoctorId}`, icon: User }, ...base.slice(1)]
+    : base;
 
   function handleLogout() {
     signOut();
@@ -118,6 +123,7 @@ function Panel({ onNavigate }) {
 
 export default function Sidebar() {
   const { user } = useAuth();
+  const { doctorId: ownDoctorId } = useOwnDoctorId(); 
   const [open, setOpen] = useState(false);
 
   return (
@@ -138,7 +144,7 @@ export default function Sidebar() {
 
       {/* Desktop sidebar */}
       <aside className="hidden w-72 shrink-0 self-start p-4 lg:sticky lg:top-0 lg:block lg:h-screen">
-        <Panel />
+        <Panel ownDoctorId={ownDoctorId} />
       </aside>
 
       {/* Mobile drawer */}
@@ -159,7 +165,7 @@ export default function Sidebar() {
             >
               <X className="h-5 w-5" />
             </button>
-            <Panel onNavigate={() => setOpen(false)} />
+            <Panel onNavigate={() => setOpen(false)} ownDoctorId={ownDoctorId} />
           </div>
         </div>
       )}

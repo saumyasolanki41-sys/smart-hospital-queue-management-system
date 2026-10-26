@@ -5,6 +5,7 @@ import Navbar from "../components/layout/Navbar";
 import DoctorCard from "../components/hospital/DoctorCard";
 import { useAuth } from "../components/context/AuthContext";
 import { getDoctor, getDoctors } from "../api/hospital";
+import { useOwnDoctorId } from "../hooks/useOwnDoctorId";
 import { joinQueue, getMyTokens } from "../api/queue";
 
 const inr = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 });
@@ -29,13 +30,15 @@ function Stat({ icon: Icon, label, value }) {
 function Profile({ doctorId }) {
   const { user, token: accessToken } = useAuth();
   const navigate = useNavigate();
+  const { doctorId: ownDoctorId } = useOwnDoctorId();
+  const isOwn = ownDoctorId === doctorId; 
 
   const [doctor, setDoctor] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null); 
   const [related, setRelated] = useState([]);
   const [joining, setJoining] = useState(false);
-  const [notice, setNotice] = useState(null);
+  const [notice, setNotice] = useState(null); 
   const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
@@ -56,6 +59,7 @@ function Profile({ doctorId }) {
     };
   }, [doctorId, reloadKey]);
 
+  // Other doctors in the same department (nice to have, so failures are ignored).
   const departmentId = doctor?.department?._id;
   useEffect(() => {
     if (!departmentId) return;
@@ -70,7 +74,7 @@ function Profile({ doctorId }) {
 
   async function handleJoin() {
     if (!user) {
-      navigate("/login", { state: { from: `/doctors/${doctorId}` } });
+      navigate("/login", { state: { from: `/doctors/${doctorId}` } }); // log in, then come back here
       return;
     }
 
@@ -80,7 +84,7 @@ function Profile({ doctorId }) {
       const joined = await joinQueue(accessToken, doctor._id);
       navigate(`/queue/${joined._id}`);
     } catch (err) {
-      if (err.code === "UNAUTHORIZED") return;
+      if (err.code === "UNAUTHORIZED") return; 
       if (err.code === "ALREADY_IN_QUEUE") {
         
         try {
@@ -158,6 +162,21 @@ function Profile({ doctorId }) {
     const canJoin = !user || user.role === "patient"; 
     content = (
       <>
+        {isOwn && (
+          <div
+            role="note"
+            className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-primary/5 p-4 text-sm text-primary/90"
+          >
+            <span className="flex items-start gap-2">
+              <Info className="mt-0.5 h-4 w-4 shrink-0" />
+              This is your public profile, the page patients see. An administrator manages these details.
+            </span>
+            <Link to="/doctor" className="font-medium underline">
+              Open my queue →
+            </Link>
+          </div>
+        )}
+
         {/* Header */}
         <section className="rounded-3xl bg-white/95 p-6 shadow-xl sm:p-8">
           <div className="flex flex-wrap items-start gap-5">
