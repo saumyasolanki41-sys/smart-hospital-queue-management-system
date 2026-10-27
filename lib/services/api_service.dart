@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+
 import 'storage_service.dart';
 
 class ApiService {
@@ -91,9 +93,13 @@ class ApiService {
       if (response.statusCode < 200 ||
           response.statusCode >= 300 ||
           result['success'] == false) {
+        final backendMessage = _extractErrorMessage(result);
+        final backendCode = _extractErrorCode(result);
+
         throw ApiException(
-          _getSafeErrorMessage(response.statusCode),
+          backendMessage ?? _getSafeErrorMessage(response.statusCode),
           statusCode: response.statusCode,
+          code: backendCode,
         );
       }
 
@@ -122,36 +128,88 @@ class ApiService {
     }
   }
 
+  /// Extracts a message from common backend response formats.
+  ///
+  /// Supported examples:
+  /// {"message": "Already in queue"}
+  /// {"error": "Already in queue"}
+  /// {"error": {"message": "Already in queue"}}
+  /// {"details": "Already in queue"}
+  String? _extractErrorMessage(Map<String, dynamic> result) {
+    final error = result['error'];
+
+    final candidates = <dynamic>[
+      result['message'],
+      result['details'],
+      error is Map ? error['message'] : null,
+      error is String ? error : null,
+    ];
+
+    for (final candidate in candidates) {
+      if (candidate is String && candidate.trim().isNotEmpty) {
+        return candidate.trim();
+      }
+    }
+
+    return null;
+  }
+
+  /// Extracts a machine-readable error code from the backend.
+  String? _extractErrorCode(Map<String, dynamic> result) {
+    final error = result['error'];
+
+    final candidates = <dynamic>[
+      result['code'],
+      error is Map ? error['code'] : null,
+    ];
+
+    for (final candidate in candidates) {
+      if (candidate is String && candidate.trim().isNotEmpty) {
+        return candidate.trim();
+      }
+    }
+
+    return null;
+  }
+
   String _getSafeErrorMessage(int statusCode) {
     switch (statusCode) {
       case 400:
         return 'Invalid request. Please check your details and try again.';
+
       case 401:
         return 'Your session may have expired. Please log in again.';
+
       case 403:
         return 'You do not have permission to perform this action.';
+
       case 404:
         return 'The requested information could not be found.';
+
       case 408:
         return 'The request timed out. Please try again.';
+
       case 409:
         return 'This action conflicts with the current information.';
+
       case 422:
         return 'Some details are invalid. Please check and try again.';
+
       case 429:
         return 'Too many requests. Please wait and try again.';
+
       case 500:
       case 501:
       case 502:
       case 503:
       case 504:
-        return 'The hospital server is temporarily unavailable. Please try again later.';
+        return 'The hospital server is temporarily unavailable. '
+            'Please try again later.';
+
       default:
         return 'Unable to complete your request. Please try again.';
     }
   }
-
-
 
   Future<Map<String, dynamic>> register({
     required String name,
@@ -321,8 +379,6 @@ class ApiService {
     );
   }
 
-
-
   Future<Map<String, dynamic>> get(
     String path, {
     bool authenticated = true,
@@ -360,7 +416,6 @@ class ApiService {
     );
   }
 
-
   String? _findAccessToken(dynamic value) {
     if (value is! Map) return null;
 
@@ -371,8 +426,7 @@ class ApiService {
     ]) {
       final candidate = value[key];
 
-      if (candidate is String &&
-          candidate.trim().isNotEmpty) {
+      if (candidate is String && candidate.trim().isNotEmpty) {
         return candidate.trim();
       }
     }
@@ -400,10 +454,12 @@ class ApiService {
 class ApiException implements Exception {
   final String message;
   final int? statusCode;
+  final String? code;
 
   const ApiException(
     this.message, {
     this.statusCode,
+    this.code,
   });
 
   @override

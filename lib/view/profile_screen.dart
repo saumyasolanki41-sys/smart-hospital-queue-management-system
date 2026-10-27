@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../controller/auth_controller.dart';
@@ -12,15 +13,15 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  static const Color _primary = Color.fromARGB(255, 14, 18, 33);
-  static const Color _skyBlue = Color(0xFF8DB8F5);
-  static const Color _background = Color(0xFFE6EFFF);
-  static const Color _textColor = Color.fromARGB(255, 5, 26, 37);
-  static const Color _muted = Color(0xFF60758A);
+  static const Color _primary = Color(0xFF174A5B);
+  static const Color _skyBlue = Color(0xFF7ED3E8);
+  static const Color _background = Color(0xFFEAF8FB);
+  static const Color _textColor = Color(0xFF174A5B);
+  static const Color _muted = Color(0xFF648994);
+  // static const Color _secondary = Color(0xFF24758B);
+  static const Color _lightBlue = Color(0xFFDDF4F8);
+  // static const Color _border = Color(0xFFD2EAF0);
 
-  String? _age;
-  String? _gender;
-  bool _isUpdatingProfile = false;
   bool _isLoggingOut = false;
 
   String _getInitials(String name) {
@@ -60,75 +61,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
           backgroundColor: isError ? Colors.red.shade700 : _primary,
         ),
       );
-  }
-
-  Future<void> _editProfile() async {
-    if (_isUpdatingProfile) return;
-
-    final auth = context.read<AuthController>();
-    final user = auth.user;
-
-    if (user == null) {
-      _showMessage(
-        'Unable to load your profile. Please sign in again.',
-        isError: true,
-      );
-      return;
-    }
-
-    final result = await Navigator.push<Map<String, String>>(
-      context,
-      MaterialPageRoute(
-        builder: (_) => EditProfileScreen(
-          fullName: user.name,
-          age: _age ?? user.age?.toString() ?? '',
-          gender: _gender ?? user.gender ?? '',
-        ),
-      ),
-    );
-
-    if (!mounted || result == null) return;
-
-    setState(() => _isUpdatingProfile = true);
-
-    try {
-      final success = await Future<bool>.sync(
-        () => auth.updateProfile(
-          fullName: result['fullName'] ?? '',
-          age: result['age'] ?? '',
-          gender: result['gender'] ?? '',
-        ),
-      );
-
-      if (!mounted) return;
-
-      if (success) {
-        setState(() {
-          _age = result['age'];
-          _gender = result['gender'];
-        });
-
-        _showMessage('Profile updated successfully');
-      } else {
-        debugPrint('Profile update failed.');
-        _showMessage(
-          'Unable to update profile. Please try again.',
-          isError: true,
-        );
-      }
-    } catch (error, stackTrace) {
-      debugPrint('Profile update exception: $error');
-      debugPrintStack(stackTrace: stackTrace);
-
-      _showMessage(
-        'Something went wrong. Please try again.',
-        isError: true,
-      );
-    } finally {
-      if (mounted) {
-        setState(() => _isUpdatingProfile = false);
-      }
-    }
   }
 
   Future<void> _logout() async {
@@ -191,10 +123,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         '/login',
         (route) => false,
       );
-    } catch (error, stackTrace) {
-      debugPrint('Logout exception: $error');
-      debugPrintStack(stackTrace: stackTrace);
-
+    } catch (_) {
       _showMessage(
         'Unable to logout. Please try again.',
         isError: true,
@@ -232,11 +161,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
       color: isDark ? colors.surfaceContainer : Colors.white,
       borderRadius: BorderRadius.circular(22),
       border: Border.all(
-        color: _skyBlue.withValues(alpha: 0.35),
+        color: _skyBlue.withValues(alpha: 0.45),
       ),
       boxShadow: [
         BoxShadow(
-          color: _primary.withValues(alpha: 0.08),
+          color: _primary.withValues(alpha: 0.07),
           blurRadius: 20,
           offset: const Offset(0, 8),
         ),
@@ -256,8 +185,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
         : 'User';
 
     final email = user?.email ?? 'No email available';
-    final age = _age ?? user?.age?.toString() ?? 'Not added';
-    final gender = _gender ?? user?.gender ?? 'Not added';
 
     return Scaffold(
       backgroundColor: isDark ? colors.surface : _background,
@@ -267,13 +194,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ? null
               : const LinearGradient(
                   colors: [
-                    Color(0xFF8DB8F5),
-                    Color(0xFFB7D2F8),
-                    Color(0xFFE6EFFF),
+                    Color(0xFFEAF8FB),
+                    Color(0xFFDDF4F8),
                     Colors.white,
-                    Color(0xFFE8F0FF),
+                    Color(0xFFEAF8FB),
                   ],
-                  stops: [0.0, 0.20, 0.42, 0.70, 1.0],
+                  stops: [0.0, 0.25, 0.65, 1.0],
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                 ),
@@ -301,15 +227,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             style: TextStyle(
                               fontSize: 25,
                               fontWeight: FontWeight.bold,
-                              color: isDark ? colors.onSurface : _textColor,
+                              color: isDark
+                                  ? colors.onSurface
+                                  : _textColor,
                             ),
                           ),
                           const SizedBox(height: 3),
-                          const Text(
+                          Text(
                             'Manage your personal details',
                             style: TextStyle(
                               fontSize: 12,
-                              color: _muted,
+                              color: isDark
+                                  ? colors.onSurfaceVariant
+                                  : _muted,
                             ),
                           ),
                         ],
@@ -320,15 +250,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                 const SizedBox(height: 25),
 
+                // Profile header
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(23),
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
                       colors: [
-                        Color.fromARGB(255, 14, 18, 33),
-                        Color(0xFF315B91),
-                        Color(0xFF8DB8F5),
+                        Color(0xFF174A5B),
+                        Color(0xFF24758B),
+                        Color(0xFF7ED3E8),
                       ],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
@@ -351,16 +282,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.65),
+                            color: Colors.white.withValues(alpha: 0.7),
                             width: 2,
                           ),
                         ),
                         child: CircleAvatar(
-                          backgroundColor: const Color(0xFFE8F0FF),
+                          backgroundColor: _lightBlue,
                           child: Text(
                             _getInitials(fullName),
                             style: const TextStyle(
-                              color: Color(0xFF246F96),
+                              color: _primary,
                               fontSize: 32,
                               fontWeight: FontWeight.bold,
                             ),
@@ -383,43 +314,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         textAlign: TextAlign.center,
                         style: const TextStyle(
                           fontSize: 13,
-                          color: Color(0xFFE6EFFF),
-                        ),
-                      ),
-                      const SizedBox(height: 18),
-                      OutlinedButton.icon(
-                        onPressed: _isUpdatingProfile ? null : _editProfile,
-                        icon: _isUpdatingProfile
-                            ? const SizedBox(
-                                height: 18,
-                                width: 18,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.white,
-                                ),
-                              )
-                            : const Icon(
-                                Icons.edit_outlined,
-                                size: 18,
-                              ),
-                        label: Text(
-                          _isUpdatingProfile ? 'Saving...' : 'Edit Profile',
-                        ),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: Colors.white,
-                          side: const BorderSide(
-                            color: Colors.white70,
-                          ),
-                          backgroundColor: Colors.white.withValues(
-                            alpha: 0.10,
-                          ),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 21,
-                            vertical: 12,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
-                          ),
+                          color: Color(0xFFEAF8FB),
                         ),
                       ),
                     ],
@@ -436,6 +331,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                 const SizedBox(height: 14),
 
+                // Registered name and email
                 Container(
                   padding: const EdgeInsets.all(18),
                   decoration: _cardDecoration(isDark, colors),
@@ -453,22 +349,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         icon: Icons.email_outlined,
                         title: 'Email Address',
                         value: email,
-                        isDark: isDark,
-                        colors: colors,
-                      ),
-                      const _SoftDivider(),
-                      _InformationRow(
-                        icon: Icons.cake_outlined,
-                        title: 'Age',
-                        value: age,
-                        isDark: isDark,
-                        colors: colors,
-                      ),
-                      const _SoftDivider(),
-                      _InformationRow(
-                        icon: Icons.people_outline_rounded,
-                        title: 'Gender',
-                        value: gender,
                         isDark: isDark,
                         colors: colors,
                       ),
@@ -551,11 +431,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                 const SizedBox(height: 15),
 
-                const Center(
+                Center(
                   child: Text(
                     'Your health, our priority',
                     style: TextStyle(
-                      color: _muted,
+                      color: isDark
+                          ? colors.onSurfaceVariant
+                          : _muted,
                       fontSize: 12,
                     ),
                   ),
@@ -589,11 +471,11 @@ class _HeaderButton extends StatelessWidget {
         color: isDark ? colors.surfaceContainer : Colors.white,
         borderRadius: BorderRadius.circular(15),
         border: Border.all(
-          color: const Color(0xFF8DB8F5).withValues(alpha: 0.4),
+          color: const Color(0xFFD2EAF0),
         ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF315B91).withValues(alpha: 0.08),
+            color: const Color(0xFF174A5B).withValues(alpha: 0.06),
             blurRadius: 10,
             offset: const Offset(0, 3),
           ),
@@ -603,7 +485,7 @@ class _HeaderButton extends StatelessWidget {
         onPressed: onTap,
         icon: Icon(
           icon,
-          color: const Color.fromARGB(255, 14, 18, 33),
+          color: isDark ? colors.onSurface : const Color(0xFF174A5B),
         ),
       ),
     );
@@ -629,12 +511,12 @@ class _SectionHeading extends StatelessWidget {
           height: 45,
           width: 45,
           decoration: BoxDecoration(
-            color: const Color(0xFFE8F0FF),
+            color: const Color(0xFFDDF4F8),
             borderRadius: BorderRadius.circular(14),
           ),
-          child: Icon(
-            icon,
-            color: const Color.fromARGB(255, 14, 18, 33),
+          child: const Icon(
+            Icons.person_outline_rounded,
+            color: Color(0xFF174A5B),
             size: 24,
           ),
         ),
@@ -648,7 +530,7 @@ class _SectionHeading extends StatelessWidget {
                 style: const TextStyle(
                   fontSize: 19,
                   fontWeight: FontWeight.bold,
-                  color: Color.fromARGB(255, 5, 26, 37),
+                  color: Color(0xFF174A5B),
                 ),
               ),
               const SizedBox(height: 3),
@@ -656,7 +538,7 @@ class _SectionHeading extends StatelessWidget {
                 subtitle,
                 style: const TextStyle(
                   fontSize: 12,
-                  color: Color(0xFF60758A),
+                  color: Color(0xFF648994),
                 ),
               ),
             ],
@@ -693,12 +575,12 @@ class _InformationRow extends StatelessWidget {
             width: 43,
             height: 43,
             decoration: BoxDecoration(
-              color: const Color(0xFFE8F0FF),
+              color: const Color(0xFFDDF4F8),
               borderRadius: BorderRadius.circular(13),
             ),
             child: Icon(
               icon,
-              color: const Color.fromARGB(255, 14, 18, 33),
+              color: const Color(0xFF24758B),
               size: 21,
             ),
           ),
@@ -713,7 +595,7 @@ class _InformationRow extends StatelessWidget {
                     fontSize: 12,
                     color: isDark
                         ? colors.onSurfaceVariant
-                        : const Color(0xFF60758A),
+                        : const Color(0xFF648994),
                   ),
                 ),
                 const SizedBox(height: 5),
@@ -724,7 +606,7 @@ class _InformationRow extends StatelessWidget {
                     fontWeight: FontWeight.w600,
                     color: isDark
                         ? colors.onSurface
-                        : const Color.fromARGB(255, 5, 26, 37),
+                        : const Color(0xFF174A5B),
                   ),
                 ),
               ],
@@ -744,7 +626,7 @@ class _SoftDivider extends StatelessWidget {
     return const Divider(
       height: 19,
       thickness: 1,
-      color: Color(0xFFE2E8F0),
+      color: Color(0xFFD2EAF0),
     );
   }
 }
@@ -774,12 +656,12 @@ class _ProfileMenuRow extends StatelessWidget {
         width: 45,
         height: 45,
         decoration: BoxDecoration(
-          color: const Color(0xFFE8F0FF),
+          color: const Color(0xFFDDF4F8),
           borderRadius: BorderRadius.circular(13),
         ),
         child: Icon(
           icon,
-          color: const Color.fromARGB(255, 14, 18, 33),
+          color: const Color(0xFF24758B),
           size: 22,
         ),
       ),
@@ -790,7 +672,7 @@ class _ProfileMenuRow extends StatelessWidget {
           fontWeight: FontWeight.w600,
           color: isDark
               ? colors.onSurface
-              : const Color.fromARGB(255, 5, 26, 37),
+              : const Color(0xFF174A5B),
         ),
       ),
       subtitle: Padding(
@@ -801,7 +683,7 @@ class _ProfileMenuRow extends StatelessWidget {
             fontSize: 11,
             color: isDark
                 ? colors.onSurfaceVariant
-                : const Color(0xFF60758A),
+                : const Color(0xFF648994),
           ),
         ),
       ),
@@ -809,317 +691,9 @@ class _ProfileMenuRow extends StatelessWidget {
         Icons.chevron_right_rounded,
         color: isDark
             ? colors.onSurfaceVariant
-            : const Color(0xFF60758A),
+            : const Color(0xFF648994),
       ),
       onTap: onTap,
-    );
-  }
-}
-
-class EditProfileScreen extends StatefulWidget {
-  final String fullName;
-  final String age;
-  final String gender;
-
-  const EditProfileScreen({
-    super.key,
-    required this.fullName,
-    required this.age,
-    required this.gender,
-  });
-
-  @override
-  State<EditProfileScreen> createState() => _EditProfileScreenState();
-}
-
-class _EditProfileScreenState extends State<EditProfileScreen> {
-  static const Color _primary = Color.fromARGB(255, 14, 18, 33);
-  static const Color _skyBlue = Color(0xFF8DB8F5);
-  static const Color _textColor = Color.fromARGB(255, 5, 26, 37);
-
-  final _formKey = GlobalKey<FormState>();
-
-  late final TextEditingController _fullNameController;
-  late final TextEditingController _ageController;
-  late String? _gender;
-
-  final List<String> _genders = const [
-    'Female',
-    'Male',
-    'Other',
-    'Prefer not to say',
-  ];
-
-  String _getInitials(String name) {
-    final words = name
-        .trim()
-        .split(RegExp(r'\s+'))
-        .where((word) => word.isNotEmpty)
-        .where(
-          (word) => !{
-            'dr',
-            'dr.',
-            'doctor',
-            'prof',
-            'prof.',
-            'professor',
-          }.contains(word.toLowerCase()),
-        )
-        .toList();
-
-    if (words.isEmpty) return '?';
-
-    if (words.length == 1) {
-      return words.first[0].toUpperCase();
-    }
-
-    return '${words.first[0]}${words.last[0]}'.toUpperCase();
-  }
-
-  @override
-  void initState() {
-    super.initState();
-
-    _fullNameController = TextEditingController(
-      text: widget.fullName,
-    );
-
-    _ageController = TextEditingController(
-      text: widget.age,
-    );
-
-    _gender = _genders.contains(widget.gender) ? widget.gender : null;
-  }
-
-  @override
-  void dispose() {
-    _fullNameController.dispose();
-    _ageController.dispose();
-    super.dispose();
-  }
-
-  void _saveProfile() {
-    if (!_formKey.currentState!.validate()) return;
-
-    if (_gender == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select your gender'),
-        ),
-      );
-      return;
-    }
-
-    Navigator.pop<Map<String, String>>(
-      context,
-      {
-        'fullName': _fullNameController.text.trim(),
-        'age': _ageController.text.trim(),
-        'gender': _gender!,
-      },
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFE6EFFF),
-      appBar: AppBar(
-        title: const Text(
-          'Edit Profile',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        backgroundColor: const Color(0xFFE6EFFF),
-        foregroundColor: _textColor,
-        elevation: 0,
-      ),
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              Color(0xFFB7D2F8),
-              Color(0xFFE6EFFF),
-              Colors.white,
-            ],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
-        ),
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-          child: Container(
-            padding: const EdgeInsets.all(22),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(23),
-              border: Border.all(
-                color: _skyBlue.withValues(alpha: 0.35),
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: _primary.withValues(alpha: 0.08),
-                  blurRadius: 20,
-                  offset: const Offset(0, 8),
-                ),
-              ],
-            ),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Center(
-                    child: CircleAvatar(
-                      radius: 42,
-                      backgroundColor: const Color(0xFFE8F0FF),
-                      child: Text(
-                        _getInitials(_fullNameController.text),
-                        style: const TextStyle(
-                          color: Color(0xFF246F96),
-                          fontSize: 26,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 22),
-                  const Text(
-                    'Update your details',
-                    style: TextStyle(
-                      fontSize: 21,
-                      fontWeight: FontWeight.bold,
-                      color: _textColor,
-                    ),
-                  ),
-                  const SizedBox(height: 7),
-                  const Text(
-                    'Keep your profile information up to date.',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Color(0xFF60758A),
-                    ),
-                  ),
-                  const SizedBox(height: 23),
-
-                  TextFormField(
-                    controller: _fullNameController,
-                    textCapitalization: TextCapitalization.words,
-                    decoration: _inputDecoration(
-                      label: 'Full Name',
-                      icon: Icons.person_outline,
-                    ),
-                    onChanged: (_) => setState(() {}),
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return 'Please enter your full name';
-                      }
-                      if (value.trim().length < 2) {
-                        return 'Please enter a valid name';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 18),
-
-                  TextFormField(
-                    controller: _ageController,
-                    keyboardType: TextInputType.number,
-                    decoration: _inputDecoration(
-                      label: 'Age',
-                      icon: Icons.cake_outlined,
-                    ),
-                    validator: (value) {
-                      final age = int.tryParse(value?.trim() ?? '');
-
-                      if (age == null || age < 1 || age > 120) {
-                        return 'Enter an age between 1 and 120';
-                      }
-
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 18),
-
-                  DropdownButtonFormField<String>(
-                    initialValue: _gender,
-                    decoration: _inputDecoration(
-                      label: 'Gender',
-                      icon: Icons.people_outline,
-                    ),
-                    items: _genders.map((gender) {
-                      return DropdownMenuItem(
-                        value: gender,
-                        child: Text(gender),
-                      );
-                    }).toList(),
-                    onChanged: (value) {
-                      setState(() => _gender = value);
-                    },
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please select your gender';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 27),
-
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: _saveProfile,
-                      icon: const Icon(Icons.check_rounded),
-                      label: const Text('Save Changes'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _primary,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  InputDecoration _inputDecoration({
-    required String label,
-    required IconData icon,
-  }) {
-    return InputDecoration(
-      labelText: label,
-      labelStyle: const TextStyle(
-        color: Color(0xFF60758A),
-      ),
-      prefixIcon: Icon(icon, color: _primary),
-      filled: true,
-      fillColor: const Color(0xFFF5F8FF),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(
-          color: Color(0xFFE2E8F0),
-        ),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(
-          color: Color(0xFFE2E8F0),
-        ),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(
-          color: _skyBlue,
-          width: 1.5,
-        ),
-      ),
     );
   }
 }

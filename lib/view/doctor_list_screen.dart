@@ -19,11 +19,11 @@ class DoctorListScreen extends StatefulWidget {
 }
 
 class _DoctorListScreenState extends State<DoctorListScreen> {
-  static const Color _background = Color(0xFFE6EFFF);
-  static const Color _primary = Color(0xFF246F96);
-  static const Color _heading = Color(0xFF173B5E);
-  static const Color _lightBlue = Color(0xFFE8F0FF);
-  static const Color _muted = Color(0xFF7892B0);
+  static const Color _background = Color(0xFFEAF8FB);
+  static const Color _primary = Color(0xFF174A5B);
+  static const Color _heading = Color(0xFF174A5B);
+  static const Color _lightBlue = Color(0xFFDDF4F8);
+  static const Color _muted = Color(0xFF648994);
 
   final TextEditingController _searchController =
       TextEditingController();
@@ -108,8 +108,8 @@ class _DoctorListScreenState extends State<DoctorListScreen> {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              Color(0xFFE6EFFF),
-              Color(0xFFF5F8FF),
+              Color(0xFFEAF8FB),
+              Color(0xFFF4FCFD),
               Colors.white,
             ],
           ),
@@ -130,7 +130,7 @@ class _DoctorListScreenState extends State<DoctorListScreen> {
                         borderRadius: BorderRadius.circular(13),
                         boxShadow: [
                           BoxShadow(
-                            color: _heading.withValues(alpha: 0.05),
+                            color: _heading.withValues(alpha: 0.07),
                             blurRadius: 8,
                             offset: const Offset(0, 3),
                           ),
@@ -183,14 +183,14 @@ class _DoctorListScreenState extends State<DoctorListScreen> {
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                       colors: [
-                        Color(0xFF246F96),
-                        Color(0xFF8DB8F5),
+                        Color(0xFF174A5B),
+                        Color(0xFF267F96),
                       ],
                     ),
                     borderRadius: BorderRadius.circular(22),
                     boxShadow: [
                       BoxShadow(
-                        color: _primary.withValues(alpha: 0.16),
+                        color: _primary.withValues(alpha: 0.18),
                         blurRadius: 12,
                         offset: const Offset(0, 5),
                       ),
@@ -235,7 +235,7 @@ class _DoctorListScreenState extends State<DoctorListScreen> {
                         ),
                         child: const Icon(
                           Icons.medical_services_rounded,
-                          color: Colors.white,
+                          color: Color(0xFF7ED3E8),
                           size: 35,
                         ),
                       ),
@@ -261,12 +261,12 @@ class _DoctorListScreenState extends State<DoctorListScreen> {
                     color: isDark ? colors.surface : Colors.white,
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
-                      color: const Color(0xFFB7D2F8)
-                          .withValues(alpha: 0.7),
+                      color: const Color(0xFF7ED3E8)
+                          .withValues(alpha: 0.55),
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: _heading.withValues(alpha: 0.04),
+                        color: _heading.withValues(alpha: 0.05),
                         blurRadius: 10,
                         offset: const Offset(0, 3),
                       ),
@@ -453,11 +453,11 @@ class _DoctorListCard extends StatelessWidget {
         color: isDark ? colors.surface : Colors.white,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: const Color(0xFFB7D2F8).withValues(alpha: 0.65),
+          color: const Color(0xFF7ED3E8).withValues(alpha: 0.45),
         ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF173B5E).withValues(alpha: 0.05),
+            color: const Color(0xFF174A5B).withValues(alpha: 0.06),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -481,17 +481,17 @@ class _DoctorListCard extends StatelessWidget {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: const Color(0xFFB7D2F8),
+                      color: const Color(0xFF7ED3E8),
                       width: 1.5,
                     ),
                   ),
                   child: CircleAvatar(
                     radius: 34,
-                    backgroundColor: const Color(0xFFE8F0FF),
+                    backgroundColor: const Color(0xFFEAF8FB),
                     child: Text(
                       _getInitials(doctor.name),
                       style: const TextStyle(
-                        color: Color(0xFF246F96),
+                        color: Color(0xFF174A5B),
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
                       ),
@@ -512,7 +512,7 @@ class _DoctorListCard extends StatelessWidget {
                         style: TextStyle(
                           color: isDark
                               ? colors.onSurface
-                              : const Color(0xFF173B5E),
+                              : const Color(0xFF174A5B),
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                         ),
@@ -525,7 +525,7 @@ class _DoctorListCard extends StatelessWidget {
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
-                            color: Color(0xFF7892B0),
+                            color: Color(0xFF648994),
                             fontSize: 13,
                           ),
                         ),
@@ -538,7 +538,7 @@ class _DoctorListCard extends StatelessWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
-                            color: Color(0xFF7892B0),
+                            color: Color(0xFF648994),
                             fontSize: 12,
                           ),
                         ),
@@ -553,7 +553,7 @@ class _DoctorListCard extends StatelessWidget {
                         ),
                         decoration: BoxDecoration(
                           color: doctor.isAvailable
-                              ? const Color(0xFFE6F6EC)
+                              ? const Color(0xFFE5F7F0)
                               : const Color(0xFFFFE9E9),
                           borderRadius: BorderRadius.circular(20),
                         ),
@@ -597,12 +597,12 @@ class _DoctorListCard extends StatelessWidget {
                   height: 32,
                   width: 32,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFE8F0FF),
+                    color: const Color(0xFFEAF8FB),
                     borderRadius: BorderRadius.circular(11),
                   ),
                   child: const Icon(
                     Icons.chevron_right_rounded,
-                    color: Color(0xFF246F96),
+                    color: Color(0xFF174A5B),
                     size: 24,
                   ),
                 ),
@@ -628,8 +628,8 @@ class _DoctorMessage extends StatelessWidget {
     this.onAction,
   });
 
-  static const Color _primary = Color(0xFF246F96);
-  static const Color _heading = Color(0xFF173B5E);
+  static const Color _primary = Color(0xFF174A5B);
+  static const Color _heading = Color(0xFF174A5B);
 
   @override
   Widget build(BuildContext context) {
@@ -644,7 +644,7 @@ class _DoctorMessage extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: const Color(0xFFB7D2F8).withValues(alpha: 0.65),
+          color: const Color(0xFF7ED3E8).withValues(alpha: 0.45),
         ),
       ),
       child: Column(
@@ -653,7 +653,7 @@ class _DoctorMessage extends StatelessWidget {
             height: 65,
             width: 65,
             decoration: BoxDecoration(
-              color: const Color(0xFFE8F0FF),
+              color: const Color(0xFFEAF8FB),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Icon(

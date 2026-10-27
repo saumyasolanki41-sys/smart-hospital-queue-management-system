@@ -1,3 +1,4 @@
+
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -25,10 +26,13 @@ class OtpVerificationScreen extends StatefulWidget {
 
 class _OtpVerificationScreenState
     extends State<OtpVerificationScreen> {
-  static const Color _blue = Color(0xFF246F96);
-  static const Color _navy = Color(0xFF173B5E);
-  static const Color _darkButton =
-      Color.fromARGB(255, 14, 18, 33);
+  static const Color _blue = Color(0xFF24758B);
+  static const Color _navy = Color(0xFF174A5B);
+  static const Color _darkButton = Color(0xFF174A5B);
+  // static const Color _accent = Color(0xFF7ED3E8);
+  static const Color _muted = Color(0xFF648994);
+  static const Color _fieldColor = Color(0xFFF1FBFE);
+  static const Color _borderColor = Color(0xFFD2EAF0);
 
   static const int _resendCooldown = 60;
 
@@ -103,9 +107,8 @@ class _OtpVerificationScreenState
       ..showSnackBar(
         SnackBar(
           content: Text(message),
-          backgroundColor: isError
-              ? Colors.red.shade700
-              : const Color.fromARGB(255, 7, 22, 31),
+          backgroundColor:
+              isError ? Colors.red.shade700 : _navy,
         ),
       );
   }
@@ -129,8 +132,6 @@ class _OtpVerificationScreenState
       if (!mounted) return;
 
       if (!success) {
-        debugPrint('Resend OTP failed: ${auth.error}');
-
         _showMessage(
           'Unable to resend OTP. Please try again.',
         );
@@ -149,10 +150,7 @@ class _OtpVerificationScreenState
         'OTP request accepted. Please check your email.',
         isError: false,
       );
-    } catch (error, stackTrace) {
-      debugPrint('Resend OTP exception: $error');
-      debugPrintStack(stackTrace: stackTrace);
-
+    } catch (_) {
       if (mounted) {
         _showMessage(
           'Unable to resend OTP. Please try again.',
@@ -182,7 +180,6 @@ class _OtpVerificationScreenState
 
     try {
       if (widget.isRegistration) {
-       
         final registrationSuccess =
             await auth.verifyRegistration(
           email: widget.email,
@@ -192,10 +189,6 @@ class _OtpVerificationScreenState
         if (!mounted) return;
 
         if (!registrationSuccess) {
-          debugPrint(
-            'Registration OTP verification failed: ${auth.error}',
-          );
-
           _showMessage(
             'Registration verification failed. Please try again.',
           );
@@ -215,7 +208,6 @@ class _OtpVerificationScreenState
           (route) => false,
         );
       } else {
-       
         final loginSuccess = await auth.verifyLogin(
           otp: _otp,
         );
@@ -223,10 +215,6 @@ class _OtpVerificationScreenState
         if (!mounted) return;
 
         if (!loginSuccess) {
-          debugPrint(
-            'Login OTP verification failed: ${auth.error}',
-          );
-
           _showMessage(
             'OTP verification failed. Please check the code and try again.',
           );
@@ -241,10 +229,7 @@ class _OtpVerificationScreenState
           (route) => false,
         );
       }
-    } catch (error, stackTrace) {
-      debugPrint('OTP verification exception: $error');
-      debugPrintStack(stackTrace: stackTrace);
-
+    } catch (_) {
       if (mounted) {
         _showMessage(
           'Something went wrong. Please try again.',
@@ -286,7 +271,7 @@ class _OtpVerificationScreenState
             decoration: const InputDecoration(
               counterText: '',
               filled: true,
-              fillColor: Color(0xFFF8FAFD),
+              fillColor: _fieldColor,
               contentPadding: EdgeInsets.zero,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.zero,
@@ -294,7 +279,7 @@ class _OtpVerificationScreenState
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.zero,
                 borderSide: BorderSide(
-                  color: Color(0xFFD0D7E2),
+                  color: _borderColor,
                 ),
               ),
               focusedBorder: OutlineInputBorder(
@@ -332,7 +317,7 @@ class _OtpVerificationScreenState
         const Text(
           "Didn't receive the code? ",
           style: TextStyle(
-            color: Color.fromARGB(255, 1, 16, 27),
+            color: _muted,
             fontSize: 13,
           ),
         ),
@@ -358,7 +343,7 @@ class _OtpVerificationScreenState
                     width: 16,
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
-                      color: Color.fromARGB(255, 12, 25, 39),
+                      color: _blue,
                     ),
                   )
                 : const Text(
@@ -383,6 +368,7 @@ class _OtpVerificationScreenState
         : 'Enter the 6-digit code sent to your email to securely continue.';
 
     return Scaffold(
+      backgroundColor: const Color(0xFFEAF8FB),
       body: Container(
         width: double.infinity,
         height: double.infinity,
@@ -391,14 +377,12 @@ class _OtpVerificationScreenState
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              Color(0xFF8DB8F5),
-              Color(0xFFB7D2F8),
-              Color(0xFFE6EFFF),
+              Color(0xFFEAF8FB),
+              Color(0xFFF7FCFD),
               Colors.white,
-              Color(0xFFE8F0FF),
-              Color(0xFF9DBDF2),
+              Color(0xFFDDF4F8),
             ],
-            stops: [0.0, 0.16, 0.32, 0.55, 0.78, 1.0],
+            stops: [0.0, 0.30, 0.65, 1.0],
           ),
         ),
         child: SafeArea(
@@ -412,9 +396,13 @@ class _OtpVerificationScreenState
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.zero,
+                  border: Border.all(
+                    color: _borderColor,
+                    width: 1,
+                  ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.08),
+                      color: _navy.withValues(alpha: 0.08),
                       blurRadius: 20,
                       offset: const Offset(0, 8),
                     ),
@@ -440,7 +428,7 @@ class _OtpVerificationScreenState
                       description,
                       textAlign: TextAlign.center,
                       style: const TextStyle(
-                        color: Colors.black54,
+                        color: _muted,
                         fontSize: 14,
                         height: 1.5,
                       ),
@@ -449,7 +437,7 @@ class _OtpVerificationScreenState
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: const BoxDecoration(
-                        color: Color(0xFFF3F6FA),
+                        color: Color(0xFFDDF4F8),
                         borderRadius: BorderRadius.zero,
                       ),
                       child: Row(
@@ -488,7 +476,8 @@ class _OtpVerificationScreenState
                         style: ElevatedButton.styleFrom(
                           backgroundColor: _darkButton,
                           foregroundColor: Colors.white,
-                          disabledBackgroundColor: Colors.blueGrey,
+                          disabledBackgroundColor:
+                              const Color(0xFF648994),
                           elevation: 0,
                           shape: const RoundedRectangleBorder(
                             borderRadius: BorderRadius.zero,
@@ -564,10 +553,10 @@ class MedicalLogo extends StatelessWidget {
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  Color.fromARGB(255, 71, 127, 177),
-                  Color.fromARGB(255, 44, 70, 141),
-                  Color.fromARGB(255, 11, 37, 56),
-                  Color.fromARGB(255, 4, 15, 29),
+                  Color(0xFF7ED3E8),
+                  Color(0xFF24758B),
+                  Color(0xFF174A5B),
+                  Color(0xFF0B303D),
                 ],
               ).createShader(bounds);
             },

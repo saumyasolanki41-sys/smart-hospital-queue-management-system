@@ -18,11 +18,11 @@ class DoctorDetailsScreen extends StatefulWidget {
 }
 
 class _DoctorDetailsScreenState extends State<DoctorDetailsScreen> {
-  static const Color _primary = Color.fromARGB(255, 14, 58, 111);
-  static const Color _skyBlue = Color(0xFF8DB8F5);
-  static const Color _background = Color(0xFFE6EFFF);
-  static const Color _darkText = Color.fromARGB(255, 5, 26, 37);
-  // static const Color _muted = Color(0xFF60758A);
+  static const Color _primary =
+      Color.fromARGB(255, 126, 211, 232);
+  static const Color _skyBlue = Color(0xFF7ED3E8);
+  static const Color _background = Color(0xFFEAF8FB);
+  static const Color _darkText = Color(0xFF174A5B);
 
   Future<void> _bookToken() async {
     final tokenController = context.read<TokenController>();
@@ -84,7 +84,7 @@ class _DoctorDetailsScreenState extends State<DoctorDetailsScreen> {
             end: Alignment.bottomCenter,
             colors: [
               _background,
-              Color(0xFFF2F6FF),
+              Color(0xFFF4FCFD),
               Colors.white,
             ],
           ),
@@ -107,7 +107,7 @@ class _DoctorDetailsScreenState extends State<DoctorDetailsScreen> {
                           child: Text(
                             'Doctor Details',
                             style: TextStyle(
-                              color: _primary,
+                              color: _darkText,
                               fontSize: 23,
                               fontWeight: FontWeight.bold,
                             ),
@@ -121,7 +121,7 @@ class _DoctorDetailsScreenState extends State<DoctorDetailsScreen> {
                             borderRadius: BorderRadius.circular(15),
                             boxShadow: [
                               BoxShadow(
-                                color: _primary.withValues(alpha: 0.06),
+                                color: _primary.withValues(alpha: 0.12),
                                 blurRadius: 10,
                                 offset: const Offset(0, 3),
                               ),
@@ -129,7 +129,7 @@ class _DoctorDetailsScreenState extends State<DoctorDetailsScreen> {
                           ),
                           child: const Icon(
                             Icons.local_hospital_rounded,
-                            color: _primary,
+                            color: _darkText,
                             size: 25,
                           ),
                         ),
@@ -141,11 +141,18 @@ class _DoctorDetailsScreenState extends State<DoctorDetailsScreen> {
                     Container(
                       padding: const EdgeInsets.all(22),
                       decoration: BoxDecoration(
-                        color: _primary,
+                        gradient: const LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            Color(0xFF174A5B),
+                            Color(0xFF267F96),
+                          ],
+                        ),
                         borderRadius: BorderRadius.circular(24),
                         boxShadow: [
                           BoxShadow(
-                            color: _primary.withValues(alpha: 0.15),
+                            color: _primary.withValues(alpha: 0.22),
                             blurRadius: 14,
                             offset: const Offset(0, 5),
                           ),
@@ -196,11 +203,11 @@ class _DoctorDetailsScreenState extends State<DoctorDetailsScreen> {
                         color: isDark ? colors.surface : Colors.white,
                         borderRadius: BorderRadius.circular(24),
                         border: Border.all(
-                          color: _skyBlue.withValues(alpha: 0.35),
+                          color: _skyBlue.withValues(alpha: 0.45),
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: _primary.withValues(alpha: 0.06),
+                            color: _primary.withValues(alpha: 0.10),
                             blurRadius: 12,
                             offset: const Offset(0, 4),
                           ),
@@ -222,7 +229,7 @@ class _DoctorDetailsScreenState extends State<DoctorDetailsScreen> {
                               backgroundColor: _background,
                               child: Icon(
                                 Icons.person_rounded,
-                                color: _primary,
+                                color: _darkText,
                                 size: 58,
                               ),
                             ),
@@ -236,7 +243,7 @@ class _DoctorDetailsScreenState extends State<DoctorDetailsScreen> {
                             style: TextStyle(
                               color: isDark
                                   ? colors.onSurface
-                                  : _primary,
+                                  : _darkText,
                               fontSize: 23,
                               fontWeight: FontWeight.bold,
                             ),
@@ -257,7 +264,7 @@ class _DoctorDetailsScreenState extends State<DoctorDetailsScreen> {
                               specialization,
                               textAlign: TextAlign.center,
                               style: const TextStyle(
-                                color: _primary,
+                                color: _darkText,
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
                               ),
@@ -273,7 +280,7 @@ class _DoctorDetailsScreenState extends State<DoctorDetailsScreen> {
                             ),
                             decoration: BoxDecoration(
                               color: doctor.isAvailable
-                                  ? const Color(0xFFE6F6EC)
+                                  ? const Color(0xFFE5F7F0)
                                   : const Color(0xFFFFE9E9),
                               borderRadius: BorderRadius.circular(20),
                             ),
@@ -317,11 +324,11 @@ class _DoctorDetailsScreenState extends State<DoctorDetailsScreen> {
                         color: isDark ? colors.surface : Colors.white,
                         borderRadius: BorderRadius.circular(22),
                         border: Border.all(
-                          color: _skyBlue.withValues(alpha: 0.35),
+                          color: _skyBlue.withValues(alpha: 0.45),
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: _primary.withValues(alpha: 0.05),
+                            color: _primary.withValues(alpha: 0.09),
                             blurRadius: 10,
                             offset: const Offset(0, 3),
                           ),
@@ -334,14 +341,14 @@ class _DoctorDetailsScreenState extends State<DoctorDetailsScreen> {
                             children: [
                               Icon(
                                 Icons.info_outline_rounded,
-                                color: _primary,
+                                color: _darkText,
                                 size: 23,
                               ),
                               SizedBox(width: 10),
                               Text(
                                 'Doctor Information',
                                 style: TextStyle(
-                                  color: _primary,
+                                  color: _darkText,
                                   fontSize: 19,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -376,7 +383,7 @@ class _DoctorDetailsScreenState extends State<DoctorDetailsScreen> {
                         color: _background,
                         borderRadius: BorderRadius.circular(18),
                         border: Border.all(
-                          color: _skyBlue.withValues(alpha: 0.3),
+                          color: _skyBlue.withValues(alpha: 0.45),
                         ),
                       ),
                       child: const Row(
@@ -384,7 +391,7 @@ class _DoctorDetailsScreenState extends State<DoctorDetailsScreen> {
                         children: [
                           Icon(
                             Icons.confirmation_number_outlined,
-                            color: _primary,
+                            color: _darkText,
                             size: 23,
                           ),
                           SizedBox(width: 12),
@@ -416,7 +423,7 @@ class _DoctorDetailsScreenState extends State<DoctorDetailsScreen> {
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: _primary.withValues(alpha: 0.08),
+                      color: _primary.withValues(alpha: 0.12),
                       blurRadius: 14,
                       offset: const Offset(0, -4),
                     ),
@@ -433,7 +440,7 @@ class _DoctorDetailsScreenState extends State<DoctorDetailsScreen> {
                           ? null
                           : _bookToken,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: _primary,
+                        backgroundColor: const Color(0xFF174A5B),
                         foregroundColor: Colors.white,
                         disabledBackgroundColor: Colors.grey.shade400,
                         elevation: 2,
@@ -495,8 +502,8 @@ class _HeaderButton extends StatelessWidget {
         borderRadius: BorderRadius.circular(15),
         boxShadow: [
           BoxShadow(
-            color: const Color.fromARGB(255, 14, 18, 33)
-                .withValues(alpha: 0.06),
+            color: const Color.fromARGB(255, 126, 211, 232)
+                .withValues(alpha: 0.16),
             blurRadius: 10,
             offset: const Offset(0, 3),
           ),
@@ -506,7 +513,7 @@ class _HeaderButton extends StatelessWidget {
         onPressed: onPressed,
         icon: Icon(
           icon,
-          color: const Color.fromARGB(255, 14, 18, 33),
+          color: const Color(0xFF174A5B),
           size: 25,
         ),
       ),
@@ -519,9 +526,9 @@ class _InfoRow extends StatelessWidget {
   final String label;
   final String value;
 
-  static const Color _primary = Color.fromARGB(255, 14, 18, 33);
-  static const Color _muted = Color(0xFF60758A);
-  static const Color _background = Color(0xFFE6EFFF);
+  static const Color _primary = Color(0xFF174A5B);
+  static const Color _muted = Color(0xFF648994);
+  static const Color _background = Color(0xFFEAF8FB);
 
   const _InfoRow({
     required this.icon,

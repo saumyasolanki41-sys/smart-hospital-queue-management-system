@@ -7,6 +7,63 @@ class QueueService {
   QueueService({ApiService? apiService})
       : _apiService = apiService ?? ApiService();
 
+  static const String _duplicateBookingMessage =
+      'Token is already booked for this doctor.';
+
+  static const String _bookingErrorMessage =
+      'Unable to book your token. Please try again.';
+
+  static const String _loadTokensErrorMessage =
+      'Unable to load your tokens. Please try again.';
+
+  static const String _tokenStatusErrorMessage =
+      'Unable to load token status. Please try again.';
+
+  static const String _cancelTokenErrorMessage =
+      'Unable to cancel your token. Please try again.';
+
+  // Detect duplicate bookings without treating every HTTP 409
+  // response as a duplicate-booking error.
+  bool _isDuplicateBooking(Object error) {
+    if (error is ApiException) {
+      final code = error.code?.toLowerCase().trim();
+
+      if (code == 'already_in_queue' ||
+          code == 'already_have_active_token' ||
+          code == 'already_have_token' ||
+          code == 'duplicate_booking') {
+        return true;
+      }
+
+      return _containsDuplicateMessage(error.message);
+    }
+
+    return _containsDuplicateMessage(error.toString());
+  }
+
+  bool _containsDuplicateMessage(String message) {
+    final text = message.toLowerCase();
+
+    const duplicateIndicators = [
+      'already_in_queue',
+      'already in queue',
+      'already booked',
+      'already has an active token',
+      'already_have_active_token',
+      'already_have_token',
+      'active token exists',
+      'duplicate token',
+      'duplicate_booking',
+      'already has a token',
+      'active token already exists',
+      'you already have an active token',
+      'token already exists',
+    ];
+
+    return duplicateIndicators.any(text.contains);
+  }
+
+  // Book a queue token for the selected doctor.
   Future<TokenModel> bookToken({
     required String doctorId,
   }) async {
@@ -17,24 +74,22 @@ class QueueService {
     try {
       final response = await _apiService.post(
         '/api/queue/tokens',
-        body: {'doctorId': doctorId.trim()},
+        body: {
+          'doctorId': doctorId.trim(),
+        },
         authenticated: true,
       );
 
       final data = response['data'];
 
       if (data is! Map) {
-        throw const ApiException(
-          'Unable to book your token. Please try again.',
-        );
+        throw const ApiException(_bookingErrorMessage);
       }
 
       final tokenData = data['token'] ?? data;
 
       if (tokenData is! Map) {
-        throw const ApiException(
-          'Unable to book your token. Please try again.',
-        );
+        throw const ApiException(_bookingErrorMessage);
       }
 
       final tokenJson = Map<String, dynamic>.from(tokenData);
@@ -42,13 +97,21 @@ class QueueService {
       _copyQueueFields(data, tokenJson);
 
       return TokenModel.fromJson(tokenJson);
-    } catch (_) {
-      throw const ApiException(
-        'Unable to book your token. Please try again.',
-      );
+    } catch (error) {
+      if (_isDuplicateBooking(error)) {
+        throw const ApiException(
+          _duplicateBookingMessage,
+          statusCode: 409,
+          code: 'ALREADY_IN_QUEUE',
+        );
+      }
+
+      // Keep all other booking errors generic.
+      throw const ApiException(_bookingErrorMessage);
     }
   }
 
+  // Fetch the current patient's queue tokens.
   Future<List<TokenModel>> getMyTokens() async {
     try {
       final response = await _apiService.get(
@@ -74,30 +137,24 @@ class QueueService {
       tokens ??= response['tokens'];
 
       if (tokens is! List) {
-        throw const ApiException(
-          'Unable to load your tokens. Please try again.',
-        );
+        throw const ApiException(_loadTokensErrorMessage);
       }
 
       return tokens.whereType<Map>().map((token) {
         final tokenJson = Map<String, dynamic>.from(token);
-
         return TokenModel.fromJson(tokenJson);
       }).toList();
     } catch (_) {
-      throw const ApiException(
-        'Unable to load your tokens. Please try again.',
-      );
+      throw const ApiException(_loadTokensErrorMessage);
     }
   }
 
+  // Fetch the latest status and queue estimates for a specific token.
   Future<TokenModel> getTokenStatus(String tokenId) async {
     final id = tokenId.trim();
 
     if (id.isEmpty) {
-      throw const ApiException(
-        'Unable to load token status. Please try again.',
-      );
+      throw const ApiException(_tokenStatusErrorMessage);
     }
 
     try {
@@ -109,17 +166,13 @@ class QueueService {
       final data = response['data'];
 
       if (data is! Map) {
-        throw const ApiException(
-          'Unable to load token status. Please try again.',
-        );
+        throw const ApiException(_tokenStatusErrorMessage);
       }
 
       final tokenData = data['token'] ?? data;
 
       if (tokenData is! Map) {
-        throw const ApiException(
-          'Unable to load token status. Please try again.',
-        );
+        throw const ApiException(_tokenStatusErrorMessage);
       }
 
       final tokenJson = Map<String, dynamic>.from(tokenData);
@@ -132,8 +185,7 @@ class QueueService {
         _copyQueueFields(queueData, tokenJson);
       }
 
-      final predictionData =
-          data['prediction'] ??
+      final predictionData = data['prediction'] ??
           (queueData is Map ? queueData['prediction'] : null);
 
       if (predictionData is Map) {
@@ -143,12 +195,11 @@ class QueueService {
 
       return TokenModel.fromJson(tokenJson);
     } catch (_) {
-      throw const ApiException(
-        'Unable to load token status. Please try again.',
-      );
+      throw const ApiException(_tokenStatusErrorMessage);
     }
   }
 
+  // Copy queue and prediction values from the API response.
   void _copyQueueFields(
     Map source,
     Map<String, dynamic> tokenJson,
@@ -179,13 +230,12 @@ class QueueService {
     }
   }
 
+  // Cancel an existing queue token.
   Future<void> cancelToken(String tokenId) async {
     final id = tokenId.trim();
 
     if (id.isEmpty) {
-      throw const ApiException(
-        'Unable to cancel your token. Please try again.',
-      );
+      throw const ApiException(_cancelTokenErrorMessage);
     }
 
     try {
@@ -194,9 +244,7 @@ class QueueService {
         authenticated: true,
       );
     } catch (_) {
-      throw const ApiException(
-        'Unable to cancel your token. Please try again.',
-      );
+      throw const ApiException(_cancelTokenErrorMessage);
     }
   }
 }

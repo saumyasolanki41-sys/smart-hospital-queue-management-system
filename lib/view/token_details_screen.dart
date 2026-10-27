@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/token_model.dart';
@@ -19,15 +20,10 @@ class TokenDetailsScreen extends StatefulWidget {
 class _TokenDetailsScreenState extends State<TokenDetailsScreen> {
   bool _isCancelling = false;
 
-  static const Color primaryBlue =
-      Color.fromARGB(255, 14, 18, 33);
-
-  static const Color darkBlue =
-      Color.fromARGB(255, 5, 26, 37);
-
-  static const Color backgroundColor = Color(0xFFE8F0FF);
-
-  static const Color accentBlue = Color(0xFF315B91);
+  static const Color primaryBlue = Color(0xFF174A5B);
+  static const Color darkBlue = Color(0xFF123743);
+  static const Color backgroundColor = Color(0xFFEAF8FB);
+  static const Color accentBlue = Color(0xFF24758B);
 
   String _displayValue(
     dynamic value, [
@@ -56,7 +52,7 @@ class _TokenDetailsScreenState extends State<TokenDetailsScreen> {
       SnackBar(
         content: Text(message),
         backgroundColor:
-            isError ? Colors.red : Colors.green,
+            isError ? Colors.red.shade700 : accentBlue,
       ),
     );
   }
@@ -91,9 +87,7 @@ class _TokenDetailsScreenState extends State<TokenDetailsScreen> {
         normalized == 'scheduled';
   }
 
-  TokenModel _getCurrentToken(
-    TokenController controller,
-  ) {
+  TokenModel _getCurrentToken(TokenController controller) {
     for (final token in controller.tokens) {
       if (token.id.trim() == widget.token.id.trim()) {
         return token;
@@ -173,8 +167,7 @@ class _TokenDetailsScreenState extends State<TokenDetailsScreen> {
     });
 
     try {
-      final tokenController =
-          context.read<TokenController>();
+      final tokenController = context.read<TokenController>();
 
       final success = await tokenController.cancelToken(
         widget.token.id,
@@ -184,7 +177,6 @@ class _TokenDetailsScreenState extends State<TokenDetailsScreen> {
 
       if (success) {
         _showMessage('Token cancelled successfully.');
-
         Navigator.pop(context, true);
       } else {
         _showMessage(
@@ -209,8 +201,7 @@ class _TokenDetailsScreenState extends State<TokenDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final tokenController =
-        context.watch<TokenController>();
+    final tokenController = context.watch<TokenController>();
 
     final currentToken = _getCurrentToken(tokenController);
 
@@ -225,7 +216,6 @@ class _TokenDetailsScreenState extends State<TokenDetailsScreen> {
     );
 
     final statusColor = _statusColor(status);
-
     final canCancel = _canCancel(status);
 
     final isCancelling =
@@ -284,20 +274,16 @@ class _TokenDetailsScreenState extends State<TokenDetailsScreen> {
                 ),
         ),
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(
-            20,
-            12,
-            20,
-            28,
-          ),
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
           children: [
             Container(
               padding: const EdgeInsets.all(26),
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
                   colors: [
-                    Color.fromARGB(255, 14, 18, 33),
-                    Color(0xFF315B91),
+                    Color(0xFF174A5B),
+                    Color(0xFF24758B),
+                    Color(0xFF31A8B9),
                   ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
@@ -317,11 +303,11 @@ class _TokenDetailsScreenState extends State<TokenDetailsScreen> {
                     height: 76,
                     width: 76,
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(
-                        alpha: 0.18,
+                      color: Colors.white.withValues(alpha: 0.18),
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.22),
                       ),
-                      borderRadius:
-                          BorderRadius.circular(24),
                     ),
                     child: const Icon(
                       Icons.confirmation_number_outlined,
@@ -341,9 +327,7 @@ class _TokenDetailsScreenState extends State<TokenDetailsScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    _displayValue(
-                      currentToken.tokenNumber,
-                    ),
+                    _displayValue(currentToken.tokenNumber),
                     textAlign: TextAlign.center,
                     style: const TextStyle(
                       color: Colors.white,
@@ -359,8 +343,7 @@ class _TokenDetailsScreenState extends State<TokenDetailsScreen> {
                     ),
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius:
-                          BorderRadius.circular(30),
+                      borderRadius: BorderRadius.circular(30),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -413,16 +396,12 @@ class _TokenDetailsScreenState extends State<TokenDetailsScreen> {
             _InfoCard(
               icon: Icons.person_outline,
               title: 'Doctor',
-              value: _displayValue(
-                currentToken.doctorName,
-              ),
+              value: _displayValue(currentToken.doctorName),
             ),
             _InfoCard(
               icon: Icons.local_hospital_outlined,
               title: 'Department',
-              value: _displayValue(
-                currentToken.departmentName,
-              ),
+              value: _displayValue(currentToken.departmentName),
             ),
             _InfoCard(
               icon: Icons.people_outline,
@@ -440,9 +419,8 @@ class _TokenDetailsScreenState extends State<TokenDetailsScreen> {
                 width: double.infinity,
                 height: 54,
                 child: FilledButton.icon(
-                  onPressed: isCancelling
-                      ? null
-                      : _confirmCancellation,
+                  onPressed:
+                      isCancelling ? null : _confirmCancellation,
                   icon: isCancelling
                       ? const SizedBox(
                           height: 20,
@@ -452,13 +430,9 @@ class _TokenDetailsScreenState extends State<TokenDetailsScreen> {
                             color: Colors.white,
                           ),
                         )
-                      : const Icon(
-                          Icons.cancel_outlined,
-                        ),
+                      : const Icon(Icons.cancel_outlined),
                   label: Text(
-                    isCancelling
-                        ? 'Cancelling...'
-                        : 'Cancel Token',
+                    isCancelling ? 'Cancelling...' : 'Cancel Token',
                     style: const TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.bold,
@@ -467,11 +441,9 @@ class _TokenDetailsScreenState extends State<TokenDetailsScreen> {
                   style: FilledButton.styleFrom(
                     backgroundColor: Colors.red.shade600,
                     foregroundColor: Colors.white,
-                    disabledBackgroundColor:
-                        Colors.red.shade200,
+                    disabledBackgroundColor: Colors.red.shade200,
                     shape: RoundedRectangleBorder(
-                      borderRadius:
-                          BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(16),
                     ),
                   ),
                 ),
@@ -485,9 +457,7 @@ class _TokenDetailsScreenState extends State<TokenDetailsScreen> {
                 onPressed: isCancelling
                     ? null
                     : () => Navigator.pop(context),
-                icon: const Icon(
-                  Icons.arrow_back_rounded,
-                ),
+                icon: const Icon(Icons.arrow_back_rounded),
                 label: const Text(
                   'Back',
                   style: TextStyle(
@@ -496,14 +466,14 @@ class _TokenDetailsScreenState extends State<TokenDetailsScreen> {
                   ),
                 ),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: primaryBlue,
-                  side: const BorderSide(
-                    color: primaryBlue,
+                  foregroundColor:
+                      isDark ? colors.onSurface : primaryBlue,
+                  side: BorderSide(
+                    color: isDark ? colors.outline : primaryBlue,
                     width: 1.3,
                   ),
                   shape: RoundedRectangleBorder(
-                    borderRadius:
-                        BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(16),
                   ),
                 ),
               ),
@@ -526,11 +496,9 @@ class _InfoCard extends StatelessWidget {
     required this.value,
   });
 
-  static const Color darkBlue =
-      Color.fromARGB(255, 5, 26, 37);
-
-  static const Color accentBlue =
-      Color(0xFF315B91);
+  static const Color darkBlue = Color(0xFF123743);
+  static const Color accentBlue = Color(0xFF24758B);
+  static const Color borderColor = Color(0xFFD2EAF0);
 
   @override
   Widget build(BuildContext context) {
@@ -546,14 +514,10 @@ class _InfoCard extends StatelessWidget {
         vertical: 15,
       ),
       decoration: BoxDecoration(
-        color: isDark
-            ? colors.surfaceContainer
-            : Colors.white,
+        color: isDark ? colors.surfaceContainer : Colors.white,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: isDark
-              ? colors.outlineVariant
-              : const Color(0xFFE2E8F0),
+          color: isDark ? colors.outlineVariant : borderColor,
         ),
         boxShadow: [
           BoxShadow(
@@ -569,7 +533,7 @@ class _InfoCard extends StatelessWidget {
             height: 48,
             width: 48,
             decoration: BoxDecoration(
-              color: const Color(0xFFE8F0FF),
+              color: const Color(0xFFDDF4F8),
               borderRadius: BorderRadius.circular(15),
             ),
             child: Icon(
@@ -581,13 +545,12 @@ class _InfoCard extends StatelessWidget {
           const SizedBox(width: 14),
           Expanded(
             child: Column(
-              crossAxisAlignment:
-                  CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   title,
                   style: const TextStyle(
-                    color: Color(0xFF60758A),
+                    color: Color(0xFF648994),
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
                   ),
@@ -596,9 +559,7 @@ class _InfoCard extends StatelessWidget {
                 Text(
                   value,
                   style: TextStyle(
-                    color: isDark
-                        ? colors.onSurface
-                        : darkBlue,
+                    color: isDark ? colors.onSurface : darkBlue,
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
                   ),

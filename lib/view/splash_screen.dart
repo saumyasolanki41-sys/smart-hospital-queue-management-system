@@ -1,10 +1,13 @@
+
 import 'package:flutter/material.dart';
 
 class SplashScreen extends StatelessWidget {
   const SplashScreen({super.key});
 
-  static const Color _primary = Color(0xFF123477);
-  static const Color _muted = Color(0xFF526A87);
+  static const Color _primary = Color.fromARGB(255, 126, 211, 232);
+  static const Color _deepBlue = Color(0xFF267D98);
+  static const Color _muted = Color(0xFF527786);
+  static const Color _darkText = Color(0xFF173B4D);
 
   Future<void> _navigate(BuildContext context, String route) async {
     final navigator = Navigator.of(context);
@@ -39,12 +42,12 @@ class SplashScreen extends StatelessWidget {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              Color(0xFF8DB8F5),
-              Color(0xFFB7D2F8),
-              Color(0xFFE6EFFF),
+              Color.fromARGB(255, 126, 211, 232),
+              Color.fromARGB(255, 160, 225, 237),
+              Color(0xFFE8F8FC),
               Colors.white,
-              Color(0xFFE8F0FF),
-              Color(0xFF9DBDF2),
+              Color(0xFFDDF4F9),
+              Color.fromARGB(255, 126, 211, 232),
             ],
             stops: [0.0, 0.16, 0.32, 0.55, 0.78, 1.0],
           ),
@@ -61,8 +64,8 @@ class SplashScreen extends StatelessWidget {
                   shape: BoxShape.circle,
                   gradient: RadialGradient(
                     colors: [
-                      const Color(0xFF669BE8).withValues(alpha: 0.85),
-                      const Color(0xFF8FB8F2).withValues(alpha: 0.55),
+                      _primary.withValues(alpha: 0.85),
+                      const Color(0xFFB1E8F3).withValues(alpha: 0.55),
                       Colors.white.withValues(alpha: 0),
                     ],
                   ),
@@ -86,7 +89,7 @@ class SplashScreen extends StatelessWidget {
                             shape: BoxShape.circle,
                             boxShadow: [
                               BoxShadow(
-                                color: const Color.fromARGB(255, 6, 27, 52)
+                                color: const Color(0xFF267D98)
                                     .withValues(alpha: 0.20),
                                 blurRadius: 25,
                                 spreadRadius: 3,
@@ -101,9 +104,9 @@ class SplashScreen extends StatelessWidget {
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                             colors: [
-                              Color.fromARGB(255, 50, 111, 181),
-                              Color.fromARGB(255, 9, 55, 107),
-                              Color.fromARGB(255, 8, 23, 66),
+                              Color(0xFFB1EAF5),
+                              Color.fromARGB(255, 126, 211, 232),
+                              Color(0xFF267D98),
                             ],
                           ).createShader(bounds),
                           child: const Icon(
@@ -128,7 +131,7 @@ class SplashScreen extends StatelessWidget {
                       fontSize: 34,
                       fontWeight: FontWeight.w700,
                       fontFamily: 'sans-serif',
-                      color: _primary,
+                      color: _deepBlue,
                       height: 1,
                     ),
                   ),
@@ -139,7 +142,7 @@ class SplashScreen extends StatelessWidget {
                       fontSize: 52,
                       fontWeight: FontWeight.w900,
                       fontFamily: 'sans-serif',
-                      color: _primary,
+                      color: _darkText,
                       letterSpacing: -1.5,
                       height: 1,
                     ),
@@ -164,7 +167,7 @@ class SplashScreen extends StatelessWidget {
                       child: ElevatedButton(
                         onPressed: () => _navigate(context, '/signup'),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: _primary,
+                          backgroundColor: _deepBlue,
                           foregroundColor: Colors.white,
                           elevation: 0,
                           shape: RoundedRectangleBorder(
@@ -199,7 +202,7 @@ class SplashScreen extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.bold,
-                            color: _primary,
+                            color: _deepBlue,
                             decoration: TextDecoration.underline,
                           ),
                         ),

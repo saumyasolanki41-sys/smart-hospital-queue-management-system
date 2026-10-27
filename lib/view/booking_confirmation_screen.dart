@@ -10,11 +10,12 @@ class BookingConfirmationScreen extends StatelessWidget {
     required this.token,
   });
 
-  static const Color _primary = Color(0xFF246F96);
-  static const Color _background = Color(0xFFE6EFFF);
-  static const Color _heading = Color(0xFF173B5E);
-  static const Color _lightBlue = Color(0xFFB7D2F8);
-  static const Color _muted = Color(0xFF7892B0);
+  static const Color _primary =
+      Color.fromARGB(255, 126, 211, 232);
+  static const Color _background = Color(0xFFEAF8FB);
+  static const Color _heading = Color(0xFF174A5B);
+  static const Color _lightBlue = Color(0xFFC8EBF2);
+  static const Color _muted = Color(0xFF648994);
 
   String _formatDate(DateTime? date) {
     if (date == null) return 'Not available';
@@ -80,8 +81,8 @@ class BookingConfirmationScreen extends StatelessWidget {
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
               colors: [
-                Color(0xFFE6EFFF),
-                Color(0xFFF5F8FF),
+                Color(0xFFEAF8FB),
+                Color(0xFFF5FCFD),
                 Colors.white,
               ],
             ),
@@ -90,7 +91,6 @@ class BookingConfirmationScreen extends StatelessWidget {
             child: ListView(
               padding: const EdgeInsets.fromLTRB(22, 24, 22, 28),
               children: [
-            
                 Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 22,
@@ -101,14 +101,14 @@ class BookingConfirmationScreen extends StatelessWidget {
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                       colors: [
-                        Color(0xFF246F96),
-                        Color(0xFF8DB8F5),
+                        Color(0xFF174A5B),
+                        Color(0xFF287F94),
                       ],
                     ),
                     borderRadius: BorderRadius.circular(24),
                     boxShadow: [
                       BoxShadow(
-                        color: _primary.withValues(alpha: 0.18),
+                        color: _primary.withValues(alpha: 0.25),
                         blurRadius: 15,
                         offset: const Offset(0, 6),
                       ),
@@ -123,13 +123,13 @@ class BookingConfirmationScreen extends StatelessWidget {
                           color: Colors.white.withValues(alpha: 0.18),
                           shape: BoxShape.circle,
                           border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.5),
+                            color: _primary.withValues(alpha: 0.8),
                             width: 2,
                           ),
                         ),
                         child: const Icon(
                           Icons.check_circle_rounded,
-                          color: Colors.white,
+                          color: _primary,
                           size: 62,
                         ),
                       ),
@@ -143,7 +143,6 @@ class BookingConfirmationScreen extends StatelessWidget {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      const SizedBox(height: 10),
                       Text(
                         'Your hospital queue token has been generated successfully.',
                         textAlign: TextAlign.center,
@@ -159,14 +158,13 @@ class BookingConfirmationScreen extends StatelessWidget {
 
                 const SizedBox(height: 25),
 
-             
                 Container(
                   padding: const EdgeInsets.all(22),
                   decoration: BoxDecoration(
                     color: isDark ? colors.surface : Colors.white,
                     borderRadius: BorderRadius.circular(24),
                     border: Border.all(
-                      color: _lightBlue.withValues(alpha: 0.6),
+                      color: _lightBlue.withValues(alpha: 0.85),
                     ),
                     boxShadow: [
                       BoxShadow(
@@ -194,7 +192,7 @@ class BookingConfirmationScreen extends StatelessWidget {
                         token.tokenNumber.toString(),
                         textAlign: TextAlign.center,
                         style: const TextStyle(
-                          color: _primary,
+                          color: _heading,
                           fontSize: 52,
                           fontWeight: FontWeight.bold,
                         ),
@@ -210,6 +208,9 @@ class BookingConfirmationScreen extends StatelessWidget {
                         decoration: BoxDecoration(
                           color: _background,
                           borderRadius: BorderRadius.circular(25),
+                          border: Border.all(
+                            color: _lightBlue,
+                          ),
                         ),
                         child: Text(
                           _statusText(token.status),
@@ -291,7 +292,6 @@ class BookingConfirmationScreen extends StatelessWidget {
 
                 const SizedBox(height: 22),
 
-             
                 Container(
                   padding: const EdgeInsets.all(17),
                   decoration: BoxDecoration(
@@ -300,7 +300,7 @@ class BookingConfirmationScreen extends StatelessWidget {
                         : Colors.white,
                     borderRadius: BorderRadius.circular(18),
                     border: Border.all(
-                      color: _lightBlue.withValues(alpha: 0.7),
+                      color: _lightBlue.withValues(alpha: 0.85),
                     ),
                   ),
                   child: const Row(
@@ -308,7 +308,7 @@ class BookingConfirmationScreen extends StatelessWidget {
                     children: [
                       Icon(
                         Icons.info_outline_rounded,
-                        color: _primary,
+                        color: _heading,
                         size: 25,
                       ),
                       SizedBox(width: 12),
@@ -329,7 +329,6 @@ class BookingConfirmationScreen extends StatelessWidget {
 
                 const SizedBox(height: 26),
 
-             
                 SizedBox(
                   height: 56,
                   child: ElevatedButton(
@@ -404,9 +403,10 @@ class _DetailRow extends StatelessWidget {
   final String label;
   final String value;
 
-  static const Color _primary = Color(0xFF246F96);
-  static const Color _heading = Color(0xFF173B5E);
-  static const Color _muted = Color(0xFF7892B0);
+  // static const Color _primary =
+  //     Color.fromARGB(255, 126, 211, 232);
+  static const Color _heading = Color(0xFF174A5B);
+  static const Color _muted = Color(0xFF648994);
 
   const _DetailRow({
     required this.icon,
@@ -427,12 +427,12 @@ class _DetailRow extends StatelessWidget {
           height: 39,
           width: 39,
           decoration: BoxDecoration(
-            color: const Color(0xFFE8F0FF),
+            color: const Color(0xFFEAF8FB),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Icon(
             icon,
-            color: _primary,
+            color: _heading,
             size: 21,
           ),
         ),

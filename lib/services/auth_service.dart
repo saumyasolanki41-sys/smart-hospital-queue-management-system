@@ -16,6 +16,7 @@ class AuthService {
 
   String? get challengeId => _challengeId;
 
+
   Future<void> register({
     required String name,
     required String email,
@@ -40,6 +41,7 @@ class AuthService {
     );
   }
 
+
   Future<UserModel> verifyRegistration({
     required String email,
     required String otp,
@@ -53,12 +55,15 @@ class AuthService {
 
     if (data is! Map || data['user'] is! Map) {
       throw const ApiException(
-        'Registration response did not contain user details.',
+        'Unable to complete registration. Please try again.',
       );
     }
 
-    final accessToken =
-        data['accessToken'] ??
+    final userData = Map<String, dynamic>.from(
+      data['user'] as Map,
+    );
+
+    final accessToken = data['accessToken'] ??
         data['access_token'] ??
         data['token'];
 
@@ -66,10 +71,9 @@ class AuthService {
       await _storageService.saveAccessToken(accessToken.trim());
     }
 
-    return UserModel.fromJson(
-      Map<String, dynamic>.from(data['user'] as Map),
-    );
+    return UserModel.fromJson(userData);
   }
+
 
   Future<void> login({
     required String email,
@@ -100,20 +104,21 @@ class AuthService {
 
     if (data is! Map) {
       throw const ApiException(
-        'Login response did not contain challenge details.',
+        'Unable to complete login. Please try again.',
       );
     }
 
     final challenge = data['challengeId'];
 
-    if (challenge is! String || challenge.isEmpty) {
+    if (challenge is! String || challenge.trim().isEmpty) {
       throw const ApiException(
-        'Login response did not contain a valid challenge ID.',
+        'Unable to complete login. Please try again.',
       );
     }
 
-    _challengeId = challenge;
+    _challengeId = challenge.trim();
   }
+
 
   Future<UserModel> verifyLogin({
     required String otp,
@@ -135,7 +140,7 @@ class AuthService {
 
     if (data is! Map || data['user'] is! Map) {
       throw const ApiException(
-        'Login response did not contain user details.',
+        'Unable to complete login verification. Please try again.',
       );
     }
 
@@ -148,25 +153,41 @@ class AuthService {
     return user;
   }
 
+
   Future<UserModel> loginWithGoogle({
     required String idToken,
   }) async {
+    final trimmedIdToken = idToken.trim();
+
+    if (trimmedIdToken.isEmpty) {
+      throw const ApiException(
+        'Google authentication failed. Please try again.',
+      );
+    }
+
     final response = await _apiService.loginWithGoogle(
-      idToken: idToken,
+      idToken: trimmedIdToken,
     );
 
     final data = response['data'];
 
     if (data is! Map || data['user'] is! Map) {
       throw const ApiException(
-        'Google login response did not contain user details.',
+        'Google authentication failed. Please try again.',
       );
     }
 
-    return UserModel.fromJson(
-      Map<String, dynamic>.from(data['user'] as Map),
+    final userData = Map<String, dynamic>.from(
+      data['user'] as Map,
     );
+
+    final user = UserModel.fromJson(userData);
+
+    _challengeId = null;
+
+    return user;
   }
+
 
   Future<UserModel?> getCurrentUser() async {
     final hasToken = await _storageService.hasAccessToken();
@@ -177,11 +198,12 @@ class AuthService {
 
     try {
       final response = await _apiService.getCurrentUser();
+
       final data = response['data'];
 
       if (data is! Map || data['user'] is! Map) {
         throw const ApiException(
-          'Current-user response did not contain user details.',
+          'Unable to retrieve your account. Please try again.',
         );
       }
 
@@ -197,6 +219,7 @@ class AuthService {
       rethrow;
     }
   }
+
 
   Future<void> logout() async {
     _challengeId = null;

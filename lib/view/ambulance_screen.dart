@@ -1,9 +1,12 @@
+
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:provider/provider.dart';
 import '../models/ambulance_request_model.dart';
 import '../controller/ambulance_controller.dart';
+// import 'package:flutter_map/flutter_map.dart';
+// import 'package:latlong2/latlong.dart';
 
 class AmbulanceScreen extends StatefulWidget {
   const AmbulanceScreen({super.key});
@@ -13,11 +16,11 @@ class AmbulanceScreen extends StatefulWidget {
 }
 
 class _AmbulanceScreenState extends State<AmbulanceScreen> {
-  static const Color _primary = Color.fromARGB(255, 3, 38, 57);
-  static const Color _background = Color(0xFFE6EFFF);
-  static const Color _heading = Color.fromARGB(255, 17, 50, 83);
+  static const Color _primary = Color.fromARGB(255, 126, 211, 232);
+  static const Color _background = Color(0xFFF0FAFC);
+  static const Color _heading = Color(0xFF173B4D);
   static const Color _cardColor = Color(0xFFFFFFFF);
-  static const Color _muted = Color(0xFF7892B0);
+  static const Color _muted = Color(0xFF668694);
 
   final _addressController = TextEditingController();
   final _phoneController = TextEditingController();
@@ -163,7 +166,6 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
           );
         }
       } catch (e) {
-      
         debugPrint('Address lookup failed: $e');
 
         if (mounted) {
@@ -176,7 +178,6 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
 
       return true;
     } catch (e) {
-  
       debugPrint('Getting current location failed: $e');
 
       if (mounted) {
@@ -249,7 +250,6 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
           'Ambulance request submitted successfully.',
         );
       } else {
-      
         _showMessage(
           'Unable to submit ambulance request. Please try again.',
         );
@@ -292,7 +292,6 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
       if (!mounted) return;
 
       if (controller.error != null) {
-    
         _showMessage(
           'Unable to refresh ETA. Please try again.',
         );
@@ -332,9 +331,8 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor:
-                  const Color.fromARGB(255, 14, 18, 33),
-              foregroundColor: Colors.white,
+              backgroundColor: _primary,
+              foregroundColor: _heading,
             ),
             onPressed: () =>
                 Navigator.pop(dialogContext, true),
@@ -357,7 +355,6 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
         _showMessage('Cancellation request processed.');
         await _refreshRequests();
       } else {
-     
         _showMessage(
           'Unable to cancel the request. Please try again.',
         );
@@ -441,14 +438,13 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
           physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.fromLTRB(18, 8, 18, 28),
           children: [
-      
             Container(
               padding: const EdgeInsets.all(21),
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
                   colors: [
-                    Color.fromARGB(255, 8, 42, 60),
-                    Color(0xFF8DB8F5),
+                    Color(0xFF267D98),
+                    Color.fromARGB(255, 126, 211, 232),
                   ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
@@ -456,7 +452,7 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
                 borderRadius: BorderRadius.circular(24),
                 boxShadow: [
                   BoxShadow(
-                    color: _primary.withValues(alpha: 0.20),
+                    color: _primary.withValues(alpha: 0.35),
                     blurRadius: 14,
                     offset: const Offset(0, 7),
                   ),
@@ -468,7 +464,7 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
                     height: 78,
                     width: 78,
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.17),
+                      color: Colors.white.withValues(alpha: 0.25),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: const Icon(
@@ -494,7 +490,7 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
                         Text(
                           'Request emergency transport and track your request.',
                           style: TextStyle(
-                            color: Color(0xFFE8F0FF),
+                            color: Color(0xFFF0FAFC),
                             height: 1.45,
                             fontSize: 13,
                           ),
@@ -577,9 +573,9 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
                             : 'Use My Current Location',
                       ),
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: _primary,
+                        foregroundColor: const Color(0xFF267D98),
                         side: const BorderSide(
-                          color: Color(0xFF9DBDF2),
+                          color: _primary,
                         ),
                         padding: const EdgeInsets.symmetric(
                           vertical: 14,
@@ -640,7 +636,7 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
                                 : _getCurrentLocation,
                             icon: const Icon(
                               Icons.refresh_rounded,
-                              color: _primary,
+                              color: Color(0xFF267D98),
                             ),
                           ),
                         ],
@@ -676,8 +672,7 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
                             : 'Request Ambulance',
                       ),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor:
-                            const Color.fromARGB(255, 14, 18, 33),
+                        backgroundColor: const Color(0xFF267D98),
                         foregroundColor: Colors.white,
                         disabledBackgroundColor: _muted,
                         padding: const EdgeInsets.symmetric(
@@ -719,7 +714,7 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
                         controller.isLoading ? null : _refreshRequests,
                     icon: const Icon(
                       Icons.refresh_rounded,
-                      color: _primary,
+                      color: Color(0xFF267D98),
                     ),
                   ),
                 ),
@@ -779,7 +774,7 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
     return InputDecoration(
       labelText: label,
       hintText: hint,
-      prefixIcon: Icon(icon, color: _primary),
+      prefixIcon: Icon(icon, color: const Color(0xFF267D98)),
       labelStyle: const TextStyle(color: _heading),
       hintStyle: const TextStyle(
         color: _muted,
@@ -794,19 +789,19 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
         borderSide: const BorderSide(
-          color: Color(0xFFD6E3F8),
+          color: Color(0xFFD0EAF0),
         ),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
         borderSide: const BorderSide(
-          color: Color(0xFFD6E3F8),
+          color: Color(0xFFD0EAF0),
         ),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
         borderSide: const BorderSide(
-          color: _primary,
+          color: Color(0xFF267D98),
           width: 1.5,
         ),
       ),
@@ -831,7 +826,7 @@ class _SectionHeading extends StatelessWidget {
         Text(
           title,
           style: const TextStyle(
-            color: Color(0xFF173B5E),
+            color: Color(0xFF173B4D),
             fontSize: 20,
             fontWeight: FontWeight.bold,
           ),
@@ -840,7 +835,7 @@ class _SectionHeading extends StatelessWidget {
         Text(
           subtitle,
           style: const TextStyle(
-            color: Color(0xFF7892B0),
+            color: Color(0xFF668694),
             fontSize: 13,
           ),
         ),
@@ -878,7 +873,7 @@ class _RequestCard extends StatelessWidget {
             : normalizedStatus == 'cancelled' ||
                     normalizedStatus == 'canceled'
                 ? const Color(0xFFB94D58)
-                : const Color(0xFF246F96);
+                : const Color(0xFF267D98);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
@@ -887,11 +882,11 @@ class _RequestCard extends StatelessWidget {
         color: const Color(0xFFFFFFFF),
         borderRadius: BorderRadius.circular(21),
         border: Border.all(
-          color: const Color(0xFFD6E3F8),
+          color: const Color(0xFFD0EAF0),
         ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF173B5E)
+            color: const Color(0xFF173B4D)
                 .withValues(alpha: 0.07),
             blurRadius: 10,
             offset: const Offset(0, 4),
@@ -907,12 +902,12 @@ class _RequestCard extends StatelessWidget {
                 height: 49,
                 width: 49,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFE8F0FF),
+                  color: const Color(0xFFE5F7FB),
                   borderRadius: BorderRadius.circular(15),
                 ),
                 child: const Icon(
                   Icons.airport_shuttle_rounded,
-                  color: Color(0xFF246F96),
+                  color: Color(0xFF267D98),
                   size: 28,
                 ),
               ),
@@ -921,7 +916,7 @@ class _RequestCard extends StatelessWidget {
                 child: Text(
                   'Ambulance Request',
                   style: TextStyle(
-                    color: Color(0xFF173B5E),
+                    color: Color(0xFF173B4D),
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
                   ),
@@ -953,7 +948,7 @@ class _RequestCard extends StatelessWidget {
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 16),
             child: Divider(
-              color: Color(0xFFD6E3F8),
+              color: Color(0xFFD0EAF0),
               height: 1,
             ),
           ),
@@ -962,7 +957,7 @@ class _RequestCard extends StatelessWidget {
             children: [
               const Icon(
                 Icons.location_on_outlined,
-                color: Color(0xFF8DB8F5),
+                color: Color(0xFF4FAFCB),
                 size: 21,
               ),
               const SizedBox(width: 9),
@@ -970,7 +965,7 @@ class _RequestCard extends StatelessWidget {
                 child: Text(
                   display(request.pickupAddress),
                   style: const TextStyle(
-                    color: Color(0xFF526D8C),
+                    color: Color(0xFF527786),
                     height: 1.4,
                   ),
                 ),
@@ -981,14 +976,14 @@ class _RequestCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(13),
             decoration: BoxDecoration(
-              color: const Color(0xFFE8F0FF),
+              color: const Color(0xFFE5F7FB),
               borderRadius: BorderRadius.circular(13),
             ),
             child: Row(
               children: [
                 const Icon(
                   Icons.schedule_rounded,
-                  color: Color(0xFF246F96),
+                  color: Color(0xFF267D98),
                   size: 23,
                 ),
                 const SizedBox(width: 10),
@@ -996,7 +991,7 @@ class _RequestCard extends StatelessWidget {
                   child: Text(
                     'Estimated arrival',
                     style: TextStyle(
-                      color: Color(0xFF526D8C),
+                      color: Color(0xFF527786),
                       fontSize: 13,
                     ),
                   ),
@@ -1004,7 +999,7 @@ class _RequestCard extends StatelessWidget {
                 Text(
                   eta == null ? 'Pending' : '$eta min',
                   style: const TextStyle(
-                    color: Color(0xFF173B5E),
+                    color: Color(0xFF173B4D),
                     fontSize: 15,
                     fontWeight: FontWeight.bold,
                   ),
@@ -1025,9 +1020,9 @@ class _RequestCard extends StatelessWidget {
                 ),
                 label: const Text('Refresh ETA'),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFF246F96),
+                  foregroundColor: const Color(0xFF267D98),
                   side: const BorderSide(
-                    color: Color(0xFF9DBDF2),
+                    color: Color(0xFF7ED3E8),
                   ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -1082,14 +1077,14 @@ class _EmptyState extends StatelessWidget {
           Icon(
             icon,
             size: 43,
-            color: const Color(0xFF8DB8F5),
+            color: const Color(0xFF4FAFCB),
           ),
           const SizedBox(height: 12),
           Text(
             title,
             textAlign: TextAlign.center,
             style: const TextStyle(
-              color: Color(0xFF173B5E),
+              color: Color(0xFF173B4D),
               fontSize: 17,
               fontWeight: FontWeight.bold,
             ),
@@ -1099,7 +1094,7 @@ class _EmptyState extends StatelessWidget {
             message,
             textAlign: TextAlign.center,
             style: const TextStyle(
-              color: Color(0xFF7892B0),
+              color: Color(0xFF668694),
               height: 1.45,
             ),
           ),
@@ -1107,7 +1102,12 @@ class _EmptyState extends StatelessWidget {
             const SizedBox(height: 12),
             TextButton(
               onPressed: onPressed,
-              child: Text(buttonLabel!),
+              child: Text(
+                buttonLabel!,
+                style: const TextStyle(
+                  color: Color(0xFF267D98),
+                ),
+              ),
             ),
           ],
         ],

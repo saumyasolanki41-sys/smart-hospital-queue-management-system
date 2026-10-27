@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -26,8 +27,12 @@ class _LoginScreenState extends State<LoginScreen> {
   static const String _webClientId =
       '575895479049-o8m7g8o39db8013ctntip67uh96rit64.apps.googleusercontent.com';
 
-  static const Color _blue = Color(0xFF246F96);
-  static const Color _navy = Color(0xFF173B5E);
+  static const Color _blue = Color(0xFF7ED3E8);
+  static const Color _navy = Color(0xFF174A5B);
+  static const Color _background = Color(0xFFEAF8FB);
+  static const Color _muted = Color(0xFF648994);
+  // static const Color _lightBlue = Color(0xFFDDF4F8);
+  static const Color _border = Color(0xFFD2EAF0);
 
   @override
   void dispose() {
@@ -82,14 +87,14 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         );
       } else {
-        debugPrint('Login failed: ${auth.error ?? 'No error details'}');
+        debugPrint('Login failed.');
 
         _showMessage(
           'Login failed. Please check your credentials and try again.',
         );
       }
     } catch (error, stackTrace) {
-      debugPrint('Login error: $error');
+      debugPrint('Login operation failed.');
       debugPrintStack(stackTrace: stackTrace);
 
       _showMessage('Unable to login. Please try again.');
@@ -128,8 +133,6 @@ class _LoginScreenState extends State<LoginScreen> {
       final idToken = account.authentication.idToken;
 
       if (idToken == null || idToken.isEmpty) {
-        debugPrint('Google sign-in returned an empty ID token.');
-
         _showMessage(
           'Google sign-in could not be completed. Please try again.',
         );
@@ -153,14 +156,7 @@ class _LoginScreenState extends State<LoginScreen> {
           (route) => false,
         );
       } else {
-        debugPrint(
-          'Google authentication failed: '
-          '${auth.error ?? 'No error details'}',
-        );
-
-        _showMessage(
-          'Google login failed. Please try again.',
-        );
+        _showMessage('Google login failed. Please try again.');
       }
     } on GoogleSignInException catch (error, stackTrace) {
       debugPrint('Google sign-in exception: ${error.code}');
@@ -170,16 +166,12 @@ class _LoginScreenState extends State<LoginScreen> {
         return;
       }
 
-      _showMessage(
-        'Google sign-in failed. Please try again.',
-      );
+      _showMessage('Google sign-in failed. Please try again.');
     } catch (error, stackTrace) {
-      debugPrint('Google login error: $error');
+      debugPrint('Google login operation failed.');
       debugPrintStack(stackTrace: stackTrace);
 
-      _showMessage(
-        'Google login failed. Please try again.',
-      );
+      _showMessage('Google login failed. Please try again.');
     } finally {
       if (mounted) {
         setState(() {
@@ -194,17 +186,15 @@ class _LoginScreenState extends State<LoginScreen> {
     required String hint,
     Widget? suffixIcon,
   }) {
-    const borderColor = Color(0xFFD6DEE8);
-
     return InputDecoration(
       labelText: label,
       hintText: hint,
       labelStyle: const TextStyle(
-        color: Color(0xFF60758A),
+        color: _muted,
         fontSize: 14,
       ),
       hintStyle: const TextStyle(
-        color: Color(0xFF929EAA),
+        color: Color(0xFF91AAB2),
         fontSize: 15,
       ),
       filled: true,
@@ -216,12 +206,12 @@ class _LoginScreenState extends State<LoginScreen> {
       suffixIcon: suffixIcon,
       border: const OutlineInputBorder(
         borderRadius: BorderRadius.zero,
-        borderSide: BorderSide(color: borderColor),
+        borderSide: BorderSide(color: _border),
       ),
       enabledBorder: const OutlineInputBorder(
         borderRadius: BorderRadius.zero,
         borderSide: BorderSide(
-          color: borderColor,
+          color: _border,
           width: 1.2,
         ),
       ),
@@ -253,7 +243,7 @@ class _LoginScreenState extends State<LoginScreen> {
         _isLoginLoading || _isGoogleLoading || auth.isLoading;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: _background,
       body: Container(
         width: double.infinity,
         height: double.infinity,
@@ -262,12 +252,12 @@ class _LoginScreenState extends State<LoginScreen> {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              Color(0xFF8DB8F5),
-              Color(0xFFB7D2F8),
-              Color(0xFFE6EFFF),
+              Color(0xFF7ED3E8),
+              Color(0xFFB9EAF2),
+              Color(0xFFEAF8FB),
               Colors.white,
-              Color(0xFFE8F0FF),
-              Color(0xFF9DBDF2),
+              Color(0xFFD9F3F7),
+              Color(0xFF7ED3E8),
             ],
             stops: [0.0, 0.16, 0.32, 0.55, 0.78, 1.0],
           ),
@@ -290,13 +280,10 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   decoration: BoxDecoration(
                     color: Colors.white.withValues(alpha: 0.97),
-                    border: Border.all(
-                      color: const Color(0xFFE2E8F0),
-                    ),
+                    border: Border.all(color: _border),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFF315B91)
-                            .withValues(alpha: 0.12),
+                        color: _navy.withValues(alpha: 0.10),
                         blurRadius: 24,
                         offset: const Offset(0, 10),
                       ),
@@ -313,7 +300,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           'Welcome back!',
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            color: Color.fromARGB(255, 11, 18, 26),
+                            color: _navy,
                             fontSize: 28,
                             fontWeight: FontWeight.w700,
                           ),
@@ -323,7 +310,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           'Login to your account',
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            color: Color.fromARGB(255, 37, 40, 43),
+                            color: _muted,
                             fontSize: 15,
                           ),
                         ),
@@ -385,7 +372,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 _obscurePassword
                                     ? Icons.visibility_outlined
                                     : Icons.visibility_off_outlined,
-                                color: const Color(0xFF718096),
+                                color: _muted,
                                 size: 21,
                               ),
                             ),
@@ -408,8 +395,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                       'Password recovery is not connected yet.',
                                     ),
                             style: TextButton.styleFrom(
-                              foregroundColor:
-                                  const Color.fromARGB(255, 11, 12, 26),
+                              foregroundColor: _navy,
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 0,
                                 vertical: 8,
@@ -424,8 +410,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           child: ElevatedButton(
                             onPressed: isLoading ? null : _login,
                             style: ElevatedButton.styleFrom(
-                              backgroundColor:
-                                  const Color.fromARGB(255, 14, 18, 33),
+                              backgroundColor: _navy,
                               foregroundColor: Colors.white,
                               elevation: 1,
                               shape: const RoundedRectangleBorder(
@@ -454,9 +439,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         const Row(
                           children: [
                             Expanded(
-                              child: Divider(
-                                color: Color(0xFFDDE3EA),
-                              ),
+                              child: Divider(color: _border),
                             ),
                             Padding(
                               padding: EdgeInsets.symmetric(
@@ -465,15 +448,13 @@ class _LoginScreenState extends State<LoginScreen> {
                               child: Text(
                                 'Or continue with',
                                 style: TextStyle(
-                                  color: Color.fromARGB(255, 33, 35, 39),
+                                  color: _muted,
                                   fontSize: 13,
                                 ),
                               ),
                             ),
                             Expanded(
-                              child: Divider(
-                                color: Color(0xFFDDE3EA),
-                              ),
+                              child: Divider(color: _border),
                             ),
                           ],
                         ),
@@ -481,15 +462,12 @@ class _LoginScreenState extends State<LoginScreen> {
                         SizedBox(
                           height: 50,
                           child: OutlinedButton(
-                            onPressed: isLoading
-                                ? null
-                                : _loginWithGoogle,
+                            onPressed:
+                                isLoading ? null : _loginWithGoogle,
                             style: OutlinedButton.styleFrom(
-                              backgroundColor: const Color(0xFFF3F5F8),
+                              backgroundColor: const Color(0xFFF0FAFC),
                               foregroundColor: _navy,
-                              side: const BorderSide(
-                                color: Color(0xFFE0E5EB),
-                              ),
+                              side: const BorderSide(color: _border),
                               shape: const RoundedRectangleBorder(
                                 borderRadius: BorderRadius.zero,
                               ),
@@ -500,6 +478,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     width: 22,
                                     child: CircularProgressIndicator(
                                       strokeWidth: 2.3,
+                                      color: _navy,
                                     ),
                                   )
                                 : const Row(
@@ -531,7 +510,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             const Text(
                               'New here? ',
                               style: TextStyle(
-                                color: Color.fromARGB(255, 29, 31, 36),
+                                color: _muted,
                                 fontSize: 14,
                               ),
                             ),
@@ -548,8 +527,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                       );
                                     },
                               style: TextButton.styleFrom(
-                                foregroundColor:
-                                    const Color.fromARGB(255, 15, 16, 32),
+                                foregroundColor: _navy,
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 2,
                                 ),
@@ -594,10 +572,10 @@ class LoginMedicalLogo extends StatelessWidget {
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  Color.fromARGB(255, 49, 160, 211),
-                  Color.fromARGB(255, 42, 92, 167),
-                  Color.fromARGB(255, 8, 64, 104),
-                  Color.fromARGB(255, 7, 26, 52),
+                  Color(0xFF7ED3E8),
+                  Color(0xFF43A9C0),
+                  Color(0xFF24758B),
+                  Color(0xFF174A5B),
                 ],
               ).createShader(bounds);
             },

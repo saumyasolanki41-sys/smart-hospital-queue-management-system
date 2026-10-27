@@ -18,11 +18,12 @@ class DepartmentScreen extends StatefulWidget {
 }
 
 class _DepartmentScreenState extends State<DepartmentScreen> {
-  static const Color _primary = Color.fromARGB(255, 14, 18, 33);
-  static const Color _skyBlue = Color(0xFF8DB8F5);
-  static const Color _background = Color(0xFFE6EFFF);
-  static const Color _heading = Color.fromARGB(255, 5, 26, 37);
-  static const Color _muted = Color(0xFF60758A);
+  static const Color _primary =
+      Color.fromARGB(255, 126, 211, 232);
+  static const Color _skyBlue = Color(0xFF7ED3E8);
+  static const Color _background = Color(0xFFEAF8FB);
+  static const Color _heading = Color(0xFF174A5B);
+  static const Color _muted = Color(0xFF648994);
 
   final TextEditingController _searchController =
       TextEditingController();
@@ -31,12 +32,12 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
   String? _openingDepartmentId;
 
   final List<Color> _cardColors = const [
-    Color(0xFFE8F0FF),
-    Color(0xFFFFEEEE),
-    Color(0xFFF0EAFF),
-    Color(0xFFFFF0F4),
-    Color(0xFFE8F7EF),
-    Color(0xFFFFF4E5),
+    Color(0xFFEAF8FB),
+    Color(0xFFE5F5F8),
+    Color(0xFFDDF2F7),
+    Color(0xFFF0FAFC),
+    Color(0xFFE2F4F7),
+    Color(0xFFF3FAFB),
   ];
 
   final List<IconData> _departmentIcons = const [
@@ -210,8 +211,8 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
             colors: isDark
                 ? [colors.surface, colors.surface]
                 : const [
-                    Color(0xFFE6EFFF),
-                    Color(0xFFF5F8FF),
+                    Color(0xFFEAF8FB),
+                    Color(0xFFF5FCFD),
                     Colors.white,
                   ],
           ),
@@ -224,7 +225,6 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
               physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.fromLTRB(20, 12, 20, 30),
               children: [
-          
                 Row(
                   children: [
                     Container(
@@ -233,7 +233,7 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
                         borderRadius: BorderRadius.circular(14),
                         boxShadow: [
                           BoxShadow(
-                            color: _primary.withValues(alpha: 0.06),
+                            color: _primary.withValues(alpha: 0.12),
                             blurRadius: 8,
                             offset: const Offset(0, 3),
                           ),
@@ -249,7 +249,7 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
                         },
                         icon: const Icon(
                           Icons.arrow_back_rounded,
-                          color: _primary,
+                          color: _heading,
                           size: 25,
                         ),
                       ),
@@ -259,7 +259,7 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
                       child: Text(
                         'Departments',
                         style: TextStyle(
-                          color: _primary,
+                          color: _heading,
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
                         ),
@@ -277,7 +277,7 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
                             : _refreshData,
                         icon: const Icon(
                           Icons.refresh_rounded,
-                          color: _primary,
+                          color: _heading,
                         ),
                       ),
                     ),
@@ -291,11 +291,11 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
                     color: isDark ? colors.surface : Colors.white,
                     borderRadius: BorderRadius.circular(30),
                     border: Border.all(
-                      color: _skyBlue.withValues(alpha: 0.25),
+                      color: _skyBlue.withValues(alpha: 0.45),
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: _primary.withValues(alpha: 0.04),
+                        color: _primary.withValues(alpha: 0.08),
                         blurRadius: 10,
                         offset: const Offset(0, 3),
                       ),
@@ -346,7 +346,6 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
 
                 const SizedBox(height: 23),
 
-            
                 Row(
                   children: [
                     Expanded(
@@ -373,7 +372,6 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
 
                 const SizedBox(height: 15),
 
-             
                 if (departmentController.isLoading &&
                     departmentController.departments.isEmpty)
                   const Padding(
@@ -385,7 +383,6 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
                     ),
                   )
 
-             
                 else if (departmentController.error != null &&
                     departmentController.departments.isEmpty)
                   _StatusMessage(
@@ -411,7 +408,6 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
                         : null,
                   )
 
-             
                 else
                   LayoutBuilder(
                     builder: (context, constraints) {
@@ -464,8 +460,10 @@ class _DepartmentCard extends StatelessWidget {
   final bool isLoading;
   final VoidCallback onTap;
 
-  static const Color _primary = Color.fromARGB(255, 14, 18, 33);
-  static const Color _muted = Color(0xFF60758A);
+  static const Color _primary =
+      Color.fromARGB(255, 126, 211, 232);
+  static const Color _heading = Color(0xFF174A5B);
+  static const Color _muted = Color(0xFF648994);
 
   const _DepartmentCard({
     required this.department,
@@ -492,12 +490,11 @@ class _DepartmentCard extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(18),
             border: Border.all(
-              color: const Color(0xFF8DB8F5)
-                  .withValues(alpha: 0.20),
+              color: _primary.withValues(alpha: 0.45),
             ),
             boxShadow: [
               BoxShadow(
-                color: _primary.withValues(alpha: 0.035),
+                color: _heading.withValues(alpha: 0.035),
                 blurRadius: 8,
                 offset: const Offset(0, 3),
               ),
@@ -506,7 +503,6 @@ class _DepartmentCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-           
               Container(
                 height: 43,
                 width: 43,
@@ -516,7 +512,7 @@ class _DepartmentCard extends StatelessWidget {
                 ),
                 child: Icon(
                   icon,
-                  color: _primary,
+                  color: _heading,
                   size: 27,
                 ),
               ),
@@ -528,9 +524,7 @@ class _DepartmentCard extends StatelessWidget {
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  color: isDark
-                      ? colors.onSurface
-                      : const Color.fromARGB(255, 5, 26, 37),
+                  color: isDark ? colors.onSurface : _heading,
                   fontSize: 13,
                   fontWeight: FontWeight.bold,
                   height: 1.25,
@@ -541,12 +535,12 @@ class _DepartmentCard extends StatelessWidget {
 
               Row(
                 children: [
-                  Expanded(
+                  const Expanded(
                     child: Text(
                       'View doctors',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: _muted,
                         fontSize: 10,
                       ),
@@ -564,7 +558,7 @@ class _DepartmentCard extends StatelessWidget {
                   else
                     const Icon(
                       Icons.arrow_forward_rounded,
-                      color: _primary,
+                      color: _heading,
                       size: 14,
                     ),
                 ],
@@ -583,8 +577,9 @@ class _StatusMessage extends StatelessWidget {
   final String? actionLabel;
   final VoidCallback? onAction;
 
-  static const Color _primary = Color.fromARGB(255, 14, 18, 33);
-  static const Color _heading = Color.fromARGB(255, 5, 26, 37);
+  static const Color _primary =
+      Color.fromARGB(255, 126, 211, 232);
+  static const Color _heading = Color(0xFF174A5B);
 
   const _StatusMessage({
     required this.icon,
@@ -605,8 +600,7 @@ class _StatusMessage extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: const Color(0xFF8DB8F5)
-              .withValues(alpha: 0.3),
+          color: _primary.withValues(alpha: 0.5),
         ),
       ),
       child: Column(
@@ -615,12 +609,12 @@ class _StatusMessage extends StatelessWidget {
             height: 65,
             width: 65,
             decoration: BoxDecoration(
-              color: const Color(0xFFE6EFFF),
+              color: const Color(0xFFEAF8FB),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Icon(
               icon,
-              color: _primary,
+              color: _heading,
               size: 34,
             ),
           ),
@@ -639,7 +633,7 @@ class _StatusMessage extends StatelessWidget {
             OutlinedButton(
               onPressed: onAction,
               style: OutlinedButton.styleFrom(
-                foregroundColor: _primary,
+                foregroundColor: _heading,
                 side: const BorderSide(color: _primary),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),

@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import '../models/token_model.dart';
+import '../services/api_service.dart';
 import '../services/queue_service.dart';
 
 class TokenController extends ChangeNotifier {
@@ -31,13 +32,59 @@ class TokenController extends ChangeNotifier {
 
   bool get isCancelling => _isCancelling;
 
-  bool get isRefreshingStatus => _refreshingTokenIds.isNotEmpty;
+  bool get isRefreshingStatus =>
+      _refreshingTokenIds.isNotEmpty;
 
   String? get error => _error;
 
   String? get statusError => _statusError;
 
   bool get hasTokens => _tokens.isNotEmpty;
+
+  static const String _duplicateBookingMessage =
+      'Token is already booked for this doctor.';
+
+  static const String _bookingErrorMessage =
+      'Unable to book your token. Please try again.';
+
+  bool _isDuplicateBooking(Object error) {
+    if (error is ApiException) {
+      final code = error.code?.toLowerCase().trim();
+
+      if (code == 'already_in_queue' ||
+          code == 'already_have_active_token' ||
+          code == 'already_have_token' ||
+          code == 'duplicate_booking') {
+        return true;
+      }
+
+      return _containsDuplicateMessage(error.message);
+    }
+
+    return _containsDuplicateMessage(error.toString());
+  }
+
+  bool _containsDuplicateMessage(String message) {
+    final text = message.toLowerCase();
+
+    const duplicateIndicators = [
+      'already_in_queue',
+      'already in queue',
+      'already booked',
+      'already has an active token',
+      'already_have_active_token',
+      'already_have_token',
+      'active token exists',
+      'duplicate token',
+      'duplicate_booking',
+      'already has a token',
+      'active token already exists',
+      'you already have an active token',
+      'token already exists',
+    ];
+
+    return duplicateIndicators.any(text.contains);
+  }
 
   TokenModel _mergeToken(
     TokenModel previous,
@@ -60,15 +107,12 @@ class TokenController extends ChangeNotifier {
       doctorName: updated.doctorName ?? previous.doctorName,
       departmentName:
           updated.departmentName ?? previous.departmentName,
-
       patientsAhead: updated.patientsAhead,
       estimatedWaitMinutes: updated.estimatedWaitMinutes,
-
       status: updated.status,
       appointmentTime:
           updated.appointmentTime ?? previous.appointmentTime,
       createdAt: updated.createdAt ?? previous.createdAt,
-
       averageConsultationMinutes:
           updated.averageConsultationMinutes,
       consultationOverdue: updated.consultationOverdue,
@@ -104,8 +148,11 @@ class TokenController extends ChangeNotifier {
           : token;
 
       return _selectedToken;
-    } catch (_) {
-      _error = 'Unable to book your token. Please try again.';
+    } catch (error) {
+      _error = _isDuplicateBooking(error)
+          ? _duplicateBookingMessage
+          : _bookingErrorMessage;
+
       return null;
     } finally {
       _isBooking = false;
@@ -155,7 +202,8 @@ class TokenController extends ChangeNotifier {
 
           _error = null;
         } catch (_) {
-          _error = 'Unable to load your tokens. Please try again.';
+          _error =
+              'Unable to load your tokens. Please try again.';
         }
 
         notifyListeners();

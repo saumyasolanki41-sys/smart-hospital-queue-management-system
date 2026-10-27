@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../controller/auth_controller.dart';
@@ -22,8 +23,13 @@ class _SignupScreenState extends State<SignupScreen> {
   bool _obscureConfirmPassword = true;
   bool _isSigningUp = false;
 
-  static const Color _navy = Color(0xFF173B5E);
-  static const Color _blue = Color(0xFF246F96);
+  static const Color _navy = Color(0xFF174A5B);
+  static const Color _blue = Color(0xFF24758B);
+  // static const Color _accent = Color(0xFF7ED3E8);
+  static const Color _muted = Color(0xFF648994);
+  static const Color _background = Color(0xFFEAF8FB);
+  static const Color _fieldColor = Color(0xFFF1FBFE);
+  static const Color _borderColor = Color(0xFFD2EAF0);
 
   @override
   void dispose() {
@@ -43,7 +49,7 @@ class _SignupScreenState extends State<SignupScreen> {
         SnackBar(
           content: Text(message),
           backgroundColor:
-              isError ? Colors.red.shade700 : Colors.green.shade700,
+              isError ? Colors.red.shade700 : _navy,
         ),
       );
   }
@@ -71,7 +77,6 @@ class _SignupScreenState extends State<SignupScreen> {
       if (!mounted) return;
 
       if (!success) {
-        debugPrint('Registration failed.');
         _showMessage(
           'Unable to create your account. Please check your details and try again.',
         );
@@ -88,10 +93,7 @@ class _SignupScreenState extends State<SignupScreen> {
           ),
         ),
       );
-    } catch (error, stackTrace) {
-      debugPrint('Registration exception: $error');
-      debugPrintStack(stackTrace: stackTrace);
-
+    } catch (_) {
       _showMessage(
         'Something went wrong. Please try again.',
       );
@@ -107,21 +109,19 @@ class _SignupScreenState extends State<SignupScreen> {
     required String hint,
     Widget? suffixIcon,
   }) {
-    const borderColor = Color(0xFFD6DEE8);
-
     return InputDecoration(
       labelText: label,
       hintText: hint,
       labelStyle: const TextStyle(
-        color: Color(0xFF60758A),
+        color: _muted,
         fontSize: 14,
       ),
       hintStyle: const TextStyle(
-        color: Color(0xFF929EAA),
+        color: Color(0xFF92AAB2),
         fontSize: 15,
       ),
       filled: true,
-      fillColor: Colors.white,
+      fillColor: _fieldColor,
       contentPadding: const EdgeInsets.symmetric(
         horizontal: 16,
         vertical: 17,
@@ -129,12 +129,12 @@ class _SignupScreenState extends State<SignupScreen> {
       suffixIcon: suffixIcon,
       border: const OutlineInputBorder(
         borderRadius: BorderRadius.zero,
-        borderSide: BorderSide(color: borderColor),
+        borderSide: BorderSide(color: _borderColor),
       ),
       enabledBorder: const OutlineInputBorder(
         borderRadius: BorderRadius.zero,
         borderSide: BorderSide(
-          color: borderColor,
+          color: _borderColor,
           width: 1.2,
         ),
       ),
@@ -216,7 +216,7 @@ class _SignupScreenState extends State<SignupScreen> {
           obscure
               ? Icons.visibility_outlined
               : Icons.visibility_off_outlined,
-          color: const Color(0xFF718096),
+          color: _muted,
           size: 21,
         ),
       ),
@@ -228,7 +228,7 @@ class _SignupScreenState extends State<SignupScreen> {
     final auth = context.watch<AuthController>();
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: _background,
       body: Container(
         width: double.infinity,
         height: double.infinity,
@@ -237,14 +237,12 @@ class _SignupScreenState extends State<SignupScreen> {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              Color(0xFF8DB8F5),
-              Color(0xFFB7D2F8),
-              Color(0xFFE6EFFF),
+              Color(0xFFEAF8FB),
+              Color(0xFFDDF4F8),
               Colors.white,
-              Color(0xFFE8F0FF),
-              Color(0xFF9DBDF2),
+              Color(0xFFEAF8FB),
             ],
-            stops: [0.0, 0.16, 0.32, 0.55, 0.78, 1.0],
+            stops: [0.0, 0.25, 0.65, 1.0],
           ),
         ),
         child: SafeArea(
@@ -267,13 +265,10 @@ class _SignupScreenState extends State<SignupScreen> {
                   ),
                   decoration: BoxDecoration(
                     color: Colors.white.withValues(alpha: 0.97),
-                    border: Border.all(
-                      color: const Color(0xFFE2E8F0),
-                    ),
+                    border: Border.all(color: _borderColor),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFF315B91)
-                            .withValues(alpha: 0.12),
+                        color: _navy.withValues(alpha: 0.10),
                         blurRadius: 24,
                         offset: const Offset(0, 10),
                       ),
@@ -290,7 +285,7 @@ class _SignupScreenState extends State<SignupScreen> {
                           'Create Account',
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            color: Color(0xFF0B121A),
+                            color: _navy,
                             fontSize: 28,
                             fontWeight: FontWeight.w700,
                           ),
@@ -300,7 +295,7 @@ class _SignupScreenState extends State<SignupScreen> {
                           'Create your account to get started',
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            color: Color(0xFF25282B),
+                            color: _muted,
                             fontSize: 15,
                           ),
                         ),
@@ -401,9 +396,9 @@ class _SignupScreenState extends State<SignupScreen> {
                                 ? null
                                 : _signup,
                             style: ElevatedButton.styleFrom(
-                              backgroundColor:
-                                  const Color.fromARGB(255, 14, 18, 33),
+                              backgroundColor: _navy,
                               foregroundColor: Colors.white,
+                              disabledBackgroundColor: _muted,
                               elevation: 1,
                               shape: const RoundedRectangleBorder(
                                 borderRadius: BorderRadius.zero,
@@ -432,9 +427,7 @@ class _SignupScreenState extends State<SignupScreen> {
                         const Row(
                           children: [
                             Expanded(
-                              child: Divider(
-                                color: Color(0xFFDDE3EA),
-                              ),
+                              child: Divider(color: _borderColor),
                             ),
                             Padding(
                               padding: EdgeInsets.symmetric(
@@ -443,15 +436,13 @@ class _SignupScreenState extends State<SignupScreen> {
                               child: Text(
                                 'Or continue with',
                                 style: TextStyle(
-                                  color: Color(0xFF212327),
+                                  color: _muted,
                                   fontSize: 13,
                                 ),
                               ),
                             ),
                             Expanded(
-                              child: Divider(
-                                color: Color(0xFFDDE3EA),
-                              ),
+                              child: Divider(color: _borderColor),
                             ),
                           ],
                         ),
@@ -468,11 +459,10 @@ class _SignupScreenState extends State<SignupScreen> {
                                     );
                                   },
                             style: OutlinedButton.styleFrom(
-                              backgroundColor:
-                                  const Color(0xFFF3F5F8),
+                              backgroundColor: _fieldColor,
                               foregroundColor: _navy,
                               side: const BorderSide(
-                                color: Color(0xFFE0E5EB),
+                                color: _borderColor,
                               ),
                               shape: const RoundedRectangleBorder(
                                 borderRadius: BorderRadius.zero,
@@ -507,7 +497,7 @@ class _SignupScreenState extends State<SignupScreen> {
                             const Text(
                               'Already have an account? ',
                               style: TextStyle(
-                                color: Color(0xFF1D1F24),
+                                color: _muted,
                                 fontSize: 14,
                               ),
                             ),
@@ -524,8 +514,7 @@ class _SignupScreenState extends State<SignupScreen> {
                                       );
                                     },
                               style: TextButton.styleFrom(
-                                foregroundColor:
-                                    const Color.fromARGB(255, 5, 7, 26),
+                                foregroundColor: _blue,
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 2,
                                 ),
@@ -570,10 +559,10 @@ class SignupMedicalLogo extends StatelessWidget {
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  Color.fromARGB(255, 49, 162, 211),
-                  Color.fromARGB(255, 31, 67, 137),
-                  Color.fromARGB(255, 6, 36, 57),
-                  Color.fromARGB(255, 6, 23, 46),
+                  Color(0xFF7ED3E8),
+                  Color(0xFF24758B),
+                  Color(0xFF174A5B),
+                  Color(0xFF0B303D),
                 ],
               ).createShader(bounds);
             },

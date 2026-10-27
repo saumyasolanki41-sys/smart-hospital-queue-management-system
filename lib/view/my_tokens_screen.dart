@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/token_model.dart';
@@ -16,9 +17,13 @@ class MyTokensScreen extends StatefulWidget {
 }
 
 class _MyTokensScreenState extends State<MyTokensScreen> {
-  static const Color _primary = Color.fromARGB(255, 21, 28, 54);
-  static const Color _background = Color(0xFFE8F0FF);
-  static const Color _textColor = Color.fromARGB(255, 5, 26, 37);
+  static const Color _primary = Color(0xFF174A5B);
+  static const Color _background = Color(0xFFEAF8FB);
+  static const Color _textColor = Color(0xFF174A5B);
+  static const Color _accent = Color(0xFF7ED3E8);
+  static const Color _muted = Color(0xFF648994);
+  static const Color _lightBlue = Color(0xFFDDF4F8);
+  // static const Color _border = Color(0xFFD2EAF0);
 
   int _selectedTab = 0;
   bool _isRefreshing = false;
@@ -45,7 +50,7 @@ class _MyTokensScreenState extends State<MyTokensScreen> {
         refresh: true,
       );
     } catch (error, stackTrace) {
-      debugPrint('Refresh tokens error: $error');
+      debugPrint('Refresh tokens failed.');
       debugPrintStack(stackTrace: stackTrace);
 
       if (mounted) {
@@ -66,7 +71,10 @@ class _MyTokensScreenState extends State<MyTokensScreen> {
     }
   }
 
-  String _safeText(dynamic value, [String fallback = 'Not available']) {
+  String _safeText(
+    dynamic value, [
+    String fallback = 'Not available',
+  ]) {
     if (value == null) return fallback;
 
     final text = value.toString().trim();
@@ -162,21 +170,20 @@ class _MyTokensScreenState extends State<MyTokensScreen> {
               colors: isDark
                   ? [colors.surface, colors.surface]
                   : const [
-                      Color(0xFFE6EFFF),
-                      Color(0xFFF6F9FF),
+                      Color(0xFFEAF8FB),
+                      Color(0xFFF7FCFD),
                     ],
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
             ),
           ),
           child: RefreshIndicator(
-            color: _primary,
+            color: _accent,
             onRefresh: _refreshTokens,
             child: ListView(
               physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.fromLTRB(20, 12, 20, 30),
               children: [
-             
                 Row(
                   children: [
                     Container(
@@ -215,7 +222,9 @@ class _MyTokensScreenState extends State<MyTokensScreen> {
                           Text(
                             'My Tokens',
                             style: TextStyle(
-                              color: isDark ? colors.onSurface : _textColor,
+                              color: isDark
+                                  ? colors.onSurface
+                                  : _textColor,
                               fontSize: 25,
                               fontWeight: FontWeight.bold,
                             ),
@@ -224,7 +233,7 @@ class _MyTokensScreenState extends State<MyTokensScreen> {
                           const Text(
                             'Manage your appointments',
                             style: TextStyle(
-                              color: Color(0xFF60758A),
+                              color: _muted,
                               fontSize: 13,
                             ),
                           ),
@@ -244,14 +253,14 @@ class _MyTokensScreenState extends State<MyTokensScreen> {
 
                 const SizedBox(height: 24),
 
-             
                 Container(
                   padding: const EdgeInsets.all(21),
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
                       colors: [
-                        Color.fromARGB(255, 14, 18, 33),
-                        Color(0xFF315B91),
+                        Color(0xFF174A5B),
+                        Color(0xFF24758B),
+                        Color(0xFF7ED3E8),
                       ],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
@@ -259,7 +268,7 @@ class _MyTokensScreenState extends State<MyTokensScreen> {
                     borderRadius: BorderRadius.circular(23),
                     boxShadow: [
                       BoxShadow(
-                        color: _primary.withValues(alpha: 0.22),
+                        color: _primary.withValues(alpha: 0.18),
                         blurRadius: 15,
                         offset: const Offset(0, 7),
                       ),
@@ -285,7 +294,7 @@ class _MyTokensScreenState extends State<MyTokensScreen> {
                                   ? 'Keep track of your upcoming visits.'
                                   : 'Review your previous appointments.',
                               style: const TextStyle(
-                                color: Color(0xFFE6EFFF),
+                                color: Color(0xFFEAF8FB),
                                 fontSize: 13,
                                 height: 1.5,
                               ),
@@ -333,7 +342,6 @@ class _MyTokensScreenState extends State<MyTokensScreen> {
 
                 const SizedBox(height: 25),
 
-             
                 Container(
                   height: 57,
                   padding: const EdgeInsets.all(5),
@@ -382,7 +390,7 @@ class _MyTokensScreenState extends State<MyTokensScreen> {
                       height: 35,
                       width: 35,
                       decoration: BoxDecoration(
-                        color: const Color(0xFFE8F0FF),
+                        color: _lightBlue,
                         borderRadius: BorderRadius.circular(11),
                       ),
                       child: Icon(
@@ -417,7 +425,7 @@ class _MyTokensScreenState extends State<MyTokensScreen> {
                     padding: EdgeInsets.only(top: 70, bottom: 70),
                     child: Center(
                       child: CircularProgressIndicator(
-                        color: _primary,
+                        color: _accent,
                       ),
                     ),
                   )
@@ -452,7 +460,7 @@ class _MyTokensScreenState extends State<MyTokensScreen> {
                       '${_selectedTab == 0 ? 'upcoming' : 'past'} '
                       '${filteredTokens.length == 1 ? 'appointment' : 'appointments'}',
                       style: const TextStyle(
-                        color: Color(0xFF60758A),
+                        color: _muted,
                         fontSize: 13,
                       ),
                     ),
@@ -476,10 +484,9 @@ class _MyTokensScreenState extends State<MyTokensScreen> {
         ),
       ),
 
-    
       bottomNavigationBar: Container(
         decoration: const BoxDecoration(
-          color: Color.fromARGB(255, 24, 33, 66),
+          color: Color(0xFF174A5B),
           borderRadius: BorderRadius.vertical(
             top: Radius.circular(23),
           ),
@@ -579,13 +586,11 @@ class _AppointmentCard extends StatelessWidget {
         color: isDark ? colors.surfaceContainer : Colors.white,
         borderRadius: BorderRadius.circular(21),
         border: Border.all(
-          color: isDark
-              ? colors.outlineVariant
-              : const Color(0xFFE2E8F0),
+          color: isDark ? colors.outlineVariant : const Color(0xFFD2EAF0),
         ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF315B91).withValues(alpha: 0.12),
+            color: const Color(0xFF174A5B).withValues(alpha: 0.08),
             blurRadius: 13,
             offset: const Offset(0, 5),
           ),
@@ -609,12 +614,12 @@ class _AppointmentCard extends StatelessWidget {
                       height: 57,
                       width: 57,
                       decoration: BoxDecoration(
-                        color: const Color(0xFFE8F0FF),
+                        color: const Color(0xFFDDF4F8),
                         borderRadius: BorderRadius.circular(17),
                       ),
                       child: const Icon(
                         Icons.medical_services_rounded,
-                        color: Color(0xFF315B91),
+                        color: Color(0xFF24758B),
                         size: 30,
                       ),
                     ),
@@ -628,7 +633,7 @@ class _AppointmentCard extends StatelessWidget {
                                 ? 'Previous Appointment'
                                 : 'Appointment',
                             style: const TextStyle(
-                              color: Color(0xFF60758A),
+                              color: Color(0xFF648994),
                               fontSize: 12,
                               fontWeight: FontWeight.w500,
                             ),
@@ -639,9 +644,7 @@ class _AppointmentCard extends StatelessWidget {
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
-                              color: isDark
-                                  ? colors.onSurface
-                                  : const Color.fromARGB(255, 5, 26, 37),
+                              color: isDark ? colors.onSurface : const Color(0xFF174A5B),
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
                             ),
@@ -652,7 +655,7 @@ class _AppointmentCard extends StatelessWidget {
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
-                              color: Color(0xFF60758A),
+                              color: Color(0xFF648994),
                               fontSize: 13,
                             ),
                           ),
@@ -662,27 +665,27 @@ class _AppointmentCard extends StatelessWidget {
                     const SizedBox(width: 5),
                     const Icon(
                       Icons.chevron_right_rounded,
-                      color: Color(0xFF60758A),
+                      color: Color(0xFF648994),
                     ),
                   ],
                 ),
 
                 const SizedBox(height: 16),
-                const Divider(color: Color(0xFFE2E8F0), height: 1),
+                const Divider(color: Color(0xFFD2EAF0), height: 1),
                 const SizedBox(height: 14),
 
                 Row(
                   children: [
                     const Icon(
                       Icons.confirmation_number_outlined,
-                      color: Color(0xFF315B91),
+                      color: Color(0xFF24758B),
                       size: 19,
                     ),
                     const SizedBox(width: 8),
                     const Text(
                       'Token number',
                       style: TextStyle(
-                        color: Color(0xFF60758A),
+                        color: Color(0xFF648994),
                         fontSize: 13,
                       ),
                     ),
@@ -693,9 +696,7 @@ class _AppointmentCard extends StatelessWidget {
                         textAlign: TextAlign.end,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          color: isDark
-                              ? colors.onSurface
-                              : const Color.fromARGB(255, 5, 26, 37),
+                          color: isDark ? colors.onSurface : const Color(0xFF174A5B),
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
                         ),
@@ -711,13 +712,13 @@ class _AppointmentCard extends StatelessWidget {
                     const Icon(
                       Icons.circle,
                       size: 10,
-                      color: Color(0xFF60758A),
+                      color: Color(0xFF648994),
                     ),
                     const SizedBox(width: 9),
                     const Text(
                       'Appointment status',
                       style: TextStyle(
-                        color: Color(0xFF60758A),
+                        color: Color(0xFF648994),
                         fontSize: 13,
                       ),
                     ),
@@ -758,7 +759,7 @@ class _AppointmentCard extends StatelessWidget {
                     vertical: 11,
                   ),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFE8F0FF),
+                    color: const Color(0xFFDDF4F8),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Row(
@@ -766,14 +767,14 @@ class _AppointmentCard extends StatelessWidget {
                     children: [
                       Icon(
                         Icons.visibility_outlined,
-                        color: Color.fromARGB(255, 14, 18, 33),
+                        color: Color(0xFF174A5B),
                         size: 18,
                       ),
                       SizedBox(width: 8),
                       Text(
                         'View Appointment Details',
                         style: TextStyle(
-                          color: Color.fromARGB(255, 14, 18, 33),
+                          color: Color(0xFF174A5B),
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
                         ),
@@ -807,34 +808,38 @@ class _HistoryTab extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: selected
-          ? const Color.fromARGB(255, 14, 18, 33)
+          ? const Color(0xFF174A5B)
           : Colors.transparent,
       borderRadius: BorderRadius.circular(14),
+      clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(14),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              icon,
-              size: 19,
-              color: selected
-                  ? Colors.white
-                  : const Color(0xFF60758A),
-            ),
-            const SizedBox(width: 7),
-            Text(
-              title,
-              style: TextStyle(
+        child: SizedBox.expand(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Icon(
+                icon,
+                size: 19,
                 color: selected
                     ? Colors.white
-                    : const Color(0xFF60758A),
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
+                    : const Color(0xFF648994),
               ),
-            ),
-          ],
+              const SizedBox(width: 7),
+              Text(
+                title,
+                style: TextStyle(
+                  color: selected
+                      ? Colors.white
+                      : const Color(0xFF648994),
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -868,9 +873,7 @@ class _HistoryMessage extends StatelessWidget {
         color: isDark ? colors.surfaceContainer : Colors.white,
         borderRadius: BorderRadius.circular(22),
         border: Border.all(
-          color: isDark
-              ? colors.outlineVariant
-              : const Color(0xFFE2E8F0),
+          color: isDark ? colors.outlineVariant : const Color(0xFFD2EAF0),
         ),
       ),
       child: Column(
@@ -879,12 +882,12 @@ class _HistoryMessage extends StatelessWidget {
             height: 85,
             width: 85,
             decoration: const BoxDecoration(
-              color: Color(0xFFE8F0FF),
+              color: Color(0xFFDDF4F8),
               shape: BoxShape.circle,
             ),
             child: Icon(
               icon,
-              color: const Color(0xFF315B91),
+              color: const Color(0xFF24758B),
               size: 42,
             ),
           ),
@@ -893,19 +896,17 @@ class _HistoryMessage extends StatelessWidget {
             message,
             textAlign: TextAlign.center,
             style: TextStyle(
-              color: isDark
-                  ? colors.onSurface
-                  : const Color.fromARGB(255, 5, 26, 37),
+              color: isDark ? colors.onSurface : const Color(0xFF174A5B),
               fontSize: 17,
               fontWeight: FontWeight.bold,
             ),
           ),
           const SizedBox(height: 9),
-          Text(
-            subtitle,
+          const Text(
+            'Please check your connection and try again.',
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: Color(0xFF60758A),
+            style: TextStyle(
+              color: Color(0xFF648994),
               fontSize: 13,
               height: 1.5,
             ),
@@ -917,7 +918,7 @@ class _HistoryMessage extends StatelessWidget {
               icon: const Icon(Icons.refresh_rounded, size: 18),
               label: Text(buttonText!),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color.fromARGB(255, 14, 18, 33),
+                backgroundColor: const Color(0xFF174A5B),
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 22,

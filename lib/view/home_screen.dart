@@ -20,11 +20,11 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  static const Color _primary = Color.fromARGB(255, 14, 18, 33);
-  static const Color _skyBlue = Color(0xFF8DB8F5);
-  static const Color _background = Color(0xFFE6EFFF);
-  static const Color _darkText = Color.fromARGB(255, 5, 26, 37);
-  static const Color _muted = Color(0xFF60758A);
+  static const Color _primary = Color(0xFF174A5B);
+  static const Color _skyBlue = Color(0xFF7ED3E8);
+  static const Color _background = Color(0xFFEAF8FB);
+  static const Color _darkText = Color(0xFF174A5B);
+  static const Color _muted = Color(0xFF648994);
 
   bool _openingDoctorProfile = false;
 
@@ -38,7 +38,6 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
- 
   Future<void> _logout() async {
     if (!mounted) return;
 
@@ -629,8 +628,8 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Container(
                 padding: const EdgeInsets.all(15),
                 decoration: BoxDecoration(
-                  color: const Color.fromARGB(255, 124, 124, 146)
-                      .withValues(alpha: 0.8),
+                  color: const Color(0xFFDDF4F8)
+                      .withValues(alpha: 0.95),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
@@ -675,7 +674,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 onPressed: () => _navigate(const DepartmentScreen()),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: _primary,
-                  foregroundColor: const Color.fromARGB(255, 128, 135, 150),
+                  foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 13),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),
@@ -719,12 +718,12 @@ class _HomeScreenState extends State<HomeScreen> {
                       ? null
                       : const LinearGradient(
                           colors: [
-                            Color(0xFF9DBDF2),
-                            Color(0xFFB7D2F8),
-                            Color(0xFFE6EFFF),
+                            Color.fromARGB(255, 125, 187, 204),
+                            Color(0xFFB9EAF2),
+                            Color(0xFFEAF8FB),
                             Colors.white,
-                            Color(0xFFE8F0FF),
-                            Color(0xFF9DBDF2),
+                            Color(0xFFD9F3F7),
+                            Color.fromARGB(255, 144, 211, 227),
                           ],
                           stops: [0.0, 0.16, 0.32, 0.55, 0.78, 1.0],
                           begin: Alignment.topCenter,
@@ -742,6 +741,33 @@ class _HomeScreenState extends State<HomeScreen> {
                 children: [
                   Row(
                     children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '${_greeting()}!',
+                              style: const TextStyle(
+                                color: Color(0xFF174A5B),
+                                fontSize: 29,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 3),
+                            Text(
+                              name,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: _darkText,
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 12),
                       Material(
                         color: Colors.white,
                         shape: const CircleBorder(),
@@ -762,33 +788,6 @@ class _HomeScreenState extends State<HomeScreen> {
                               ),
                             ),
                           ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              '${_greeting()}!',
-                              style: const TextStyle(
-                                color: Color.fromARGB(255, 6, 16, 26),
-                                fontSize: 25,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(height: 3),
-                            Text(
-                              name,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                color: _darkText,
-                                fontSize: 17,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
                         ),
                       ),
                     ],
@@ -1156,7 +1155,7 @@ class _MainActionButton extends StatelessWidget {
     required this.onTap,
   });
 
-  static const Color primaryBlue = Color.fromARGB(255, 14, 18, 33);
+  static const Color primaryBlue = Color(0xFF174A5B);
 
   @override
   Widget build(BuildContext context) {
@@ -1171,10 +1170,10 @@ class _MainActionButton extends StatelessWidget {
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: const Color(0xFFE2E8F0)),
+            border: Border.all(color: const Color(0xFFD2EAF0)),
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFF315B91).withValues(alpha: 0.12),
+                color: const Color(0xFF174A5B).withValues(alpha: 0.10),
                 blurRadius: 12,
                 offset: const Offset(0, 5),
               ),
@@ -1188,7 +1187,7 @@ class _MainActionButton extends StatelessWidget {
               Text(
                 title,
                 style: const TextStyle(
-                  color: Color.fromARGB(255, 5, 26, 37),
+                  color: Color(0xFF174A5B),
                   fontSize: 15,
                   fontWeight: FontWeight.bold,
                 ),
@@ -1197,7 +1196,7 @@ class _MainActionButton extends StatelessWidget {
               Text(
                 subtitle,
                 style: const TextStyle(
-                  color: Color(0xFF60758A),
+                  color: Color(0xFF648994),
                   fontSize: 11,
                 ),
               ),
@@ -1220,8 +1219,8 @@ class _DepartmentTile extends StatelessWidget {
     required this.onTap,
   });
 
-  static const Color primaryBlue = Color.fromARGB(255, 14, 18, 33);
-  static const Color darkText = Color.fromARGB(255, 5, 26, 37);
+  static const Color primaryBlue = Color(0xFF174A5B);
+  static const Color darkText = Color(0xFF174A5B);
 
   @override
   Widget build(BuildContext context) {
@@ -1237,11 +1236,11 @@ class _DepartmentTile extends StatelessWidget {
             color: Colors.white,
             borderRadius: BorderRadius.circular(22),
             border: Border.all(
-              color: const Color(0xFFE2E8F0),
+              color: const Color(0xFFD2EAF0),
             ),
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFF315B91).withValues(alpha: 0.10),
+                color: const Color(0xFF174A5B).withValues(alpha: 0.10),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               ),
@@ -1254,7 +1253,7 @@ class _DepartmentTile extends StatelessWidget {
                 height: 57,
                 width: 57,
                 decoration: const BoxDecoration(
-                  color: Color(0xFFE8F0FF),
+                  color: Color(0xFFDDF4F8),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
@@ -1299,8 +1298,8 @@ class _BottomNavItem extends StatelessWidget {
     this.selected = false,
   });
 
-  static const Color primaryBlue = Color.fromARGB(255, 14, 18, 33);
-  static const Color darkText = Color.fromARGB(255, 5, 26, 37);
+  static const Color primaryBlue = Color(0xFF174A5B);
+  static const Color darkText = Color(0xFF174A5B);
 
   @override
   Widget build(BuildContext context) {
@@ -1310,7 +1309,7 @@ class _BottomNavItem extends StatelessWidget {
         ? primaryBlue
         : isDark
             ? colors.onSurfaceVariant
-            : const Color(0xFF60758A);
+            : const Color(0xFF648994);
 
     return InkWell(
       onTap: onTap,
@@ -1323,7 +1322,7 @@ class _BottomNavItem extends StatelessWidget {
         ),
         decoration: BoxDecoration(
           color: selected
-              ? const Color(0xFFE8F0FF)
+              ? const Color(0xFFDDF4F8)
               : Colors.transparent,
           borderRadius: BorderRadius.circular(15),
         ),

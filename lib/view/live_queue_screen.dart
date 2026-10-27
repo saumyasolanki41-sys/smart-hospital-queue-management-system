@@ -3,13 +3,13 @@ import 'package:provider/provider.dart';
 import '../models/token_model.dart';
 import '../controller/token_controller.dart';
 
-const Color pageColor = Color(0xFFE6EFFF);
-const Color blue = Color(0xFF8DB8F5);
-const Color darkBlue = Color.fromARGB(255, 14, 18, 33);
+const Color pageColor = Color(0xFFEAF8FB);
+const Color blue = Color(0xFF7ED3E8);
+const Color darkBlue = Color(0xFF174A5B);
 const Color cardColor = Colors.white;
-const Color mutedColor = Color(0xFF60758A);
-const Color lightBlue = Color(0xFFE8F0FF);
-const Color borderColor = Color(0xFFE2E8F0);
+const Color mutedColor = Color(0xFF648994);
+const Color lightBlue = Color(0xFFDDF4F8);
+const Color borderColor = Color(0xFFD2EAF0);
 
 class LiveQueueScreen extends StatefulWidget {
   const LiveQueueScreen({super.key});
@@ -82,7 +82,6 @@ class _LiveQueueScreenState extends State<LiveQueueScreen>
         await controller.fetchTokenStatus(tokenId);
       }
     } catch (_) {
-   
     } finally {
       _isRefreshingStatus = false;
 
@@ -281,11 +280,13 @@ class _LiveQueueScreenState extends State<LiveQueueScreen>
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              Color(0xFFE6EFFF),
-              Color(0xFFF5F8FF),
+              Color(0xFF7ED3E8),
+              Color(0xFFB9EAF2),
+              Color(0xFFEAF8FB),
               Colors.white,
-              Color(0xFFE8F0FF),
+              Color(0xFFD9F3F7),
             ],
+            stops: [0.0, 0.2, 0.45, 0.7, 1.0],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
           ),
@@ -356,7 +357,6 @@ class _LiveQueueScreenState extends State<LiveQueueScreen>
                 ],
               ),
               const SizedBox(height: 8),
-
               if (viewModel.statusError != null ||
                   viewModel.error != null)
                 Container(
@@ -394,7 +394,6 @@ class _LiveQueueScreenState extends State<LiveQueueScreen>
                     ],
                   ),
                 ),
-
               if (viewModel.isLoading && viewModel.tokens.isEmpty)
                 const Padding(
                   padding: EdgeInsets.all(40),
@@ -434,7 +433,6 @@ class _LiveQueueScreenState extends State<LiveQueueScreen>
                     onCancel: () => _cancelToken(token),
                   ),
                 ),
-
               const SizedBox(height: 15),
               const Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -470,9 +468,9 @@ class _LiveQueueScreenState extends State<LiveQueueScreen>
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           colors: [
-            Color.fromARGB(255, 14, 18, 33),
-            Color(0xFF8DB8F5),
-            Color(0xFFB7D2F8),
+            Color(0xFF174A5B),
+            Color(0xFF287C91),
+            Color(0xFF7ED3E8),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -843,7 +841,7 @@ class _QueueStat extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFFF0F5FF),
+        color: const Color(0xFFF0FAFC),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: borderColor.withValues(alpha: 0.8),
