@@ -5,7 +5,7 @@ const FOOTER_COLUMNS = [
   {
     heading: "Quick Links",
     links: [
-      { label: "Home", to: "/" },
+      { label: "Login", to: "/Login" },
       { label: "About", to: "/about" },
       { label: "Features", to: "/#features" },
       { label: "How It Works", to: "/#how-it-works" },
@@ -28,13 +28,6 @@ const FOOTER_COLUMNS = [
       { label: "Terms of Service", to: "/" },
     ],
   },
-];
-
-const SOCIAL_LINKS = [
-  { label: "Facebook", href: "https://www.facebook.com", mark: "f" },
-  { label: "LinkedIn", href: "https://www.linkedin.com", mark: "in" },
-  { label: "Twitter", href: "https://www.twitter.com", mark: "X" },
-  { label: "Instagram", href: "https://www.instagram.com", mark: "ig" },
 ];
 
 function FooterLink({ label, to }) {
@@ -104,21 +97,7 @@ export default function Footer() {
             <p className="mt-2 max-w-60 text-xs leading-relaxed text-cyan-50/75">
               Digital tokens, real-time queue tracking and timely updates for a simpler visit.
             </p>
-            <ul className="mt-4 flex gap-2.5">
-              {SOCIAL_LINKS.map(({ label, href, mark }) => (
-                <li key={label}>
-                  <a
-                    href={href}
-                    aria-label={label}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="flex h-8 w-8 items-center justify-center rounded-full border border-cyan-100/30 bg-cyan-100/10 text-cyan-100 transition-colors hover:bg-cyan-100/25"
-                  >
-                    <span className="text-[10px] font-bold">{mark}</span>
-                  </a>
-                </li>
-              ))}
-            </ul>
+            
           </div>
 
           {FOOTER_COLUMNS.map(({ heading, links }) => (
@@ -158,13 +137,7 @@ export default function Footer() {
 
         <div className="flex flex-col gap-3 pt-7 text-xs text-cyan-100/65 sm:flex-row sm:items-center sm:justify-between">
           <p>© {new Date().getFullYear()} Smart Hospital. All rights reserved.</p>
-          <nav aria-label="Legal links" className="flex flex-wrap gap-x-2">
-            <Link to="/" className="hover:text-white">Privacy Policy</Link>
-            <span aria-hidden="true">•</span>
-            <Link to="/" className="hover:text-white">Terms of Service</Link>
-            <span aria-hidden="true">•</span>
-            <Link to="/" className="hover:text-white">Cookie Policy</Link>
-          </nav>
+          
         </div>
       </div>
     </footer>
