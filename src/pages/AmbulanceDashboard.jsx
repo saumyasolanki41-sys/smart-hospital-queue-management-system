@@ -187,7 +187,7 @@ export default function AmbulanceDashboard() {
     "w-36 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-primary/60 focus:ring-2 focus:ring-primary/40";
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-secondary/5 via-accent/5 to-white">
+    <div className="min-h-screen bg-transparent">
       <Navbar />
 
       <main className="mx-auto max-w-6xl px-6 pb-20 pt-6">

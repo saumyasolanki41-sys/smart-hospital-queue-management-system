@@ -22,7 +22,7 @@ function greeting() {
 
 function MiniStat({ icon: Icon, label, value }) {
   return (
-    <div className="rounded-2xl bg-secondary/5 p-4">
+    <div className="rounded-2xl bg-white/70 p-4 border border-white/60">
       <div className="flex items-center gap-2 text-sm text-slate-600">
         <Icon className="h-4 w-4 text-primary/70" />
         {label}
@@ -37,7 +37,7 @@ function ActiveTokenCard({ token, detail }) {
   const waitText = formatWait(est);
 
   return (
-    <article className="rounded-3xl bg-white/95 p-6 shadow-xl">
+    <article className="rounded-3xl bg-white/90 backdrop-blur-md p-6 shadow-xl shadow-cyan-950/5 border border-white/70">
       <div className="flex items-start justify-between gap-4">
         <div className="flex min-w-0 items-center gap-4">
           <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-primary/5 text-2xl font-bold text-primary/80">
@@ -161,7 +161,7 @@ export default function Home() {
   }, [hasActive, load]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-sky-500/5 via-accent-500/5 to-white">
+    <div className="min-h-screen bg-transparent">
       <Navbar />
 
       <main className="mx-auto max-w-6xl px-6 pb-20 pt-6">

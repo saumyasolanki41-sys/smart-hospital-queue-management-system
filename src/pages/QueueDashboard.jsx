@@ -44,7 +44,7 @@ const TOKEN_TILES = [
 function SummaryStrip({ summary }) {
   const { tokens, doctors, departments } = summary;
   return (
-    <section aria-label="Today's summary" className="mb-6 rounded-3xl bg-white/95 p-5 shadow-xl">
+    <section aria-label="Today's summary" className="mb-6 rounded-3xl bg-white/90 backdrop-blur-md p-5 shadow-xl shadow-cyan-950/5 border border-white/70">
       <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">Hospital-wide today</h2>
         <p className="text-sm text-slate-600">
@@ -283,7 +283,7 @@ export default function QueueDashboard({ mode }) {
 
         <div className="grid gap-6 lg:grid-cols-5">
           {/* Now serving */}
-          <section className="rounded-3xl bg-white/95 p-6 shadow-xl lg:col-span-2">
+          <section className="rounded-3xl bg-white/90 backdrop-blur-md p-6 shadow-xl shadow-cyan-950/5 border border-white/70 lg:col-span-2">
             <p className="text-sm font-medium text-slate-500">Now serving</p>
 
             {current ? (
@@ -364,7 +364,7 @@ export default function QueueDashboard({ mode }) {
           </section>
 
           {/* Waiting list */}
-          <section className="rounded-3xl bg-white/95 p-6 shadow-xl lg:col-span-3">
+          <section className="rounded-3xl bg-white/90 backdrop-blur-md p-6 shadow-xl shadow-cyan-950/5 border border-white/70 lg:col-span-3">
             <div className="flex items-baseline justify-between gap-4">
               <h2 className="text-lg font-semibold text-slate-900">Waiting ({waitingLabel})</h2>
               {current && (
@@ -410,7 +410,7 @@ export default function QueueDashboard({ mode }) {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-300/5 via-accent-300/5 to-white">
+    <div className="min-h-screen bg-transparent">
       <Navbar />
 
       <main className="mx-auto max-w-6xl px-6 pb-20 pt-6">

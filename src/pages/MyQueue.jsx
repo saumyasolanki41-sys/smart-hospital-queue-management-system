@@ -33,7 +33,7 @@ export default function MyQueue() {
   }, [load]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-secondary/5 via-accent/5 to-white">
+    <div className="min-h-screen bg-transparent">
       <Navbar />
 
       <main className="mx-auto max-w-2xl px-6 pb-20 pt-6">

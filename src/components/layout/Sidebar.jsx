@@ -47,7 +47,7 @@ const ROLE_LABEL = {
 function Logo({ onClick, to }) {
   return (
     <Link to={to} onClick={onClick} className="flex items-center gap-2">
-      <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/60 text-white">
+      <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#197092] text-white">
         <HeartPulse className="h-5 w-5" />
       </span>
       <span className="text-lg font-semibold text-slate-800">Smart Hospital</span>
@@ -71,13 +71,17 @@ function Panel({ onNavigate, ownDoctorId }) {
   }
 
   return (
-    <div className="flex h-full flex-col rounded-3xl bg-primary/90 p-5 text-white shadow-xl">
+    <div className="flex h-full flex-col rounded-3xl bg-gradient-to-b from-[#0a3d54] via-[#0b435d] to-[#09394e] p-5 text-white shadow-2xl border border-cyan-900/30">
       <Link to={ROLE_HOME[user.role] ?? "/"} onClick={onNavigate} className="mb-8 mt-2 block px-2 text-center">
-        <span className="flex items-center justify-center gap-2 text-lg font-semibold">
-          <HeartPulse className="h-5 w-5" />
+        <span className="flex items-center justify-center gap-2 text-lg font-semibold text-white">
+          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#186a8a] text-white shadow-sm">
+            <HeartPulse className="h-5 w-5" />
+          </span>
           Smart Hospital
         </span>
-        <span className="mt-1 block text-xs text-white/70">Queue Management System</span>
+        <span className="mt-1.5 block text-xs tracking-wide text-cyan-200/70">
+          Queue Management System
+        </span>
       </Link>
 
       <nav aria-label="Main" className="flex-1 space-y-1.5 overflow-y-auto">
@@ -87,8 +91,10 @@ function Panel({ onNavigate, ownDoctorId }) {
             to={to}
             onClick={onNavigate}
             className={({ isActive }) =>
-              `flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-colors ${
-                isActive ? "bg-white/20 text-white" : "text-white/80 hover:bg-white/10 hover:text-white"
+              `flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all ${
+                isActive
+                  ? "bg-[#227b9e] text-white shadow-md shadow-cyan-950/20 font-semibold"
+                  : "text-cyan-100/75 hover:bg-white/10 hover:text-white"
               }`
             }
           >
@@ -98,20 +104,20 @@ function Panel({ onNavigate, ownDoctorId }) {
         ))}
       </nav>
 
-      <div className="mt-6 border-t border-white/20 pt-4">
-        <div className="flex items-center gap-3 px-1">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/20">
+      <div className="mt-6 border-t border-cyan-800/40 pt-4">
+        <div className="flex items-center gap-3 rounded-2xl bg-[#083549]/60 p-2.5">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#134d67] text-cyan-200">
             <User className="h-5 w-5" />
           </span>
           <div className="min-w-0">
-            <p className="truncate text-sm font-semibold">{user.name}</p>
-            <p className="text-xs text-white/70">{ROLE_LABEL[user.role] ?? user.role}</p>
+            <p className="truncate text-sm font-semibold text-white">{user.name}</p>
+            <p className="text-xs text-cyan-200/70">{ROLE_LABEL[user.role] ?? user.role}</p>
           </div>
         </div>
         <button
           type="button"
           onClick={handleLogout}
-          className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-white/30 px-4 py-2 text-sm font-medium transition-colors hover:bg-white/10"
+          className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-cyan-700/40 px-4 py-2 text-sm font-medium text-cyan-100 transition-colors hover:bg-white/10"
         >
           <LogOut className="h-4 w-4" />
           Log out

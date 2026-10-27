@@ -302,7 +302,7 @@ function Profile({ doctorId }) {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-secondary/5 via-accent/5 to-white">
+    <div className={`min-h-screen ${user ? "bg-transparent" : "bg-gradient-to-br from-secondary/5 via-accent/5 to-white"}`}>
       <Navbar />
       <main className="mx-auto max-w-4xl px-6 pb-20 pt-6">
         <Link
