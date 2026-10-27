@@ -145,7 +145,7 @@ export default function About() {
           <div className="flex flex-col items-start justify-between gap-6 rounded-3xl bg-primary/70 p-8 text-white md:flex-row md:items-center md:p-10">
             <div>
               <h2 className="text-2xl font-semibold">Ready to skip the wait?</h2>
-              <p className="mt-1 text-primary/5">
+              <p className="mt-1 text-white">
                 Book a token and follow your turn in real time.
               </p>
             </div>
