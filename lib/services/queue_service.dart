@@ -1,4 +1,3 @@
-
 import '../models/token_model.dart';
 import 'api_service.dart';
 
@@ -24,21 +23,25 @@ class QueueService {
 
       final data = response['data'];
 
-      if (data is! Map || data['token'] is! Map) {
+      if (data is! Map) {
         throw const ApiException(
           'Unable to book your token. Please try again.',
         );
       }
 
-      final tokenJson = Map<String, dynamic>.from(
-        data['token'] as Map,
-      );
+      final tokenData = data['token'] ?? data;
+
+      if (tokenData is! Map) {
+        throw const ApiException(
+          'Unable to book your token. Please try again.',
+        );
+      }
+
+      final tokenJson = Map<String, dynamic>.from(tokenData);
 
       _copyQueueFields(data, tokenJson);
 
       return TokenModel.fromJson(tokenJson);
-    } on ApiException {
-      rethrow;
     } catch (_) {
       throw const ApiException(
         'Unable to book your token. Please try again.',
@@ -62,6 +65,11 @@ class QueueService {
         tokens = data['tokens'] ??
             data['items'] ??
             data['results'];
+
+        // Handle another common nested response structure.
+        if (tokens == null && data['data'] is List) {
+          tokens = data['data'];
+        }
       }
 
       tokens ??= response['tokens'];
@@ -77,8 +85,6 @@ class QueueService {
 
         return TokenModel.fromJson(tokenJson);
       }).toList();
-    } on ApiException {
-      rethrow;
     } catch (_) {
       throw const ApiException(
         'Unable to load your tokens. Please try again.',
@@ -90,7 +96,9 @@ class QueueService {
     final id = tokenId.trim();
 
     if (id.isEmpty) {
-      throw const ApiException('Token ID is required.');
+      throw const ApiException(
+        'Unable to load token status. Please try again.',
+      );
     }
 
     try {
@@ -101,30 +109,52 @@ class QueueService {
 
       final data = response['data'];
 
-      if (data is! Map || data['token'] is! Map) {
+      if (data is! Map) {
         throw const ApiException(
           'Unable to load token status. Please try again.',
         );
       }
 
-      final tokenJson = Map<String, dynamic>.from(
-        data['token'] as Map,
-      );
+      final tokenData = data['token'] ?? data;
 
+      if (tokenData is! Map) {
+        throw const ApiException(
+          'Unable to load token status. Please try again.',
+        );
+      }
+
+      final tokenJson = Map<String, dynamic>.from(tokenData);
+
+      // Copy live queue values from the response into the token.
       _copyQueueFields(data, tokenJson);
 
+      // Also support queue details nested inside a queue object.
+      final queueData = data['queue'];
+
+      if (queueData is Map) {
+        _copyQueueFields(queueData, tokenJson);
+      }
+
+      // Keep prediction data available to TokenModel.
+      final predictionData =
+          data['prediction'] ??
+          (queueData is Map ? queueData['prediction'] : null);
+
+      if (predictionData is Map) {
+        tokenJson['prediction'] =
+            Map<String, dynamic>.from(predictionData);
+      }
+
       return TokenModel.fromJson(tokenJson);
-    } on ApiException {
-      rethrow;
     } catch (_) {
       throw const ApiException(
-        'Unable to fetch token status. Please try again.',
+        'Unable to load token status. Please try again.',
       );
     }
   }
 
   void _copyQueueFields(
-    Map data,
+    Map source,
     Map<String, dynamic> tokenJson,
   ) {
     const fields = [
@@ -133,33 +163,42 @@ class QueueService {
       'estimatedWaitMinutes',
       'estimatedWaitingTime',
       'estimatedWait',
-      'prediction',
       'averageConsultationMinutes',
       'consultationOverdue',
     ];
 
     for (final field in fields) {
-      if (data.containsKey(field)) {
-        tokenJson[field] = data[field];
+      final value = source[field];
+
+      // Preserve valid zero values, but don't overwrite existing
+      // values with null or absent response fields.
+      if (value != null) {
+        tokenJson[field] = value;
       }
+    }
+
+    final prediction = source['prediction'];
+
+    if (prediction is Map) {
+      tokenJson['prediction'] =
+          Map<String, dynamic>.from(prediction);
     }
   }
 
   Future<void> cancelToken(String tokenId) async {
-    if (tokenId.trim().isEmpty) {
-      throw const ApiException('Token ID is required.');
+    final id = tokenId.trim();
+
+    if (id.isEmpty) {
+      throw const ApiException(
+        'Unable to cancel your token. Please try again.',
+      );
     }
 
     try {
-      final encodedTokenId =
-          Uri.encodeComponent(tokenId.trim());
-
       await _apiService.patch(
-        '/api/queue/tokens/$encodedTokenId/cancel',
+        '/api/queue/tokens/${Uri.encodeComponent(id)}/cancel',
         authenticated: true,
       );
-    } on ApiException {
-      rethrow;
     } catch (_) {
       throw const ApiException(
         'Unable to cancel your token. Please try again.',

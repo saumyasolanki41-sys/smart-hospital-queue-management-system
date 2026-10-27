@@ -1,3 +1,4 @@
+
 class TokenModel {
   final String id;
   final String tokenNumber;
@@ -7,7 +8,6 @@ class TokenModel {
   final String? doctorName;
   final String? departmentName;
 
-
   final int? patientsAhead;
   final double? estimatedWaitMinutes;
 
@@ -15,11 +15,9 @@ class TokenModel {
   final DateTime? appointmentTime;
   final DateTime? createdAt;
 
-
   final int? averageConsultationMinutes;
   final bool? consultationOverdue;
   final Map<String, dynamic>? prediction;
-
 
   int? get peopleAhead => patientsAhead;
 
@@ -68,15 +66,16 @@ class TokenModel {
     return value?.toString() ?? '';
   }
 
+  // Invalid or missing values remain null.
+  // A genuine zero remains zero.
   static int? _readInt(dynamic value) {
     if (value == null) return null;
+
     if (value is int) return value;
 
     if (value is num) {
       if (!value.isFinite || value % 1 != 0) {
-        throw FormatException(
-          'Expected a whole number, got $value',
-        );
+        return null;
       }
 
       return value.toInt();
@@ -88,13 +87,7 @@ class TokenModel {
       return null;
     }
 
-    final parsed = int.tryParse(text);
-
-    if (parsed == null) {
-      throw FormatException('Invalid integer value: $value');
-    }
-
-    return parsed;
+    return int.tryParse(text);
   }
 
   static double? _readDouble(dynamic value) {
@@ -102,14 +95,7 @@ class TokenModel {
 
     if (value is num) {
       final result = value.toDouble();
-
-      if (!result.isFinite) {
-        throw FormatException(
-          'Invalid waiting-time value: $value',
-        );
-      }
-
-      return result;
+      return result.isFinite ? result : null;
     }
 
     final text = value.toString().trim();
@@ -118,15 +104,13 @@ class TokenModel {
       return null;
     }
 
-    final parsed = double.tryParse(text);
+    final result = double.tryParse(text);
 
-    if (parsed == null || !parsed.isFinite) {
-      throw FormatException(
-        'Invalid waiting-time value: $value',
-      );
+    if (result == null || !result.isFinite) {
+      return null;
     }
 
-    return parsed;
+    return result;
   }
 
   static String _parseTokenNumber(Map<String, dynamic> json) {
@@ -262,6 +246,8 @@ class TokenModel {
         )
       ),
 
+      // Backend returns peopleAhead at the response level.
+      // Do not convert a missing value into zero.
       patientsAhead: _readInt(
         json['peopleAhead'] ??
         json['patientsAhead'] ??
