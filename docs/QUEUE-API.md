@@ -33,23 +33,16 @@ POST `/api/queue/tokens` with JSON:
 Replace the example ID with the actual doctor's ID. No other body fields are
 accepted. Patient ID, date, number and initial status are assigned by the server.
 
-201 response:
+201 responses now use the token-status envelope described below: `data.token`
+plus `data.peopleAhead`, `data.estimatedWaitMinutes`,
+`data.averageConsultationMinutes`, `data.consultationOverdue` and `data.prediction`.
+The doctor is populated with department details on a successful status read.
 
-```json
-{
-  "success": true,
-  "data": {
-    "token": {
-      "_id": "507f1f77bcf86cd799439013",
-      "doctor": "507f1f77bcf86cd799439012",
-      "queueDate": "2026-10-18",
-      "tokenNumber": 1,
-      "status": "waiting",
-      "createdAt": "2026-10-18T06:00:00.000Z"
-    }
-  }
-}
-```
+Booking commits before reading its queue estimate. If that subsequent read fails,
+the API still returns 201 with the created token (plain doctor ID), null queue
+fields, and `prediction: { source: "unavailable", reason: "queue_info_unavailable" }`.
+Do not rebook: fetch that token's status instead. Estimates are a live view after
+commit, not a transaction snapshot or reserved appointment time.
 
 Queue day uses India time (UTC+05:30). Numbering starts at 1 separately for each
 doctor and date. Each patient can have one active token per doctor per day.
@@ -84,7 +77,7 @@ Both the list and token-status responses populate `doctor` as
 Read department details from `data.tokens[i].doctor.department` in the list
 and `data.token.doctor.department` in token status. Token status previously
 returned a plain doctor ID; clients must now read `data.token.doctor._id`.
-Booking and cancellation still return the plain doctor ID. No patient information
+Cancellation and booking estimation-error responses return the plain doctor ID. No patient information
 is exposed. A removed doctor profile populates as null; a removed department
 populates as null inside the doctor. Clients should show an unavailable label in
 those cases. There is no public list of patients in the queue.
@@ -189,3 +182,71 @@ Token status now supports ML prediction with the existing calculation as fallbac
 See [ML-INTEGRATION.md](ML-INTEGRATION.md) for setup, prediction.source/reason,
 assumptions and the 60 status checks/minute per-user limit. ML configuration is
 optional; no configuration keeps the original baseline estimate.
+
+## Flutter response contract and examples
+
+Booking POST `/api/queue/tokens` and status GET `/api/queue/tokens/:id` use
+this same successful envelope. Example values are illustrative: token 1 is called
+and began 5 minutes ago, token 2 is waiting ahead of token 3, average consultation
+is 15 minutes, and ML is not configured. The fallback estimate is 15 + 10 = 25.
+
+```json
+{
+  "success": true,
+  "data": {
+    "token": {
+      "_id": "507f1f77bcf86cd799439013",
+      "doctor": {
+        "_id": "507f1f77bcf86cd799439012",
+        "name": "Example Doctor",
+        "specialization": "Internal Medicine Specialist",
+        "department": {
+          "_id": "507f1f77bcf86cd799439011",
+          "name": "Internal Medicine"
+        }
+      },
+      "queueDate": "2026-10-27",
+      "tokenNumber": 3,
+      "status": "waiting",
+      "createdAt": "2026-10-27T06:00:00.000Z"
+    },
+    "peopleAhead": 1,
+    "estimatedWaitMinutes": 25,
+    "averageConsultationMinutes": 15,
+    "consultationOverdue": false,
+    "prediction": { "source": "fallback", "reason": "ml_not_configured" }
+  }
+}
+```
+
+POST returns HTTP 201; GET returns HTTP 200. Fields are siblings of `token`,
+not fields inside it. Use `peopleAhead`, not `patientsAhead`. Parse numeric
+waiting minutes as a nullable number, preserving fractional ML values. Completed,
+called, cancelled, skipped and historical tokens have null queue estimates.
+Null/missing is unavailable, not zero. Actual numeric zero is a valid estimate.
+The schema supports `called` for the current consultation, not `serving`.
+A called token is excluded from peopleAhead but contributes remaining time.
+
+GET `/api/queue/tokens/mine` remains a paginated list with populated doctor and
+department; it does not add per-token ML calls or live estimates. Fetch status
+for the selected active token on entry and refresh. The existing list response is:
+
+```json
+{
+  "success": true,
+  "data": {
+    "tokens": [],
+    "date": "2026-10-27",
+    "page": 1,
+    "limit": 20
+  }
+}
+```
+
+Flutter must merge sibling queue fields when building TokenModel from a booking
+or status response. List refreshes must not silently replace a live estimate with
+zero; retain a visibly stale estimate or fetch status again. Doctor may be a
+populated object, a plain ID in a booking estimate failure, or null for a removed
+profile. Qualifications and appointment times are not supplied by these APIs.
+Do not display literal null for absent fields. These changes require deployment
+before the hosted booking endpoint returns the new envelope.

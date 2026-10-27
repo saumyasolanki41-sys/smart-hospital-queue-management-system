@@ -80,10 +80,22 @@ async function joinQueue(patientId, body) {
     }
     throw error;
   }
-  return { token: {
+  const bookedToken = {
     _id: token._id, doctor: token.doctor, queueDate: token.queueDate,
     tokenNumber: token.tokenNumber, status: token.status, createdAt: token.createdAt,
-  } };
+  };
+  try {
+    return await tokenStatus(patientId, token._id.toString());
+  } catch {
+    return {
+      token: bookedToken,
+      peopleAhead: null,
+      estimatedWaitMinutes: null,
+      averageConsultationMinutes: null,
+      consultationOverdue: null,
+      prediction: { source: 'unavailable', reason: 'queue_info_unavailable' },
+    };
+  }
 }
 
 async function myTokens(patientId, query) {
