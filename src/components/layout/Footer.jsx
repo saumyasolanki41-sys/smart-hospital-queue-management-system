@@ -76,8 +76,8 @@ function ContactItem({ icon: Icon, children, href }) {
 export default function Footer() {
   return (
     <footer className="w-full bg-[#0d4b68] text-white">
-      <div className="mx-auto w-full max-w-[1600px] px-6 py-8 sm:px-8 md:px-10 md:py-10 lg:px-12">
-        <section className="mb-8 flex flex-col items-start justify-between gap-5 rounded-2xl bg-[#2183a0] px-6 py-5 sm:flex-row sm:items-center sm:px-7">
+      <div className="mx-auto w-full max-w-[1600px] px-6 py-12 sm:px-8 md:px-10 md:py-14 lg:px-12">
+        <section className="mb-12 flex flex-col items-start justify-between gap-5 rounded-2xl bg-[#2183a0] px-6 py-7 sm:flex-row sm:items-center sm:px-7">
           <div>
             <h2 className="text-lg font-bold">Ready for a smoother hospital visit?</h2>
             <p className="mt-1 text-sm text-cyan-50/80">
@@ -92,7 +92,7 @@ export default function Footer() {
           </Link>
         </section>
 
-        <div className="grid gap-x-10 gap-y-10 border-b border-cyan-100/20 pb-10 sm:grid-cols-2 lg:grid-cols-[1.8fr_0.8fr_1fr_0.8fr_1.25fr]">
+        <div className="grid gap-x-10 gap-y-12 border-b border-cyan-100/20 pb-14 sm:grid-cols-2 lg:grid-cols-[1.8fr_0.8fr_1fr_0.8fr_1.25fr]">
           <div>
             <Link to="/" className="inline-flex items-center gap-2">
               <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-cyan-200/20 text-cyan-200">
@@ -123,10 +123,10 @@ export default function Footer() {
 
           {FOOTER_COLUMNS.map(({ heading, links }) => (
             <nav key={heading} aria-label={heading}>
-              <h2 className="mb-4 text-sm font-bold text-white after:mt-1.5 after:block after:h-px after:w-7 after:bg-cyan-300">
+              <h2 className="mb-5 text-sm font-bold text-white after:mt-1.5 after:block after:h-px after:w-7 after:bg-cyan-300">
                 {heading}
               </h2>
-              <ul className="space-y-3">
+              <ul className="space-y-4">
                 {links.map((link) => (
                   <FooterLink key={link.label} {...link} />
                 ))}
@@ -137,11 +137,11 @@ export default function Footer() {
           <section aria-labelledby="footer-contact-heading">
             <h2
               id="footer-contact-heading"
-              className="mb-4 text-sm font-bold text-white after:mt-1.5 after:block after:h-px after:w-7 after:bg-cyan-300"
+              className="mb-5 text-sm font-bold text-white after:mt-1.5 after:block after:h-px after:w-7 after:bg-cyan-300"
             >
               Contact
             </h2>
-            <ul className="space-y-3">
+            <ul className="space-y-4">
               <ContactItem icon={Mail} href="mailto:support@smarthospital.com">
                 support@smarthospital.com
               </ContactItem>
@@ -156,7 +156,7 @@ export default function Footer() {
           </section>
         </div>
 
-        <div className="flex flex-col gap-3 pt-5 text-xs text-cyan-100/65 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-3 pt-7 text-xs text-cyan-100/65 sm:flex-row sm:items-center sm:justify-between">
           <p>© {new Date().getFullYear()} Smart Hospital. All rights reserved.</p>
           <nav aria-label="Legal links" className="flex flex-wrap gap-x-2">
             <Link to="/" className="hover:text-white">Privacy Policy</Link>
