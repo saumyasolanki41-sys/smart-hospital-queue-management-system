@@ -1,4 +1,3 @@
-
 class AmbulanceRequestModel {
   final String id;
   final String pickupAddress;

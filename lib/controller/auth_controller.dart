@@ -1,6 +1,4 @@
-
 import 'package:flutter/foundation.dart';
-
 import '../models/user_model.dart';
 import '../services/api_service.dart';
 import '../services/auth_service.dart';
@@ -41,7 +39,6 @@ class AuthController extends ChangeNotifier {
     notifyListeners();
   }
 
-  // Update profile using one Full Name field.
   bool updateProfile({
     required String fullName,
     required String age,

@@ -61,9 +61,6 @@ class TokenController extends ChangeNotifier {
       departmentName:
           updated.departmentName ?? previous.departmentName,
 
-      // The refreshed response is authoritative for live queue data.
-      // Keep null if the latest response does not provide a value.
-      // Never replace missing values with zero.
       patientsAhead: updated.patientsAhead,
       estimatedWaitMinutes: updated.estimatedWaitMinutes,
 

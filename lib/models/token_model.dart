@@ -1,4 +1,3 @@
-
 class TokenModel {
   final String id;
   final String tokenNumber;
@@ -66,8 +65,6 @@ class TokenModel {
     return value?.toString() ?? '';
   }
 
-  // Invalid or missing values remain null.
-  // A genuine zero remains zero.
   static int? _readInt(dynamic value) {
     if (value == null) return null;
 
@@ -246,8 +243,6 @@ class TokenModel {
         )
       ),
 
-      // Backend returns peopleAhead at the response level.
-      // Do not convert a missing value into zero.
       patientsAhead: _readInt(
         json['peopleAhead'] ??
         json['patientsAhead'] ??

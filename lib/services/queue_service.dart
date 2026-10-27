@@ -66,7 +66,6 @@ class QueueService {
             data['items'] ??
             data['results'];
 
-        // Handle another common nested response structure.
         if (tokens == null && data['data'] is List) {
           tokens = data['data'];
         }
@@ -125,17 +124,14 @@ class QueueService {
 
       final tokenJson = Map<String, dynamic>.from(tokenData);
 
-      // Copy live queue values from the response into the token.
       _copyQueueFields(data, tokenJson);
 
-      // Also support queue details nested inside a queue object.
       final queueData = data['queue'];
 
       if (queueData is Map) {
         _copyQueueFields(queueData, tokenJson);
       }
 
-      // Keep prediction data available to TokenModel.
       final predictionData =
           data['prediction'] ??
           (queueData is Map ? queueData['prediction'] : null);
@@ -170,8 +166,6 @@ class QueueService {
     for (final field in fields) {
       final value = source[field];
 
-      // Preserve valid zero values, but don't overwrite existing
-      // values with null or absent response fields.
       if (value != null) {
         tokenJson[field] = value;
       }

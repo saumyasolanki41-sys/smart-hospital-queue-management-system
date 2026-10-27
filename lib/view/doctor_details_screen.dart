@@ -1,7 +1,5 @@
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
 import '../models/doctor_model.dart';
 import '../controller/token_controller.dart';
 import 'booking_confirmation_screen.dart';

@@ -1,7 +1,5 @@
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
 import '../models/token_model.dart';
 import '../controller/token_controller.dart';
 
@@ -65,8 +63,6 @@ class _LiveQueueScreenState extends State<LiveQueueScreen>
 
       if (!mounted) return;
 
-      // Refresh active tokens one at a time. The controller currently
-      // permits only one live-status request at a time.
       final activeTokenIds = controller.tokens
           .where((token) {
             final status = token.status.toLowerCase().trim();
@@ -86,7 +82,7 @@ class _LiveQueueScreenState extends State<LiveQueueScreen>
         await controller.fetchTokenStatus(tokenId);
       }
     } catch (_) {
-      // Never show technical backend details to the user.
+   
     } finally {
       _isRefreshingStatus = false;
 
