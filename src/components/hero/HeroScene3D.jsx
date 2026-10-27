@@ -78,7 +78,7 @@ function OrbitDot({ radius, speed, color, size = 0.07 }) {
 function Scene() {
   return (
     <>
-      {/* Lighting — manual setup, no external HDR download needed */}
+      {/* Lighting */}
       <ambientLight intensity={1.0} />
       <directionalLight position={[4, 6, 5]} intensity={1.6} />
       <pointLight position={[-5,  3,  4]} color={C_LIGHT}  intensity={2.8} />
@@ -94,9 +94,9 @@ function Scene() {
           {/* The user-provided hero.png */}
           <HeroImage />
 
-          {/* Three rings at distinct tilts — inspired by Fitnect orbit rings */}
+          {/* Three rings at distinct tilts*/}
           <OrbitRing
-            radius={2.05} tube={0.030}
+            radius={2.45} tube={0.030}
             color={C_LIGHT}   speed={ 0.50}
             tiltX={0.30}
           />
@@ -106,7 +106,7 @@ function Scene() {
             tiltX={Math.PI / 2} tiltZ={0.38}
           />
           <OrbitRing
-            radius={1.82} tube={0.035}
+            radius={1.86} tube={0.035}
             color={C_PRIMARY} speed={ 0.28}
             tiltX={Math.PI / 3} tiltZ={-0.55}
           />
