@@ -142,7 +142,7 @@ export default function About() {
 
         {/* Call to action */}
         <section className="mx-auto max-w-6xl px-6 pb-20">
-          <div className="flex flex-col items-start justify-between gap-6 rounded-3xl bg-primary/70 p-8 text-white md:flex-row md:items-center md:p-10">
+          <div className="flex flex-col items-start justify-between gap-6 rounded-3xl bg-[#0D4B6C] p-8 text-white md:flex-row md:items-center md:p-10">
             <div>
               <h2 className="text-2xl font-semibold">Ready to skip the wait?</h2>
               <p className="mt-1 text-white">

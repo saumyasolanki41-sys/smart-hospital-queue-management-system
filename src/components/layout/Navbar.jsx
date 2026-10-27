@@ -66,7 +66,7 @@ function AuthActions({ onNavigate, mobile = false }) {
       <Link
         to="/Register"
         onClick={onNavigate}
-        className={`${fill} rounded-lg bg-primary/70 px-5 py-2 text-center text-sm font-medium text-white shadow-sm transition-colors hover:bg-primary/80`}
+        className={`${fill} rounded-lg bg-[#0D4B6C] px-5 py-2 text-center text-sm font-medium text-white shadow-sm transition-colors hover:bg-primary/80`}
       >
         Get Started
       </Link>
@@ -85,7 +85,7 @@ export default function Navbar() {
       <nav className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2">
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/60 text-white">
+          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#0D4B6C] text-white">
             <HeartPulse className="h-5 w-5" />
           </span>
           <span className="text-lg font-semibold text-slate-800">Smart Hospital</span>
