@@ -1,4 +1,4 @@
-// import 'package:flutter/foundation.dart';
+
 import '../models/token_model.dart';
 import 'api_service.dart';
 
@@ -30,9 +30,13 @@ class QueueService {
         );
       }
 
-      return TokenModel.fromJson(
-        Map<String, dynamic>.from(data['token'] as Map),
+      final tokenJson = Map<String, dynamic>.from(
+        data['token'] as Map,
       );
+
+      _copyQueueFields(data, tokenJson);
+
+      return TokenModel.fromJson(tokenJson);
     } on ApiException {
       rethrow;
     } catch (_) {
@@ -68,14 +72,11 @@ class QueueService {
         );
       }
 
-      return tokens
-          .whereType<Map>()
-          .map(
-            (token) => TokenModel.fromJson(
-              Map<String, dynamic>.from(token),
-            ),
-          )
-          .toList();
+      return tokens.whereType<Map>().map((token) {
+        final tokenJson = Map<String, dynamic>.from(token);
+
+        return TokenModel.fromJson(tokenJson);
+      }).toList();
     } on ApiException {
       rethrow;
     } catch (_) {
@@ -86,15 +87,15 @@ class QueueService {
   }
 
   Future<TokenModel> getTokenStatus(String tokenId) async {
-    if (tokenId.trim().isEmpty) {
+    final id = tokenId.trim();
+
+    if (id.isEmpty) {
       throw const ApiException('Token ID is required.');
     }
 
     try {
-      final encodedTokenId = Uri.encodeComponent(tokenId.trim());
-
       final response = await _apiService.get(
-        '/api/queue/tokens/$encodedTokenId',
+        '/api/queue/tokens/${Uri.encodeComponent(id)}',
         authenticated: true,
       );
 
@@ -102,7 +103,7 @@ class QueueService {
 
       if (data is! Map || data['token'] is! Map) {
         throw const ApiException(
-          'Unable to fetch token status. Please try again.',
+          'Unable to load token status. Please try again.',
         );
       }
 
@@ -110,29 +111,7 @@ class QueueService {
         data['token'] as Map,
       );
 
-      // Copy queue status values only when they exist in the response.
-      if (data.containsKey('peopleAhead')) {
-        tokenJson['peopleAhead'] = data['peopleAhead'];
-      }
-
-      if (data.containsKey('estimatedWaitMinutes')) {
-        tokenJson['estimatedWaitMinutes'] =
-            data['estimatedWaitMinutes'];
-      }
-
-      if (data.containsKey('averageConsultationMinutes')) {
-        tokenJson['averageConsultationMinutes'] =
-            data['averageConsultationMinutes'];
-      }
-
-      if (data.containsKey('consultationOverdue')) {
-        tokenJson['consultationOverdue'] =
-            data['consultationOverdue'];
-      }
-
-      if (data.containsKey('prediction')) {
-        tokenJson['prediction'] = data['prediction'];
-      }
+      _copyQueueFields(data, tokenJson);
 
       return TokenModel.fromJson(tokenJson);
     } on ApiException {
@@ -144,13 +123,36 @@ class QueueService {
     }
   }
 
+  void _copyQueueFields(
+    Map data,
+    Map<String, dynamic> tokenJson,
+  ) {
+    const fields = [
+      'peopleAhead',
+      'patientsAhead',
+      'estimatedWaitMinutes',
+      'estimatedWaitingTime',
+      'estimatedWait',
+      'prediction',
+      'averageConsultationMinutes',
+      'consultationOverdue',
+    ];
+
+    for (final field in fields) {
+      if (data.containsKey(field)) {
+        tokenJson[field] = data[field];
+      }
+    }
+  }
+
   Future<void> cancelToken(String tokenId) async {
     if (tokenId.trim().isEmpty) {
       throw const ApiException('Token ID is required.');
     }
 
     try {
-      final encodedTokenId = Uri.encodeComponent(tokenId.trim());
+      final encodedTokenId =
+          Uri.encodeComponent(tokenId.trim());
 
       await _apiService.patch(
         '/api/queue/tokens/$encodedTokenId/cancel',

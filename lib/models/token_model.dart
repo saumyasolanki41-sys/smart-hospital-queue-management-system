@@ -1,4 +1,3 @@
-
 class TokenModel {
   final String id;
   final String tokenNumber;
@@ -8,18 +7,21 @@ class TokenModel {
   final String? doctorName;
   final String? departmentName;
 
-  // Null means the API did not provide the value.
+
   final int? patientsAhead;
-  final int? estimatedWaitMinutes;
+  final double? estimatedWaitMinutes;
 
   final String status;
   final DateTime? appointmentTime;
   final DateTime? createdAt;
 
-  // Additional live queue details.
+
   final int? averageConsultationMinutes;
   final bool? consultationOverdue;
   final Map<String, dynamic>? prediction;
+
+
+  int? get peopleAhead => patientsAhead;
 
   const TokenModel({
     required this.id,
@@ -69,14 +71,62 @@ class TokenModel {
   static int? _readInt(dynamic value) {
     if (value == null) return null;
     if (value is int) return value;
-    if (value is num) return value.toInt();
+
+    if (value is num) {
+      if (!value.isFinite || value % 1 != 0) {
+        throw FormatException(
+          'Expected a whole number, got $value',
+        );
+      }
+
+      return value.toInt();
+    }
 
     final text = value.toString().trim();
+
     if (text.isEmpty || text.toLowerCase() == 'null') {
       return null;
     }
 
-    return int.tryParse(text);
+    final parsed = int.tryParse(text);
+
+    if (parsed == null) {
+      throw FormatException('Invalid integer value: $value');
+    }
+
+    return parsed;
+  }
+
+  static double? _readDouble(dynamic value) {
+    if (value == null) return null;
+
+    if (value is num) {
+      final result = value.toDouble();
+
+      if (!result.isFinite) {
+        throw FormatException(
+          'Invalid waiting-time value: $value',
+        );
+      }
+
+      return result;
+    }
+
+    final text = value.toString().trim();
+
+    if (text.isEmpty || text.toLowerCase() == 'null') {
+      return null;
+    }
+
+    final parsed = double.tryParse(text);
+
+    if (parsed == null || !parsed.isFinite) {
+      throw FormatException(
+        'Invalid waiting-time value: $value',
+      );
+    }
+
+    return parsed;
   }
 
   static String _parseTokenNumber(Map<String, dynamic> json) {
@@ -95,6 +145,7 @@ class TokenModel {
 
     if (value is num) {
       final timestamp = value.toInt();
+
       final milliseconds = timestamp.abs() < 1000000000000
           ? timestamp * 1000
           : timestamp;
@@ -162,7 +213,12 @@ class TokenModel {
       ''
     ).toString();
 
-    final predictionValue = json['prediction'];
+    final dynamic predictionValue = json['prediction'];
+
+    final Map<String, dynamic>? predictionMap =
+        predictionValue is Map
+            ? Map<String, dynamic>.from(predictionValue)
+            : null;
 
     return TokenModel(
       id: (
@@ -177,7 +233,9 @@ class TokenModel {
       patientId: (
         json['patientId'] ??
         json['userId'] ??
-        (patient is Map ? patient['_id'] ?? patient['id'] : null) ??
+        (patient is Map
+            ? patient['_id'] ?? patient['id']
+            : null) ??
         ''
       ).toString(),
 
@@ -199,31 +257,40 @@ class TokenModel {
         _readName(json['department_name']) ??
         _readName(department) ??
         _readName(doctorDepartment) ??
-        _readName(doctor is Map ? doctor['departmentName'] : null)
+        _readName(
+          doctor is Map ? doctor['departmentName'] : null,
+        )
       ),
 
-     patientsAhead: _readInt(
-  json['peopleAhead'] ?? json['patientsAhead'],
-),
+      patientsAhead: _readInt(
+        json['peopleAhead'] ??
+        json['patientsAhead'] ??
+        predictionMap?['peopleAhead'] ??
+        predictionMap?['patientsAhead'],
+      ),
 
-      estimatedWaitMinutes: _readInt(
+      estimatedWaitMinutes: _readDouble(
         json['estimatedWaitMinutes'] ??
         json['estimatedWaitingTime'] ??
-        json['estimatedWait'],
+        json['estimatedWait'] ??
+        predictionMap?['estimatedWaitMinutes'] ??
+        predictionMap?['estimatedWaitingTime'] ??
+        predictionMap?['estimatedWait'],
       ),
 
       averageConsultationMinutes: _readInt(
-        json['averageConsultationMinutes'],
+        json['averageConsultationMinutes'] ??
+        predictionMap?['averageConsultationMinutes'],
       ),
 
       consultationOverdue:
           json['consultationOverdue'] is bool
               ? json['consultationOverdue'] as bool
-              : null,
+              : predictionMap?['consultationOverdue'] is bool
+                  ? predictionMap!['consultationOverdue'] as bool
+                  : null,
 
-      prediction: predictionValue is Map
-          ? Map<String, dynamic>.from(predictionValue)
-          : null,
+      prediction: predictionMap,
 
       status: (json['status'] ?? 'waiting').toString(),
 
@@ -244,6 +311,7 @@ class TokenModel {
       'departmentId': departmentId,
       'doctorName': doctorName,
       'departmentName': departmentName,
+      'peopleAhead': patientsAhead,
       'patientsAhead': patientsAhead,
       'estimatedWaitMinutes': estimatedWaitMinutes,
       'averageConsultationMinutes': averageConsultationMinutes,

@@ -92,7 +92,6 @@ class AuthService {
       password: password,
     );
 
-    // Use the latest challenge ID returned by the backend.
     _updateChallengeId(response);
   }
 

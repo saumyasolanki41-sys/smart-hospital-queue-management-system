@@ -2,7 +2,6 @@
 import 'package:flutter/foundation.dart';
 
 import '../models/token_model.dart';
-// import '../services/api_service.dart';
 import '../services/queue_service.dart';
 
 class TokenController extends ChangeNotifier {
@@ -17,9 +16,11 @@ class TokenController extends ChangeNotifier {
   bool _isLoading = false;
   bool _isBooking = false;
   bool _isCancelling = false;
+  bool _isRefreshingStatus = false;
   bool _refreshRequested = false;
 
   String? _error;
+  String? _statusError;
 
   List<TokenModel> get tokens => List.unmodifiable(_tokens);
 
@@ -31,7 +32,11 @@ class TokenController extends ChangeNotifier {
 
   bool get isCancelling => _isCancelling;
 
+  bool get isRefreshingStatus => _isRefreshingStatus;
+
   String? get error => _error;
+
+  String? get statusError => _statusError;
 
   bool get hasTokens => _tokens.isNotEmpty;
 
@@ -50,6 +55,7 @@ class TokenController extends ChangeNotifier {
       );
 
       _selectedToken = token;
+      notifyListeners();
 
       await fetchMyTokens(refresh: true);
 
@@ -111,9 +117,7 @@ class TokenController extends ChangeNotifier {
         } catch (_) {
           _error = 'Unable to load your tokens. Please try again.';
 
-          if (!refresh && _tokens.isEmpty) {
-            _tokens = [];
-          }
+          // Preserve existing token data if a refresh fails.
         }
 
         notifyListeners();
@@ -129,16 +133,21 @@ class TokenController extends ChangeNotifier {
   ) async {
     final normalizedId = tokenId.trim();
 
-    if (normalizedId.isEmpty) {
+    if (normalizedId.isEmpty || _isRefreshingStatus) {
       return null;
     }
+
+    _isRefreshingStatus = true;
+    _statusError = null;
+    notifyListeners();
 
     try {
       final updatedToken =
           await _queueService.getTokenStatus(normalizedId);
 
+      // Replace the existing token with the latest API response.
       final index = _tokens.indexWhere(
-        (item) => item.id == normalizedId,
+        (item) => item.id.trim() == normalizedId,
       );
 
       if (index >= 0) {
@@ -147,16 +156,25 @@ class TokenController extends ChangeNotifier {
         _tokens = [..._tokens, updatedToken];
       }
 
-      if (_selectedToken?.id == normalizedId) {
+      // Keep the selected token synchronized with the refreshed data.
+      if (_selectedToken?.id.trim() == normalizedId) {
         _selectedToken = updatedToken;
       }
 
+      _statusError = null;
       notifyListeners();
 
       return updatedToken;
     } catch (_) {
-      // Keep the existing token data if live status is unavailable.
+      // Do not replace valid existing values with zero or null.
+      _statusError =
+          'Unable to refresh waiting time. Please try again.';
+
+      notifyListeners();
       return null;
+    } finally {
+      _isRefreshingStatus = false;
+      notifyListeners();
     }
   }
 
@@ -186,6 +204,7 @@ class TokenController extends ChangeNotifier {
         _selectedToken = null;
       }
 
+      _statusError = null;
       notifyListeners();
 
       await fetchMyTokens(refresh: true);
@@ -202,11 +221,13 @@ class TokenController extends ChangeNotifier {
 
   void selectToken(TokenModel token) {
     _selectedToken = token;
+    _statusError = null;
     notifyListeners();
   }
 
   void clearError() {
     _error = null;
+    _statusError = null;
     notifyListeners();
   }
 
@@ -214,6 +235,7 @@ class TokenController extends ChangeNotifier {
     _tokens = [];
     _selectedToken = null;
     _error = null;
+    _statusError = null;
     _refreshRequested = false;
 
     notifyListeners();

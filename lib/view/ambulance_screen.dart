@@ -99,13 +99,11 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
 
       if (!mounted) return false;
 
-      // Save the current GPS coordinates.
       setState(() {
         _latitude = position.latitude;
         _longitude = position.longitude;
       });
 
-      // Convert GPS coordinates into a readable address.
       try {
         final geocoding = Geocoding();
 
@@ -126,8 +124,6 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
         }
 
         final place = placemarks.first;
-
-        // Build an address using the available location details.
         final addressParts = <String?>[
           place.name,
           place.street,
@@ -143,7 +139,6 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
             .where((part) => part.isNotEmpty)
             .toList();
 
-        // Remove repeated address parts.
         final uniqueParts = <String>[];
 
         for (final part in addressParts) {
@@ -168,7 +163,7 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
           );
         }
       } catch (e) {
-        // Keep technical geocoding errors out of the UI.
+      
         debugPrint('Address lookup failed: $e');
 
         if (mounted) {
@@ -181,7 +176,7 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
 
       return true;
     } catch (e) {
-      // Keep technical location errors out of the UI.
+  
       debugPrint('Getting current location failed: $e');
 
       if (mounted) {
@@ -254,7 +249,7 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
           'Ambulance request submitted successfully.',
         );
       } else {
-        // Never display the raw backend error.
+      
         _showMessage(
           'Unable to submit ambulance request. Please try again.',
         );
@@ -297,7 +292,7 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
       if (!mounted) return;
 
       if (controller.error != null) {
-        // Never display the raw backend error.
+    
         _showMessage(
           'Unable to refresh ETA. Please try again.',
         );
@@ -362,7 +357,7 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
         _showMessage('Cancellation request processed.');
         await _refreshRequests();
       } else {
-        // Never display the raw backend error.
+     
         _showMessage(
           'Unable to cancel the request. Please try again.',
         );
@@ -446,7 +441,7 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
           physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.fromLTRB(18, 8, 18, 28),
           children: [
-            // Ambulance header banner
+      
             Container(
               padding: const EdgeInsets.all(21),
               decoration: BoxDecoration(
@@ -558,7 +553,6 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
                   ),
                   const SizedBox(height: 16),
 
-                  // GPS location button
                   SizedBox(
                     width: double.infinity,
                     child: OutlinedButton.icon(

@@ -1,5 +1,7 @@
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import '../models/doctor_model.dart';
 import '../controller/token_controller.dart';
 import 'booking_confirmation_screen.dart';
@@ -22,7 +24,7 @@ class _DoctorDetailsScreenState extends State<DoctorDetailsScreen> {
   static const Color _skyBlue = Color(0xFF8DB8F5);
   static const Color _background = Color(0xFFE6EFFF);
   static const Color _darkText = Color.fromARGB(255, 5, 26, 37);
-  static const Color _muted = Color(0xFF60758A);
+  // static const Color _muted = Color(0xFF60758A);
 
   Future<void> _bookToken() async {
     final tokenController = context.read<TokenController>();
@@ -75,11 +77,6 @@ class _DoctorDetailsScreenState extends State<DoctorDetailsScreen> {
             ? doctor.specialization!.trim()
             : 'Medical Specialist';
 
-    final qualification =
-        doctor.qualification?.trim().isNotEmpty == true
-            ? doctor.qualification!.trim()
-            : 'Qualification not provided';
-
     return Scaffold(
       backgroundColor: _background,
       body: Container(
@@ -101,7 +98,6 @@ class _DoctorDetailsScreenState extends State<DoctorDetailsScreen> {
                 child: ListView(
                   padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
                   children: [
-                    
                     Row(
                       children: [
                         _HeaderButton(
@@ -144,7 +140,6 @@ class _DoctorDetailsScreenState extends State<DoctorDetailsScreen> {
 
                     const SizedBox(height: 24),
 
-              
                     Container(
                       padding: const EdgeInsets.all(22),
                       decoration: BoxDecoration(
@@ -196,7 +191,6 @@ class _DoctorDetailsScreenState extends State<DoctorDetailsScreen> {
 
                     const SizedBox(height: 24),
 
-                 
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.all(24),
@@ -242,7 +236,9 @@ class _DoctorDetailsScreenState extends State<DoctorDetailsScreen> {
                             doctor.name,
                             textAlign: TextAlign.center,
                             style: TextStyle(
-                              color: isDark ? colors.onSurface : _primary,
+                              color: isDark
+                                  ? colors.onSurface
+                                  : _primary,
                               fontSize: 23,
                               fontWeight: FontWeight.bold,
                             ),
@@ -267,17 +263,6 @@ class _DoctorDetailsScreenState extends State<DoctorDetailsScreen> {
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
                               ),
-                            ),
-                          ),
-
-                          const SizedBox(height: 10),
-
-                          Text(
-                            qualification,
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              color: _muted,
-                              fontSize: 14,
                             ),
                           ),
 
@@ -328,7 +313,6 @@ class _DoctorDetailsScreenState extends State<DoctorDetailsScreen> {
 
                     const SizedBox(height: 24),
 
-               
                     Container(
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
@@ -381,14 +365,6 @@ class _DoctorDetailsScreenState extends State<DoctorDetailsScreen> {
                             icon: Icons.medical_services_outlined,
                             label: 'Specialization',
                             value: specialization,
-                          ),
-
-                          const SizedBox(height: 20),
-
-                          _InfoRow(
-                            icon: Icons.school_outlined,
-                            label: 'Qualification',
-                            value: qualification,
                           ),
                         ],
                       ),
@@ -503,6 +479,7 @@ class _DoctorDetailsScreenState extends State<DoctorDetailsScreen> {
     );
   }
 }
+
 class _HeaderButton extends StatelessWidget {
   final IconData icon;
   final VoidCallback onPressed;
@@ -575,9 +552,7 @@ class _InfoRow extends StatelessWidget {
             size: 21,
           ),
         ),
-
         const SizedBox(width: 12),
-
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -590,9 +565,7 @@ class _InfoRow extends StatelessWidget {
                   fontWeight: FontWeight.w500,
                 ),
               ),
-
               const SizedBox(height: 4),
-
               Text(
                 value,
                 style: TextStyle(

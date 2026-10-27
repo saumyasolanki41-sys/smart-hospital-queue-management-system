@@ -151,7 +151,7 @@ class ApiService {
     }
   }
 
-  // Authentication
+
 
   Future<Map<String, dynamic>> register({
     required String name,
@@ -184,7 +184,6 @@ class ApiService {
       },
     );
 
-    // Save a token if registration verification returns one.
     final token = _findAccessToken(response);
 
     if (token != null) {
@@ -322,7 +321,7 @@ class ApiService {
     );
   }
 
-  // Generic API methods
+
 
   Future<Map<String, dynamic>> get(
     String path, {
@@ -361,7 +360,6 @@ class ApiService {
     );
   }
 
-  // Find access tokens in common nested response formats.
 
   String? _findAccessToken(dynamic value) {
     if (value is! Map) return null;

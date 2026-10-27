@@ -20,17 +20,33 @@ class LiveQueueScreen extends StatefulWidget {
   State<LiveQueueScreen> createState() => _LiveQueueScreenState();
 }
 
-class _LiveQueueScreenState extends State<LiveQueueScreen> {
+class _LiveQueueScreenState extends State<LiveQueueScreen>
+    with WidgetsBindingObserver {
   bool _isRefreshingStatus = false;
 
   @override
   void initState() {
     super.initState();
 
+    WidgetsBinding.instance.addObserver(this);
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       _loadQueueWithStatus();
     });
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && mounted) {
+      _loadQueueWithStatus(refresh: true);
+    }
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
   }
 
   Future<void> _loadQueueWithStatus({
@@ -40,6 +56,8 @@ class _LiveQueueScreenState extends State<LiveQueueScreen> {
 
     _isRefreshingStatus = true;
 
+    if (mounted) setState(() {});
+
     final controller = context.read<TokenController>();
 
     try {
@@ -47,28 +65,32 @@ class _LiveQueueScreenState extends State<LiveQueueScreen> {
 
       if (!mounted) return;
 
-      final activeTokens = controller.tokens.where((token) {
-        final status = token.status.toLowerCase().trim();
+      // Refresh active tokens one at a time. The controller currently
+      // permits only one live-status request at a time.
+      final activeTokenIds = controller.tokens
+          .where((token) {
+            final status = token.status.toLowerCase().trim();
 
-        return status == 'waiting' ||
-            status == 'pending' ||
-            status == 'in-progress' ||
-            status == 'in progress';
-      }).toList();
+            return status == 'waiting' ||
+                status == 'pending' ||
+                status == 'in-progress' ||
+                status == 'in progress';
+          })
+          .map((token) => token.id)
+          .where((id) => id.trim().isNotEmpty)
+          .toList();
 
-      for (final token in activeTokens) {
+      for (final tokenId in activeTokenIds) {
         if (!mounted) return;
 
-        try {
-          await controller.fetchTokenStatus(token.id);
-        } catch (_) {
-          // Keep the screen usable if live status is unavailable.
-        }
+        await controller.fetchTokenStatus(tokenId);
       }
     } catch (_) {
-      // Display only a general message in the UI.
+      // Never show technical backend details to the user.
     } finally {
       _isRefreshingStatus = false;
+
+      if (mounted) setState(() {});
     }
   }
 
@@ -126,11 +148,11 @@ class _LiveQueueScreenState extends State<LiveQueueScreen> {
     final viewModel = context.read<TokenController>();
     final messenger = ScaffoldMessenger.of(context);
 
-    try {
-      await viewModel.cancelToken(token.id);
+    final success = await viewModel.cancelToken(token.id);
 
-      if (!mounted) return;
+    if (!mounted) return;
 
+    if (success) {
       messenger.showSnackBar(
         const SnackBar(
           content: Text('Token cancelled successfully.'),
@@ -138,9 +160,7 @@ class _LiveQueueScreenState extends State<LiveQueueScreen> {
       );
 
       await _loadQueueWithStatus(refresh: true);
-    } catch (_) {
-      if (!mounted) return;
-
+    } else {
       messenger.showSnackBar(
         const SnackBar(
           content: Text(
@@ -282,9 +302,7 @@ class _LiveQueueScreenState extends State<LiveQueueScreen> {
             padding: const EdgeInsets.fromLTRB(20, 8, 20, 30),
             children: [
               _buildWelcomeCard(),
-
               const SizedBox(height: 25),
-
               const Text(
                 'Queue Overview',
                 style: TextStyle(
@@ -293,9 +311,7 @@ class _LiveQueueScreenState extends State<LiveQueueScreen> {
                   fontWeight: FontWeight.bold,
                 ),
               ),
-
               const SizedBox(height: 14),
-
               Row(
                 children: [
                   Expanded(
@@ -317,9 +333,7 @@ class _LiveQueueScreenState extends State<LiveQueueScreen> {
                   ),
                 ],
               ),
-
               const SizedBox(height: 28),
-
               Row(
                 children: [
                   const Expanded(
@@ -345,8 +359,45 @@ class _LiveQueueScreenState extends State<LiveQueueScreen> {
                   ),
                 ],
               ),
-
               const SizedBox(height: 8),
+
+              if (viewModel.statusError != null ||
+                  viewModel.error != null)
+                Container(
+                  width: double.infinity,
+                  margin: const EdgeInsets.only(bottom: 12),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFF4E5),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: const Color(0xFFE8C995),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.cloud_off_outlined,
+                        color: Color(0xFF9A6700),
+                      ),
+                      const SizedBox(width: 10),
+                      const Expanded(
+                        child: Text(
+                          'Could not update queue information. '
+                          'Please try again.',
+                          style: TextStyle(
+                            color: Color(0xFF805B13),
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: _refreshQueue,
+                        child: const Text('Retry'),
+                      ),
+                    ],
+                  ),
+                ),
 
               if (viewModel.isLoading && viewModel.tokens.isEmpty)
                 const Padding(
@@ -357,8 +408,8 @@ class _LiveQueueScreenState extends State<LiveQueueScreen> {
                     ),
                   ),
                 )
-              else if (viewModel.error != null &&
-                  viewModel.tokens.isEmpty)
+              else if (viewModel.tokens.isEmpty &&
+                  viewModel.error != null)
                 _QueueMessage(
                   icon: Icons.cloud_off_outlined,
                   title: 'Could not load queue',
@@ -381,7 +432,7 @@ class _LiveQueueScreenState extends State<LiveQueueScreen> {
                   (token) => _TokenCard(
                     token: token,
                     status: _status(token.status),
-                    statusColor: _statusColor(_status(token.status)),
+                    statusColor: _statusColor(token.status),
                     canCancel: _canCancel(token.status),
                     displayText: _displayText,
                     onCancel: () => _cancelToken(token),
@@ -389,7 +440,6 @@ class _LiveQueueScreenState extends State<LiveQueueScreen> {
                 ),
 
               const SizedBox(height: 15),
-
               const Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -585,6 +635,12 @@ class _TokenCard extends StatelessWidget {
     final waitMinutes = token.estimatedWaitMinutes;
     final patientsAhead = token.patientsAhead;
 
+    final waitingText = waitMinutes == null
+        ? 'Not available'
+        : waitMinutes == 0
+            ? '0 minutes'
+            : 'About ${waitMinutes.ceil()} min';
+
     return Container(
       margin: const EdgeInsets.only(bottom: 18),
       padding: const EdgeInsets.all(19),
@@ -662,28 +718,22 @@ class _TokenCard extends StatelessWidget {
               ),
             ],
           ),
-
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 18),
             child: Divider(height: 1, color: borderColor),
           ),
-
           _DetailRow(
             icon: Icons.person_outline_rounded,
             label: 'Doctor',
             value: displayText(token.doctorName),
           ),
-
           const SizedBox(height: 15),
-
           _DetailRow(
             icon: Icons.local_hospital_outlined,
             label: 'Department',
             value: displayText(token.departmentName),
           ),
-
           const SizedBox(height: 19),
-
           Row(
             children: [
               Expanded(
@@ -698,14 +748,11 @@ class _TokenCard extends StatelessWidget {
                 child: _QueueStat(
                   icon: Icons.access_time_rounded,
                   label: 'Est. waiting',
-                  value: waitMinutes == null
-                      ? 'Not available'
-                      : '$waitMinutes min',
+                  value: waitingText,
                 ),
               ),
             ],
           ),
-
           if (canCancel) ...[
             const SizedBox(height: 18),
             SizedBox(
