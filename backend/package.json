@@ -1,0 +1,36 @@
+{
+  "name": "hospital-queue-management",
+  "version": "1.0.0",
+  "description": "A web application for managing hospital queues,\r patient tokens, waiting times, and ambulance ETA prediction.",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node --env-file=.env src/server.js",
+    "start:prod": "node src/server.js",
+    "dev": "node --watch --env-file=.env src/server.js",
+    "check": "node --check src/app.js && node --check src/server.js",
+    "seed:hospital": "node --env-file=.env seed-hospital.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/saumyasolanki41-sys/smart-hospital-queue-management-system.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/saumyasolanki41-sys/smart-hospital-queue-management-system/issues"
+  },
+  "homepage": "https://github.com/saumyasolanki41-sys/smart-hospital-queue-management-system#readme",
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "cors": "^2.8.6",
+    "express": "^5.3.0",
+    "express-rate-limit": "^8.7.1",
+    "google-auth-library": "^11.3.0",
+    "jsonwebtoken": "^9.0.3",
+    "mongoose": "^9.11.2",
+    "nodemailer": "^10.1.1",
+    "validator": "^13.15.35"
+  }
+}
