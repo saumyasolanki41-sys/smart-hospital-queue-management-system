@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/token_model.dart';
@@ -185,7 +184,7 @@ class _TokenDetailsScreenState extends State<TokenDetailsScreen> {
         );
       }
     } catch (_) {
-      // Never expose backend or exception details to the user.
+      
       _showMessage(
         'Unable to cancel your token. Please try again.',
         isError: true,

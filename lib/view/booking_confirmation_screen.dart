@@ -403,8 +403,6 @@ class _DetailRow extends StatelessWidget {
   final String label;
   final String value;
 
-  // static const Color _primary =
-  //     Color.fromARGB(255, 126, 211, 232);
   static const Color _heading = Color(0xFF174A5B);
   static const Color _muted = Color(0xFF648994);
 

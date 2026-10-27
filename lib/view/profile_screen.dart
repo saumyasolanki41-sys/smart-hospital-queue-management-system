@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../controller/auth_controller.dart';
@@ -18,10 +17,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   static const Color _background = Color(0xFFEAF8FB);
   static const Color _textColor = Color(0xFF174A5B);
   static const Color _muted = Color(0xFF648994);
-  // static const Color _secondary = Color(0xFF24758B);
   static const Color _lightBlue = Color(0xFFDDF4F8);
-  // static const Color _border = Color(0xFFD2EAF0);
-
+  
   bool _isLoggingOut = false;
 
   String _getInitials(String name) {
@@ -250,7 +247,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                 const SizedBox(height: 25),
 
-                // Profile header
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(23),
@@ -331,7 +327,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                 const SizedBox(height: 14),
 
-                // Registered name and email
                 Container(
                   padding: const EdgeInsets.all(18),
                   decoration: _cardDecoration(isDark, colors),

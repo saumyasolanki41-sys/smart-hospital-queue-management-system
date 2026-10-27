@@ -22,8 +22,6 @@ class QueueService {
   static const String _cancelTokenErrorMessage =
       'Unable to cancel your token. Please try again.';
 
-  // Detect duplicate bookings without treating every HTTP 409
-  // response as a duplicate-booking error.
   bool _isDuplicateBooking(Object error) {
     if (error is ApiException) {
       final code = error.code?.toLowerCase().trim();
@@ -63,7 +61,6 @@ class QueueService {
     return duplicateIndicators.any(text.contains);
   }
 
-  // Book a queue token for the selected doctor.
   Future<TokenModel> bookToken({
     required String doctorId,
   }) async {
@@ -106,12 +103,10 @@ class QueueService {
         );
       }
 
-      // Keep all other booking errors generic.
       throw const ApiException(_bookingErrorMessage);
     }
   }
 
-  // Fetch the current patient's queue tokens.
   Future<List<TokenModel>> getMyTokens() async {
     try {
       final response = await _apiService.get(
@@ -149,7 +144,6 @@ class QueueService {
     }
   }
 
-  // Fetch the latest status and queue estimates for a specific token.
   Future<TokenModel> getTokenStatus(String tokenId) async {
     final id = tokenId.trim();
 
@@ -199,7 +193,6 @@ class QueueService {
     }
   }
 
-  // Copy queue and prediction values from the API response.
   void _copyQueueFields(
     Map source,
     Map<String, dynamic> tokenJson,
@@ -230,7 +223,6 @@ class QueueService {
     }
   }
 
-  // Cancel an existing queue token.
   Future<void> cancelToken(String tokenId) async {
     final id = tokenId.trim();
 

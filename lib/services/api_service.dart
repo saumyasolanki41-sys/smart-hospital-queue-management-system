@@ -1,9 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
-
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
-
 import 'storage_service.dart';
 
 class ApiService {
@@ -128,13 +126,6 @@ class ApiService {
     }
   }
 
-  /// Extracts a message from common backend response formats.
-  ///
-  /// Supported examples:
-  /// {"message": "Already in queue"}
-  /// {"error": "Already in queue"}
-  /// {"error": {"message": "Already in queue"}}
-  /// {"details": "Already in queue"}
   String? _extractErrorMessage(Map<String, dynamic> result) {
     final error = result['error'];
 
@@ -154,7 +145,6 @@ class ApiService {
     return null;
   }
 
-  /// Extracts a machine-readable error code from the backend.
   String? _extractErrorCode(Map<String, dynamic> result) {
     final error = result['error'];
 

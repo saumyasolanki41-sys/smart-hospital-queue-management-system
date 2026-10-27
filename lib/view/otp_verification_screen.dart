@@ -1,4 +1,3 @@
-
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -29,7 +28,6 @@ class _OtpVerificationScreenState
   static const Color _blue = Color(0xFF24758B);
   static const Color _navy = Color(0xFF174A5B);
   static const Color _darkButton = Color(0xFF174A5B);
-  // static const Color _accent = Color(0xFF7ED3E8);
   static const Color _muted = Color(0xFF648994);
   static const Color _fieldColor = Color(0xFFF1FBFE);
   static const Color _borderColor = Color(0xFFD2EAF0);
