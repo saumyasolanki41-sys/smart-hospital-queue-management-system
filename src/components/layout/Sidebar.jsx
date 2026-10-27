@@ -129,7 +129,7 @@ function Panel({ onNavigate, ownDoctorId }) {
 
 export default function Sidebar() {
   const { user } = useAuth();
-  const { doctorId: ownDoctorId } = useOwnDoctorId(); 
+  const { doctorId: ownDoctorId } = useOwnDoctorId();
   const [open, setOpen] = useState(false);
 
   return (
@@ -149,9 +149,12 @@ export default function Sidebar() {
       </div>
 
       {/* Desktop sidebar */}
-      <aside className="hidden w-72 shrink-0 self-start p-4 lg:sticky lg:top-0 lg:block lg:h-screen">
+      <aside className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-30 lg:block w-72 p-4">
         <Panel ownDoctorId={ownDoctorId} />
       </aside>
+
+      
+      <div className="hidden lg:block w-72 shrink-0" aria-hidden="true" />
 
       {/* Mobile drawer */}
       {open && (
