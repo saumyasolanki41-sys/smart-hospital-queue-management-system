@@ -17,7 +17,7 @@ export default function Pagination({ page, totalPages, onChange, label = "Pagina
 
   const button =
     "flex h-9 min-w-[2.25rem] items-center justify-center rounded-lg px-3 text-sm font-medium transition-colors";
-  const plain = "border border-slate-200 bg-white text-slate-700 hover:bg-primary/5";
+  const plain = "border border-slate-200 bg-white text-slate-700 hover:bg-cyan-50";
 
   return (
     <nav aria-label={label} className="flex flex-wrap items-center justify-center gap-1.5">
@@ -43,7 +43,7 @@ export default function Pagination({ page, totalPages, onChange, label = "Pagina
             onClick={() => onChange(item)}
             aria-label={`Page ${item}`}
             aria-current={item === page ? "page" : undefined}
-            className={`${button} ${item === page ? "bg-primary/70 text-white shadow-sm" : plain}`}
+            className={`${button} ${item === page ? "bg-[#0d4b68] text-white shadow-sm" : plain}`}
           >
             {item}
           </button>

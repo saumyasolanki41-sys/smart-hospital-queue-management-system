@@ -27,17 +27,17 @@ export default function DoctorCard({
     experienceYears,
     consultationFee,
     isAvailable,
-    averageConsultationMinutes, 
+    averageConsultationMinutes,
   } = doctor;
 
   return (
     <article className="flex flex-col rounded-3xl bg-white/90 p-5 shadow-md">
       <div className="flex items-start gap-4">
-        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-secondary/10 font-semibold text-primary/80">
+        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#2183a0]/10 font-semibold text-[#0d4b68]">
           {initials(name)}
         </span>
         <div className="min-w-0 flex-1">
-          <h3 className="truncate font-semibold text-slate-900">
+          <h3 className="truncate font-semibold text-[#0d4b68]">
             {link ? (
               <Link to={`/doctors/${doctor._id}`} className="hover:underline">
                 {name}
@@ -60,16 +60,16 @@ export default function DoctorCard({
 
       <ul className="mt-4 space-y-2 text-sm text-slate-600">
         <li className="flex items-center gap-2">
-          <Briefcase className="h-4 w-4 text-primary/60" />
+          <Briefcase className="h-4 w-4 text-[#2183a0]" />
           {experienceYears} {experienceYears === 1 ? "year" : "years"} of experience
         </li>
         <li className="flex items-center gap-2">
-          <Wallet className="h-4 w-4 text-primary/60" />
+          <Wallet className="h-4 w-4 text-[#2183a0]" />
           {consultationFee > 0 ? `${inr.format(consultationFee)} consultation fee` : "Fee not listed"}
         </li>
         {averageConsultationMinutes && (
           <li className="flex items-center gap-2">
-            <Clock className="h-4 w-4 text-primary/60" />
+            <Clock className="h-4 w-4 text-[#2183a0]" />
             About {averageConsultationMinutes} min per patient
           </li>
         )}
@@ -78,7 +78,7 @@ export default function DoctorCard({
       {link && (
         <Link
           to={`/doctors/${doctor._id}`}
-          className="mt-3 text-sm font-medium text-primary/70 hover:underline"
+          className="mt-3 text-sm font-medium text-[#2183a0] hover:underline"
         >
           View profile →
         </Link>
@@ -89,7 +89,7 @@ export default function DoctorCard({
           type="button"
           disabled={!isAvailable || busy}
           onClick={() => onJoin?.(doctor)}
-          className="mt-5 w-full rounded-xl bg-primary/70 px-5 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-primary/80 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500 disabled:shadow-none"
+          className="mt-5 w-full rounded-xl bg-[#0d4b68] px-5 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-[#2183a0] disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500 disabled:shadow-none"
         >
           {joining ? "Joining…" : isAvailable ? "Join Queue" : "Not taking patients"}
         </button>

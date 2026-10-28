@@ -132,7 +132,6 @@ export default function Departments() {
 
   async function handleJoin(doctor) {
     if (!user) {
-      // Log in first, then come back to this page.
       navigate("/login", { state: { from: "/departments" } });
       return;
     }
@@ -144,7 +143,7 @@ export default function Departments() {
       navigate(`/queue/${joined._id}`);
     } catch (err) {
       if (err.code === "UNAUTHORIZED") {
-        signOut(); // session expired
+        signOut();
         return;
       }
       if (err.code === "ALREADY_IN_QUEUE") {
@@ -195,20 +194,20 @@ export default function Departments() {
   const currentDeptPage = Math.min(deptPage ?? autoDeptPage, totalDeptPages);
   const deptStart = (currentDeptPage - 1) * DEPARTMENTS_PER_PAGE;
   const visibleDepartments = departments.slice(deptStart, deptStart + DEPARTMENTS_PER_PAGE);
-  const showJoin = !user || user.role === "patient"; // doctors and staff don't join queues
+  const showJoin = !user || user.role === "patient";
 
   let emptyMessage = "No doctors are listed yet.";
   if (query) emptyMessage = "No doctors match your search.";
   else if (availableOnly) emptyMessage = "No doctors are available right now. Try turning off the filter.";
 
   return (
-    <div className={`min-h-screen ${user ? "bg-transparent" : "bg-gradient-to-br from-secondary/5 via-accent/5 to-white"}`}>
+    <div className={`min-h-screen ${user ? "bg-transparent" : "bg-gradient-to-br from-cyan-50 via-white to-cyan-50"}`}>
       <Navbar />
 
       <main className="mx-auto max-w-6xl px-6 pb-20 pt-6">
         <header className="mb-8">
-          <p className="mb-2 text-base font-medium text-primary/70">Find the right care</p>
-          <h1 className="text-3xl font-bold text-slate-900 sm:text-4xl">Departments &amp; Doctors</h1>
+          <p className="mb-2 text-base font-medium text-[#2183a0]">Find the right care</p>
+          <h1 className="text-3xl font-bold text-[#0d4b68] sm:text-4xl">Departments &amp; Doctors</h1>
           <p className="mt-3 max-w-2xl text-slate-600">
             Pick a department, choose a doctor, and join their queue without waiting at the hospital.
           </p>
@@ -218,7 +217,7 @@ export default function Departments() {
           <div
             role={notice.tone === "error" ? "alert" : "status"}
             className={`mb-6 flex items-start gap-2 rounded-xl p-3 text-sm ${
-              notice.tone === "error" ? "bg-red-50 text-red-700" : "bg-secondary/5 text-secondary/80"
+              notice.tone === "error" ? "bg-red-50 text-red-700" : "bg-cyan-50 text-[#0d4b68]"
             }`}
           >
             <Info className="mt-0.5 h-4 w-4 shrink-0" />
@@ -286,7 +285,7 @@ export default function Departments() {
         {/* Doctors */}
         <section aria-label="Doctors">
           <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
-            <h2 className="text-xl font-semibold text-slate-900">
+            <h2 className="text-xl font-semibold text-[#0d4b68]">
               {selectedName ? `${selectedName} doctors` : "All doctors"}
             </h2>
             <div className="flex flex-wrap items-center gap-4">
@@ -295,7 +294,7 @@ export default function Departments() {
                   type="checkbox"
                   checked={availableOnly}
                   onChange={toggleAvailable}
-                  className="h-4 w-4 accent-primary/70"
+                  className="h-4 w-4 accent-[#2183a0]"
                 />
                 Available only
               </label>
@@ -307,7 +306,7 @@ export default function Departments() {
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Search by name or specialty"
                   aria-label="Search doctors"
-                  className="w-64 max-w-full rounded-xl border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm outline-none focus:border-primary/60 focus:ring-2 focus:ring-primary/40"
+                  className="w-64 max-w-full rounded-xl border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm outline-none focus:border-[#2183a0] focus:ring-2 focus:ring-[#2183a0]/30"
                 />
               </div>
             </div>
@@ -344,7 +343,7 @@ export default function Departments() {
                     type="button"
                     onClick={loadMore}
                     disabled={moreLoading}
-                    className="rounded-xl border border-primary/60 px-6 py-2.5 text-sm font-medium text-primary/70 hover:bg-primary/5 disabled:opacity-60"
+                    className="rounded-xl border border-[#0d4b68] px-6 py-2.5 text-sm font-medium text-[#0d4b68] hover:bg-[#0d4b68] hover:text-white disabled:opacity-60"
                   >
                     {moreLoading ? "Loading…" : "Load more doctors"}
                   </button>
