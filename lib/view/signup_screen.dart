@@ -1,8 +1,12 @@
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+
 import '../controller/auth_controller.dart';
 import 'login_screen.dart';
 import 'otp_verification_screen.dart';
+import 'home_screen.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -21,6 +25,11 @@ class _SignupScreenState extends State<SignupScreen> {
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
   bool _isSigningUp = false;
+  bool _isGoogleLoading = false;
+  bool _googleInitialized = false;
+
+  static const String _webClientId =
+      '575895479049-o8m7g8o39db8013ctntip67uh96rit64.apps.googleusercontent.com';
 
   static const Color _navy = Color(0xFF174A5B);
   static const Color _blue = Color(0xFF24758B);
@@ -28,6 +37,8 @@ class _SignupScreenState extends State<SignupScreen> {
   static const Color _background = Color(0xFFEAF8FB);
   static const Color _fieldColor = Color(0xFFF1FBFE);
   static const Color _borderColor = Color(0xFFD2EAF0);
+
+  bool get _isBusy => _isSigningUp || _isGoogleLoading;
 
   @override
   void dispose() {
@@ -46,14 +57,13 @@ class _SignupScreenState extends State<SignupScreen> {
       ..showSnackBar(
         SnackBar(
           content: Text(message),
-          backgroundColor:
-              isError ? Colors.red.shade700 : _navy,
+          backgroundColor: isError ? Colors.red.shade700 : _navy,
         ),
       );
   }
 
   Future<void> _signup() async {
-    if (_isSigningUp) return;
+    if (_isBusy) return;
 
     FocusScope.of(context).unfocus();
 
@@ -92,12 +102,82 @@ class _SignupScreenState extends State<SignupScreen> {
         ),
       );
     } catch (_) {
-      _showMessage(
-        'Something went wrong. Please try again.',
-      );
+      _showMessage('Something went wrong. Please try again.');
     } finally {
       if (mounted) {
         setState(() => _isSigningUp = false);
+      }
+    }
+  }
+
+  Future<void> _signupWithGoogle() async {
+    if (_isBusy) return;
+
+    FocusScope.of(context).unfocus();
+
+    setState(() => _isGoogleLoading = true);
+
+    try {
+      final auth = context.read<AuthController>();
+      auth.clearError();
+
+      final googleSignIn = GoogleSignIn.instance;
+
+      if (!_googleInitialized) {
+        await googleSignIn.initialize(
+          serverClientId: _webClientId,
+        );
+        _googleInitialized = true;
+      }
+
+      final account = await googleSignIn.authenticate();
+      final idToken = account.authentication.idToken;
+
+      if (idToken == null || idToken.isEmpty) {
+        _showMessage(
+          'Google sign-in could not be completed. Please try again.',
+        );
+        return;
+      }
+
+      if (!mounted) return;
+
+      final success = await auth.loginWithGoogle(
+        idToken: idToken,
+      );
+
+      if (!mounted) return;
+
+      if (success) {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const HomeScreen(),
+          ),
+          (route) => false,
+        );
+      } else {
+        _showMessage(
+          'Google sign-in failed. Please try again.',
+        );
+      }
+    } on GoogleSignInException catch (error, stackTrace) {
+      debugPrint('Google sign-in exception: ${error.code}');
+      debugPrintStack(stackTrace: stackTrace);
+
+      if (error.code == GoogleSignInExceptionCode.canceled) {
+        return;
+      }
+
+      _showMessage('Google sign-in failed. Please try again.');
+    } catch (error, stackTrace) {
+      debugPrint('Google sign-in operation failed.');
+      debugPrintStack(stackTrace: stackTrace);
+
+      _showMessage('Google sign-in failed. Please try again.');
+    } finally {
+      if (mounted) {
+        setState(() => _isGoogleLoading = false);
       }
     }
   }
@@ -177,7 +257,7 @@ class _SignupScreenState extends State<SignupScreen> {
       autofillHints: autofillHints,
       autocorrect: false,
       enableSuggestions: !obscureText,
-      enabled: !_isSigningUp,
+      enabled: !_isBusy,
       style: const TextStyle(
         color: _navy,
         fontSize: 15,
@@ -209,7 +289,7 @@ class _SignupScreenState extends State<SignupScreen> {
       validator: validator,
       autofillHints: const [AutofillHints.newPassword],
       suffixIcon: IconButton(
-        onPressed: _isSigningUp ? null : onToggle,
+        onPressed: _isBusy ? null : onToggle,
         icon: Icon(
           obscure
               ? Icons.visibility_outlined
@@ -224,6 +304,7 @@ class _SignupScreenState extends State<SignupScreen> {
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthController>();
+    final isLoading = _isBusy || auth.isLoading;
 
     return Scaffold(
       backgroundColor: _background,
@@ -305,7 +386,8 @@ class _SignupScreenState extends State<SignupScreen> {
                           hint: 'Enter your full name',
                           autofillHints: const [AutofillHints.name],
                           validator: (value) {
-                            if (value == null || value.trim().isEmpty) {
+                            if (value == null ||
+                                value.trim().isEmpty) {
                               return 'Please enter your full name';
                             }
                             return null;
@@ -390,9 +472,7 @@ class _SignupScreenState extends State<SignupScreen> {
                         SizedBox(
                           height: 52,
                           child: ElevatedButton(
-                            onPressed: (_isSigningUp || auth.isLoading)
-                                ? null
-                                : _signup,
+                            onPressed: isLoading ? null : _signup,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: _navy,
                               foregroundColor: Colors.white,
@@ -402,7 +482,7 @@ class _SignupScreenState extends State<SignupScreen> {
                                 borderRadius: BorderRadius.zero,
                               ),
                             ),
-                            child: _isSigningUp || auth.isLoading
+                            child: isLoading
                                 ? const SizedBox(
                                     height: 22,
                                     width: 22,
@@ -449,13 +529,8 @@ class _SignupScreenState extends State<SignupScreen> {
                         SizedBox(
                           height: 50,
                           child: OutlinedButton(
-                            onPressed: (_isSigningUp || auth.isLoading)
-                                ? null
-                                : () {
-                                    _showMessage(
-                                      'Google sign-in is not available yet.',
-                                    );
-                                  },
+                            onPressed:
+                                isLoading ? null : _signupWithGoogle,
                             style: OutlinedButton.styleFrom(
                               backgroundColor: _fieldColor,
                               foregroundColor: _navy,
@@ -466,24 +541,34 @@ class _SignupScreenState extends State<SignupScreen> {
                                 borderRadius: BorderRadius.zero,
                               ),
                             ),
-                            child: const Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.g_mobiledata,
-                                  size: 30,
-                                  color: Color(0xFF4285F4),
-                                ),
-                                SizedBox(width: 7),
-                                Text(
-                                  'Sign in with Google',
-                                  style: TextStyle(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w600,
+                            child: _isGoogleLoading
+                                ? const SizedBox(
+                                    height: 22,
+                                    width: 22,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2.3,
+                                      color: _navy,
+                                    ),
+                                  )
+                                : const Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.g_mobiledata,
+                                        size: 30,
+                                        color: Color(0xFF4285F4),
+                                      ),
+                                      SizedBox(width: 7),
+                                      Text(
+                                        'Sign in with Google',
+                                        style: TextStyle(
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                ),
-                              ],
-                            ),
                           ),
                         ),
                         const SizedBox(height: 22),
@@ -500,7 +585,7 @@ class _SignupScreenState extends State<SignupScreen> {
                               ),
                             ),
                             TextButton(
-                              onPressed: (_isSigningUp || auth.isLoading)
+                              onPressed: isLoading
                                   ? null
                                   : () {
                                       Navigator.pushReplacement(

@@ -1,4 +1,6 @@
+
 import 'package:flutter/foundation.dart';
+
 import '../models/token_model.dart';
 import '../services/api_service.dart';
 import '../services/queue_service.dart';
@@ -32,8 +34,7 @@ class TokenController extends ChangeNotifier {
 
   bool get isCancelling => _isCancelling;
 
-  bool get isRefreshingStatus =>
-      _refreshingTokenIds.isNotEmpty;
+  bool get isRefreshingStatus => _refreshingTokenIds.isNotEmpty;
 
   String? get error => _error;
 
@@ -42,19 +43,52 @@ class TokenController extends ChangeNotifier {
   bool get hasTokens => _tokens.isNotEmpty;
 
   static const String _duplicateBookingMessage =
-      'Token is already booked for this doctor.';
+      'You already have an active token for this doctor.';
+
+  static const String _queueConflictMessage =
+      'Your queue has been updated. Please try booking again.';
 
   static const String _bookingErrorMessage =
       'Unable to book your token. Please try again.';
 
+  static const String _loadTokensErrorMessage =
+      'Unable to load your tokens. Please try again.';
+
+  static const String _statusErrorMessage =
+      'Unable to refresh waiting time. Please try again.';
+
+  static const String _cancelTokenErrorMessage =
+      'Unable to cancel your token. Please try again.';
+
+  static const String _invalidTokenErrorMessage =
+      'Unable to cancel token. Please try again.';
+
+  bool _isActiveToken(TokenModel token) {
+    final status = token.status.trim().toLowerCase();
+
+    return status == 'waiting' ||
+        status == 'pending' ||
+        status == 'in-progress' ||
+        status == 'in_progress' ||
+        status == 'in progress' ||
+        status == 'called';
+  }
+
   bool _isDuplicateBooking(Object error) {
     if (error is ApiException) {
-      final code = error.code?.toLowerCase().trim();
+      final code = error.code?.toUpperCase().trim();
 
-      if (code == 'already_in_queue' ||
-          code == 'already_have_active_token' ||
-          code == 'already_have_token' ||
-          code == 'duplicate_booking') {
+      if (code == 'QUEUE_CONFLICT') {
+        return false;
+      }
+
+      if (code == 'ALREADY_IN_QUEUE' ||
+          code == 'ALREADY_IN_QUEUE_TODAY' ||
+          code == 'ALREADY_HAVE_ACTIVE_TOKEN' ||
+          code == 'ALREADY_HAVE_TOKEN' ||
+          code == 'DUPLICATE_BOOKING' ||
+          code == 'DUPLICATE_ACTIVE_TOKEN' ||
+          code == 'ACTIVE_TOKEN_EXISTS') {
         return true;
       }
 
@@ -64,23 +98,45 @@ class TokenController extends ChangeNotifier {
     return _containsDuplicateMessage(error.toString());
   }
 
-  bool _containsDuplicateMessage(String message) {
-    final text = message.toLowerCase();
+  bool _isQueueConflict(Object error) {
+    if (error is ApiException) {
+      final code = error.code?.toUpperCase().trim();
 
-    const duplicateIndicators = [
-      'already_in_queue',
+      if (code == 'QUEUE_CONFLICT') {
+        return true;
+      }
+
+      final message = error.message.toLowerCase();
+
+      return message.contains('queue_conflict') ||
+          message.contains('queue conflict');
+    }
+
+    final message = error.toString().toLowerCase();
+
+    return message.contains('queue_conflict') ||
+        message.contains('queue conflict');
+  }
+
+  bool _containsDuplicateMessage(String message) {
+    final text = message
+        .toLowerCase()
+        .replaceAll(RegExp(r'[_-]+'), ' ')
+        .trim();
+
+    const duplicateIndicators = <String>[
       'already in queue',
       'already booked',
+      'already have an active token',
       'already has an active token',
-      'already_have_active_token',
-      'already_have_token',
-      'active token exists',
-      'duplicate token',
-      'duplicate_booking',
+      'already have a token',
       'already has a token',
+      'active token exists',
       'active token already exists',
-      'you already have an active token',
+      'duplicate token',
+      'duplicate booking',
       'token already exists',
+      'already booked for this doctor',
     ];
 
     return duplicateIndicators.any(text.contains);
@@ -149,9 +205,33 @@ class TokenController extends ChangeNotifier {
 
       return _selectedToken;
     } catch (error) {
-      _error = _isDuplicateBooking(error)
-          ? _duplicateBookingMessage
-          : _bookingErrorMessage;
+      if (_isDuplicateBooking(error)) {
+        // Refresh tokens and look for the existing active token.
+        await fetchMyTokens(refresh: true);
+
+        final normalizedDoctorId = doctorId.trim();
+
+        final existingTokens = _tokens.where((token) {
+          return token.doctorId.trim() == normalizedDoctorId &&
+              _isActiveToken(token);
+        });
+
+        if (existingTokens.isNotEmpty) {
+          _selectedToken = existingTokens.first;
+          _error = null;
+
+          notifyListeners();
+          return _selectedToken;
+        }
+
+        _error = _duplicateBookingMessage;
+      } else if (_isQueueConflict(error)) {
+        await fetchMyTokens(refresh: true);
+        _error = _queueConflictMessage;
+      } else {
+        // Keep backend messages and exception details out of the UI.
+        _error = _bookingErrorMessage;
+      }
 
       return null;
     } finally {
@@ -202,8 +282,7 @@ class TokenController extends ChangeNotifier {
 
           _error = null;
         } catch (_) {
-          _error =
-              'Unable to load your tokens. Please try again.';
+          _error = _loadTokensErrorMessage;
         }
 
         notifyListeners();
@@ -220,15 +299,7 @@ class TokenController extends ChangeNotifier {
 
   Future<void> _refreshActiveTokenStatuses() async {
     final activeTokenIds = _tokens
-        .where((token) {
-          final status = token.status.trim().toLowerCase();
-
-          return status == 'waiting' ||
-              status == 'pending' ||
-              status == 'in-progress' ||
-              status == 'in_progress' ||
-              status == 'called';
-        })
+        .where(_isActiveToken)
         .map((token) => token.id.trim())
         .where((id) => id.isNotEmpty)
         .toSet()
@@ -286,8 +357,7 @@ class TokenController extends ChangeNotifier {
 
       return mergedToken;
     } catch (_) {
-      _statusError =
-          'Unable to refresh waiting time. Please try again.';
+      _statusError = _statusErrorMessage;
 
       notifyListeners();
       return null;
@@ -303,7 +373,7 @@ class TokenController extends ChangeNotifier {
     final normalizedId = tokenId.trim();
 
     if (normalizedId.isEmpty) {
-      _error = 'Unable to cancel token. Please try again.';
+      _error = _invalidTokenErrorMessage;
       notifyListeners();
       return false;
     }
@@ -330,7 +400,7 @@ class TokenController extends ChangeNotifier {
 
       return true;
     } catch (_) {
-      _error = 'Unable to cancel your token. Please try again.';
+      _error = _cancelTokenErrorMessage;
       return false;
     } finally {
       _isCancelling = false;

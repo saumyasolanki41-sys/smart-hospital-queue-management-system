@@ -825,7 +825,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             const SizedBox(width: 11),
                             const Expanded(
                               child: Text(
-                                'Search doctors, departments...',
+                                'Search departments...',
                                 style: TextStyle(
                                   color: _muted,
                                   fontSize: 13,

@@ -22,6 +22,15 @@ class _BookTokenScreenState extends State<BookTokenScreen> {
   static const Color _lightBlue = Color(0xFFC8EBF2);
   static const Color _muted = Color(0xFF648994);
 
+  static const String _bookingErrorMessage =
+      'Unable to book your token. Please try again.';
+
+  static const Set<String> _friendlyMessages = {
+    'Token already booked.',
+    'You already have an active token for this doctor.',
+    'Your queue has been updated. Please try again.',
+  };
+
   Future<void> _bookToken() async {
     final controller = context.read<TokenController>();
 
@@ -33,56 +42,44 @@ class _BookTokenScreenState extends State<BookTokenScreen> {
       if (!mounted) return;
 
       if (token != null) {
+        final isExistingToken = controller.error == null &&
+            controller.tokens.any(
+              (item) => item.id.trim() == token.id.trim(),
+            );
+
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Text(
-              'Queue token booked successfully!',
+              isExistingToken
+                  ? 'Your existing queue token has been opened.'
+                  : 'Queue token booked successfully!',
             ),
             backgroundColor: Colors.green,
           ),
         );
 
         Navigator.pop(context, token);
-      } else {
-        final errorMessage =
-            (controller.error ?? '').toLowerCase();
-
-        final isDuplicateBooking = [
-          'already booked',
-          'already_in_queue',
-          'already in queue',
-          'already has an active token',
-          'already_have_active_token',
-          'already_have_token',
-          'active token exists',
-          'active token already exists',
-          'already has a token',
-          'you already have an active token',
-          'duplicate token',
-          'duplicate_booking',
-          'token already exists',
-        ].any(errorMessage.contains);
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              isDuplicateBooking
-                  ? 'Token is already booked for this doctor.'
-                  : controller.error ??
-                      'Unable to book your token. Please try again.',
-            ),
-            backgroundColor: Colors.red,
-          ),
-        );
+        return;
       }
+
+      final controllerError = controller.error;
+      final message = controllerError != null &&
+              _friendlyMessages.contains(controllerError)
+          ? controllerError
+          : _bookingErrorMessage;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: Colors.red,
+        ),
+      );
     } catch (_) {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text(
-            'Unable to book your token. Please try again.',
-          ),
+          content: Text(_bookingErrorMessage),
           backgroundColor: Colors.red,
         ),
       );

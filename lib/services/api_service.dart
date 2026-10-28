@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+
 import 'storage_service.dart';
 
 class ApiService {
@@ -22,6 +23,7 @@ class ApiService {
     String path, {
     Map<String, dynamic>? body,
     bool authenticated = true,
+    bool debugBackendErrors = false,
   }) async {
     final headers = <String, String>{
       'Content-Type': 'application/json',
@@ -39,7 +41,7 @@ class ApiService {
     final uri = Uri.parse('$baseUrl$path');
 
     try {
-      late http.Response response;
+      late final http.Response response;
 
       switch (method.toUpperCase()) {
         case 'GET':
@@ -70,20 +72,46 @@ class ApiService {
 
         default:
           throw const ApiException(
-            'Unable to process your request. Please try again.',
+            'Unable to complete your request. Please try again.',
           );
       }
 
-      Map<String, dynamic> result = {};
+      Map<String, dynamic> result = <String, dynamic>{};
 
       if (response.body.trim().isNotEmpty) {
-        final decoded = jsonDecode(response.body);
+        dynamic decoded;
+
+        try {
+          decoded = jsonDecode(response.body);
+        } on FormatException {
+          if (debugBackendErrors) {
+            debugPrint(
+              '[API] Server returned invalid JSON '
+              'for ${method.toUpperCase()} $path '
+              '(HTTP ${response.statusCode}).',
+            );
+          }
+
+          throw ApiException(
+            _getSafeErrorMessage(response.statusCode),
+            statusCode: response.statusCode,
+          );
+        }
 
         if (decoded is Map) {
           result = Map<String, dynamic>.from(decoded);
         } else {
-          throw const ApiException(
-            'The server returned an unexpected response. Please try again.',
+          if (debugBackendErrors) {
+            debugPrint(
+              '[API] Unexpected response format for '
+              '${method.toUpperCase()} $path '
+              '(HTTP ${response.statusCode}).',
+            );
+          }
+
+          throw ApiException(
+            _getSafeErrorMessage(response.statusCode),
+            statusCode: response.statusCode,
           );
         }
       }
@@ -91,11 +119,18 @@ class ApiService {
       if (response.statusCode < 200 ||
           response.statusCode >= 300 ||
           result['success'] == false) {
-        final backendMessage = _extractErrorMessage(result);
         final backendCode = _extractErrorCode(result);
 
+        if (debugBackendErrors) {
+          debugPrint(
+            '[API] Request failed: ${method.toUpperCase()} $path',
+          );
+          debugPrint('HTTP status: ${response.statusCode}');
+          debugPrint('Backend code: ${backendCode ?? "Not provided"}');
+        }
+
         throw ApiException(
-          backendMessage ?? _getSafeErrorMessage(response.statusCode),
+          _getSafeErrorMessage(response.statusCode),
           statusCode: response.statusCode,
           code: backendCode,
         );
@@ -105,20 +140,43 @@ class ApiService {
     } on ApiException {
       rethrow;
     } on TimeoutException {
+      if (debugBackendErrors) {
+        debugPrint(
+          '[API] Request timed out: ${method.toUpperCase()} $path',
+        );
+      }
+
       throw const ApiException(
-        'The server took too long to respond. Please try again.',
+        'The request took too long. Please try again.',
       );
     } on http.ClientException {
+      if (debugBackendErrors) {
+        debugPrint(
+          '[API] Connection failed: ${method.toUpperCase()} $path',
+        );
+      }
+
       throw const ApiException(
-        'Unable to connect to the hospital server. '
-        'Check your internet connection.',
+        'Unable to connect. Please check your internet connection '
+        'and try again.',
       );
     } on FormatException {
+      if (debugBackendErrors) {
+        debugPrint(
+          '[API] Invalid response format: ${method.toUpperCase()} $path',
+        );
+      }
+
       throw const ApiException(
-        'The server returned an invalid response. Please try again.',
+        'Something went wrong. Please try again.',
       );
-    } catch (e) {
-      debugPrint('API request failed: $e');
+    } catch (_) {
+      if (debugBackendErrors) {
+        debugPrint(
+          '[API] Unexpected request failure: '
+          '${method.toUpperCase()} $path',
+        );
+      }
 
       throw const ApiException(
         'Something went wrong. Please try again.',
@@ -126,36 +184,39 @@ class ApiService {
     }
   }
 
-  String? _extractErrorMessage(Map<String, dynamic> result) {
-    final error = result['error'];
-
-    final candidates = <dynamic>[
-      result['message'],
-      result['details'],
-      error is Map ? error['message'] : null,
-      error is String ? error : null,
+  String? _extractErrorCode(Map<String, dynamic> result) {
+    const codeKeys = <String>[
+      'code',
+      'errorCode',
+      'error_code',
     ];
 
-    for (final candidate in candidates) {
-      if (candidate is String && candidate.trim().isNotEmpty) {
-        return candidate.trim();
+    for (final key in codeKeys) {
+      final value = result[key];
+
+      if (value is String && value.trim().isNotEmpty) {
+        return value.trim();
       }
     }
 
-    return null;
-  }
-
-  String? _extractErrorCode(Map<String, dynamic> result) {
-    final error = result['error'];
-
-    final candidates = <dynamic>[
-      result['code'],
-      error is Map ? error['code'] : null,
+    const nestedKeys = <String>[
+      'error',
+      'data',
+      'details',
+      'response',
     ];
 
-    for (final candidate in candidates) {
-      if (candidate is String && candidate.trim().isNotEmpty) {
-        return candidate.trim();
+    for (final key in nestedKeys) {
+      final value = result[key];
+
+      if (value is Map) {
+        final nestedCode = _extractErrorCode(
+          Map<String, dynamic>.from(value),
+        );
+
+        if (nestedCode != null) {
+          return nestedCode;
+        }
       }
     }
 
@@ -166,28 +227,20 @@ class ApiService {
     switch (statusCode) {
       case 400:
         return 'Invalid request. Please check your details and try again.';
-
       case 401:
         return 'Your session may have expired. Please log in again.';
-
       case 403:
         return 'You do not have permission to perform this action.';
-
       case 404:
         return 'The requested information could not be found.';
-
       case 408:
         return 'The request timed out. Please try again.';
-
       case 409:
-        return 'This action conflicts with the current information.';
-
+        return 'This action conflicts with your current information.';
       case 422:
         return 'Some details are invalid. Please check and try again.';
-
       case 429:
         return 'Too many requests. Please wait and try again.';
-
       case 500:
       case 501:
       case 502:
@@ -195,7 +248,6 @@ class ApiService {
       case 504:
         return 'The hospital server is temporarily unavailable. '
             'Please try again later.';
-
       default:
         return 'Unable to complete your request. Please try again.';
     }
@@ -321,10 +373,7 @@ class ApiService {
   }
 
   Future<Map<String, dynamic>> getCurrentUser() {
-    return _request(
-      'GET',
-      '/api/auth/me',
-    );
+    return _request('GET', '/api/auth/me');
   }
 
   Future<Map<String, dynamic>> forgotPassword({
@@ -334,9 +383,7 @@ class ApiService {
       'POST',
       '/api/auth/forgot-password',
       authenticated: false,
-      body: {
-        'email': email,
-      },
+      body: {'email': email},
     );
   }
 
@@ -384,12 +431,14 @@ class ApiService {
     String path, {
     Map<String, dynamic>? body,
     bool authenticated = true,
+    bool debugBackendErrors = false,
   }) {
     return _request(
       'POST',
       path,
       body: body,
       authenticated: authenticated,
+      debugBackendErrors: debugBackendErrors,
     );
   }
 
@@ -425,7 +474,9 @@ class ApiService {
       if (entry.value is Map) {
         final token = _findAccessToken(entry.value);
 
-        if (token != null) return token;
+        if (token != null) {
+          return token;
+        }
       }
     }
 
