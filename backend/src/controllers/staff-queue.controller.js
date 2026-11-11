@@ -2,7 +2,7 @@ const service = require('../services/staff-queue.service');
 
 function handleError(error, res, next) {
   const codes = ['VALIDATION_ERROR', 'DOCTOR_NOT_FOUND', 'FORBIDDEN', 'QUEUE_BUSY',
-    'QUEUE_EMPTY', 'TOKEN_NOT_FOUND', 'TOKEN_NOT_CALLED'];
+    'QUEUE_EMPTY', 'QUEUE_PAUSED', 'TOKEN_NOT_FOUND', 'TOKEN_NOT_CALLED'];
   if (!codes.includes(error.code)) return next(error);
   return res.status(error.status).json({
     success: false, error: { code: error.code, message: error.message },
@@ -37,4 +37,16 @@ async function skipToken(req, res, next) {
   } catch (error) { return handleError(error, res, next); }
 }
 
-module.exports = { listQueue, callNext, completeToken, skipToken };
+async function pauseQueue(req, res, next) {
+  try {
+    return res.json({ success: true, data: await service.pauseQueue(req.user, req.params.doctorId, req.body) });
+  } catch (error) { return handleError(error, res, next); }
+}
+
+async function resumeQueue(req, res, next) {
+  try {
+    return res.json({ success: true, data: await service.resumeQueue(req.user, req.params.doctorId, req.body) });
+  } catch (error) { return handleError(error, res, next); }
+}
+
+module.exports = { listQueue, callNext, completeToken, skipToken, pauseQueue, resumeQueue };

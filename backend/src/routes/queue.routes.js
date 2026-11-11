@@ -2,6 +2,7 @@ const express = require('express');
 const { rateLimit } = require('express-rate-limit');
 const { authenticate, allowRoles } = require('../middleware/auth.middleware');
 const controller = require('../controllers/queue.controller');
+const visits = require('../controllers/visit.controller');
 
 const router = express.Router();
 const bookingLimiter = rateLimit({
@@ -21,6 +22,9 @@ const statusLimiter = rateLimit({
 router.use(authenticate, allowRoles('patient'));
 router.post('/tokens', bookingLimiter, controller.joinQueue);
 router.get('/tokens/mine', controller.myTokens);
+router.get('/history', statusLimiter, visits.history);
+router.get('/tokens/:id/feedback', statusLimiter, visits.getFeedback);
+router.post('/tokens/:id/feedback', bookingLimiter, visits.submitFeedback);
 router.get('/tokens/:id', statusLimiter, controller.tokenStatus);
 router.patch('/tokens/:id/cancel', bookingLimiter, controller.cancelToken);
 

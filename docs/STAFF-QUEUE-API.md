@@ -1,5 +1,8 @@
 # Staff queue management
 
+Pause/resume endpoints and queueState are documented in
+[VISIT-HISTORY-FEEDBACK-PAUSE-API.md](VISIT-HISTORY-FEEDBACK-PAUSE-API.md).
+
 Local base URL: `http://localhost:8080`. Restart the local backend after changing
 code. These endpoints are not available on the shared HTTPS URL until deployed.
 
