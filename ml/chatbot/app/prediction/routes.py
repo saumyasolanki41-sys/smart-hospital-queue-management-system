@@ -1,4 +1,4 @@
-"""HTTP endpoints for the two models plus a health check per model."""
+
 
 from fastapi import APIRouter, HTTPException
 from starlette.concurrency import run_in_threadpool

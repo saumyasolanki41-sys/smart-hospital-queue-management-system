@@ -1,4 +1,4 @@
-"""Dialogue manager: turns a message into a reply by calling the hospital backend."""
+
 
 import asyncio
 import re
@@ -33,11 +33,10 @@ class Reply:
     text: str
     intent: str
     suggestions: list[str] = field(default_factory=list)
-    source: str = "rules"  # rules | gemini | fallback
-    private: bool = False  # true while collecting personal details: never stored in Gemini history
+    source: str = "rules"  
+    private: bool = False 
 
 
-# ------------------------------------------------------------- formatting
 def _dept_name(doc: dict) -> str:
     dept = doc.get("department")
     return dept.get("name", "") if isinstance(dept, dict) else ""
@@ -106,7 +105,6 @@ def _token_summary(data: dict, ml_minutes: float | None = None, now_serving: int
     return head
 
 
-# ---- ambulance message parsing ------------------------------------------------
 _KM = re.compile(r"(\d+(?:\.\d+)?)\s*(?:km|kms|kilometers|kilometres|kilometer|kilometre|k m)\b")
 _BARE_NUM = re.compile(r"^\s*(\d+(?:\.\d+)?)\s*$")
 
@@ -151,7 +149,7 @@ def _parse_coords(raw: str) -> tuple[float, float] | None:
 
 
 def _find_key(data, key: str):
-    """First value stored under `key` anywhere in a nested JSON structure (the ETA response shape isn't fixed)."""
+
     if isinstance(data, dict):
         if key in data:
             return data[key]
@@ -196,7 +194,6 @@ class ChatEngine:
         self.gemini = gemini
         self.gemini_max_calls = gemini_max_calls
 
-    # ------------------------------------------------- prediction API
     async def _ml_wait(self, data: dict) -> float | None:
         """Ask the prediction API how long a waiting token will wait. None means 'use the backend's estimate'."""
         if self.ml is None:
@@ -207,7 +204,7 @@ class ChatEngine:
             return None
         pred = data.get("prediction") or {}
         if pred.get("source") == "ml" and isinstance(data.get("estimatedWaitMinutes"), (int, float)):
-            self.stats.event("ml_queue_from_backend")  # the backend already used the model, with richer live inputs
+            self.stats.event("ml_queue_from_backend") 
             return float(data["estimatedWaitMinutes"])
         doc_ref = tok.get("doctor")
         doc_id = doc_ref.get("_id") if isinstance(doc_ref, dict) else doc_ref
@@ -222,7 +219,7 @@ class ChatEngine:
         specialty = map_specialty(dept, (directory or {}).get("specialization"),
                                   doc_ref.get("specialization") if isinstance(doc_ref, dict) else None)
         if not specialty:
-            return None  # the model only knows 10 specialties; other departments keep the backend estimate
+            return None  
         avg = (directory or {}).get("averageConsultationMinutes") or data.get("averageConsultationMinutes") or 10
         try:
             minutes = await self.ml.predict_queue(specialty, int(people), float(avg))
@@ -232,7 +229,7 @@ class ChatEngine:
             self.stats.event("ml_queue_fallback")
             return None
 
-    # ------------------------------------------------------------ entry
+
     async def handle(
         self,
         session_id: str | None,
@@ -244,7 +241,7 @@ class ChatEngine:
         sess = self.sessions.get(session_id)
         fingerprint = token_fingerprint(token)
         if sess.pending and sess.token_hash != fingerprint:
-            sess.pending = None  # never let another login confirm someone else's action
+            sess.pending = None  
         sess.token_hash = fingerprint
         if location:
             sess.location = location
@@ -264,7 +261,7 @@ class ChatEngine:
 
     async def _dispatch(self, sess: Session, norm: str, raw: str, token: str | None, mode: str = "auto") -> Reply:
         intent = detect_intent(norm)
-        # Emergencies always win, even in the middle of another flow.
+
         if intent == "emergency":
             sess.pending = None
             return Reply(EMERGENCY_TEXT, "emergency")
@@ -274,7 +271,6 @@ class ChatEngine:
             reply = await self._handle_pending(sess, pending, norm, token, raw)
             if reply:
                 return reply
-            # not an answer to the pending question: treat as a fresh request
 
         refusal = privacy_refusal(norm)
         if refusal:
@@ -367,7 +363,7 @@ class ChatEngine:
         if kind == "ask_queue_target":
             if is_no(norm):
                 return Reply("No problem. Anything else I can do?", "declined", self._menu())
-            return await self._queue_info_for(norm)  # None (no doctor/department named) = treat as a new request
+            return await self._queue_info_for(norm)  
 
         if kind == "ask_distance":
             distance = _parse_distance(norm, bare_ok=True)
@@ -385,7 +381,6 @@ class ChatEngine:
             return None
         return None
 
-    # ----------------------------------------------------------- booking
     async def _start_booking(self, sess: Session, norm: str, token: str | None) -> Reply:
         if not token:
             return self._login_needed("join a queue")
@@ -453,10 +448,10 @@ class ChatEngine:
                 f"for {tok.get('queueDate', 'today')}.\n{_wait_text(data, ml_minutes)}")
         return Reply(text, "booked", ["My token status", "Cancel my token"])
 
-    # ------------------------------------------------------------ status
+
     async def _status(self, sess: Session, norm: str, token: str | None) -> Reply:
         if not re.search(r"\b(my|me|mine|i|ive|im)\b", norm):
-            general = await self._queue_info_for(norm)  # e.g. "wait time for Dr Meera" is about the doctor's queue
+            general = await self._queue_info_for(norm)  
             if general:
                 return general
         if not token:
@@ -482,7 +477,7 @@ class ChatEngine:
         lines = await asyncio.gather(*(one(t) for t in active[:5]))
         return Reply("\n\n".join(lines), "status", ["Cancel my token"] if any(t["status"] == "waiting" for t in active) else [])
 
-    # ------------------------------------------------------------ cancel
+
     async def _start_cancel(self, sess: Session, norm: str, token: str | None) -> Reply:
         if not token:
             return self._login_needed("cancel a token")
@@ -509,7 +504,7 @@ class ChatEngine:
         await self.backend.cancel(token, token_id)
         return Reply("Your token has been cancelled. You can join the queue again any time today.", "cancelled", ["Book a token"])
 
-    # --------------------------------------------------------- directory
+
     async def _list_departments(self, sess: Session, norm: str, token: str | None) -> Reply:
         depts = await self.backend.departments()
         if not depts:
@@ -562,7 +557,6 @@ class ChatEngine:
         return Reply("Sorry, I didn't quite get that. I can help with departments, doctors, joining a queue, "
                      "checking or cancelling your token, and ambulance requests.", "unknown", self._menu(), source="fallback")
 
-    # ------------------------------------- public token lookup (no login)
     async def _token_lookup(self, sess: Session, norm: str, token: str | None) -> Reply:
         """'How many people are before token 12 for Dr X?' answered from the token number alone."""
         m = _TOKEN_NO.search(norm)
@@ -630,7 +624,6 @@ class ChatEngine:
         return Reply(text + "\nI can only show token numbers, never who holds a token.", "token_lookup",
                  ["Book a token", "Show departments"])
 
-    # --------------------------------------------- live queue inquiries
     async def _summary(self, doctor_id: str) -> dict | None:
         """Aggregate queue numbers for a doctor, or None if the backend doesn't offer them (yet) or failed.
         When the route is missing we stop asking for 5 minutes instead of failing on every message."""
@@ -710,7 +703,7 @@ class ChatEngine:
                 parts.append(f"about {round(minutes)} min if you join now{source}")
         return f"- {name}: " + " · ".join(parts)
 
-    # ------------------------------------------------- ambulance requests
+
     async def _amb_book_start(self, sess: Session, token: str | None) -> Reply:
         if not token:
             return self._login_needed("request an ambulance")
@@ -858,7 +851,7 @@ class ChatEngine:
         await self.backend.cancel_ambulance_request(token, request_id)
         return Reply("Your ambulance request has been cancelled.", "ambulance_cancelled", self._menu())
 
-    # ---------------------------------------------------------- gemini guide
+
     async def _medical_refusal(self, sess: Session, norm: str) -> Reply:
         text = REFUSAL_MEDICAL
         try:
@@ -892,7 +885,7 @@ class ChatEngine:
             return Reply(REFUSAL_MEDICAL, "medical_refusal", ["Available doctors", "Book a token"], source="fallback")
         return Reply(text[:1500], "gemini", self._menu(), source="gemini")
 
-    # ------------------------------------------------------------- misc
+
     async def _predict_eta(self, distance: float, norm: str) -> tuple[float, str, dict]:
         """Ambulance travel time from the prediction API, or distance / 40 km/h if it is unavailable."""
         cond = _ambulance_conditions(norm)

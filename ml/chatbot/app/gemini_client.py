@@ -1,5 +1,4 @@
-"""Minimal Gemini REST client (generateContent). The API key is sent in the x-goog-api-key header,
-never in the URL, and is never logged."""
+
 
 import httpx
 

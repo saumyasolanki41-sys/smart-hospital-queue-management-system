@@ -1,10 +1,3 @@
-"""Rules for the Gemini assistant.
-
-Two layers keep it away from medical advice:
-  1. SYSTEM_PROMPT tells the model what it may and may not do.
-  2. Code-level guards that don't depend on the model obeying: messages that ask for medicine/dosage/
-     diagnosis never reach Gemini, and any Gemini reply that looks like dosing advice is replaced.
-"""
 
 import re
 
@@ -67,7 +60,6 @@ _MEDICAL_REQUEST = re.compile(
     r"side effects?|what disease|what do i have|which disease|lab report|test report|blood report|scan report)\b"
 )
 
-# Replies that look like dosing / drug advice are never shown.
 _UNSAFE_REPLY = re.compile(
     r"\b\d+(\.\d+)?\s?(mg|mcg|ml|iu)\b|\b(take|taking|consume)\s+\d+\s+(tablet|tablets|pill|pills|capsule|capsules)\b|"
     r"\b(paracetamol|ibuprofen|aspirin|amoxicillin|azithromycin|metformin|cetirizine|omeprazole)\b",
@@ -83,9 +75,6 @@ def reply_is_unsafe(text: str) -> bool:
     return bool(_UNSAFE_REPLY.search(text))
 
 
-# ---------------------------------------------------------------------------------------------
-# Privacy: what the chatbot refuses to look up, and what it never prints.
-# ---------------------------------------------------------------------------------------------
 REFUSAL_PRIVACY = (
     "I can only show your own tokens and ambulance requests, plus general queue numbers such as how many people "
     "are waiting. I can't share other patients' details, anyone's medical records, staff personal details or account data."

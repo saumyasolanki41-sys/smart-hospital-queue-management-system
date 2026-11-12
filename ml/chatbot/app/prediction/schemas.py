@@ -1,5 +1,4 @@
-"""Request models for the prediction endpoints. Field names, ranges and defaults are identical to the original
-ml/main.py so existing callers (backend ml.service.js, the chatbot) keep working unchanged."""
+
 
 from typing import Literal
 

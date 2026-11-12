@@ -1,8 +1,3 @@
-"""Loads the two scikit-learn pipelines once and runs predictions in-process.
-
-The feature engineering below is copied from the original ml/main.py without changes, so predictions are identical.
-Model files (joblib pickles) are trusted code: only load files you trained or reviewed yourself.
-"""
 
 import logging
 from pathlib import Path
@@ -61,12 +56,10 @@ class Predictor:
             log.error("Could not load model %s: %s", path, exc)
             return None
 
-    # ---------------------------------------------------------------- status
     @property
     def status(self) -> dict:
         return {"queue": self.queue_model is not None, "ambulance": self.ambulance_model is not None}
 
-    # ----------------------------------------------------------- predictions
     def queue_minutes(self, data: QueueInput) -> float:
         if self.queue_model is None:
             raise ModelUnavailable("Queue model is not available.")

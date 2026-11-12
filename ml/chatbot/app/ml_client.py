@@ -1,12 +1,4 @@
-"""Client for the hospital prediction API (the `ML` branch: ml/main.py).
 
-Endpoints used:
-  POST /predict/queue-time    -> {"wait_time ": {"formatted": "23 min 24 sec"}}   (note the trailing space in the key)
-  POST /predict/ambulance-eta -> {"ambulance": {"formatted": "9 min 05 sec"}}
-  GET  /health
-
-Every failure becomes an MLError so callers can fall back to the backend's own estimate.
-"""
 
 import re
 from datetime import datetime
@@ -17,7 +9,6 @@ import httpx
 
 IST = ZoneInfo("Asia/Kolkata")
 
-# Exact values accepted by the ML service's QueueInput.Specialty
 ML_SPECIALTIES = [
     "Cardiology", "Dermatology", "Gastroenterology", "General Medicine", "Internal Medicine",
     "Neurology", "Obstetrics & Gynecology", "Orthopedics", "Pediatrics", "Psychiatry",
@@ -40,8 +31,7 @@ def _norm(text: str) -> str:
 
 
 def map_specialty(*names: str | None) -> str | None:
-    """Map a department / specialization name to an ML specialty, or None if the model has no match
-    (the caller then keeps the backend's own estimate)."""
+
     lookup = {_norm(s): s for s in ML_SPECIALTIES}
     for name in names:
         n = _norm(name or "")
@@ -67,7 +57,7 @@ _DURATION = re.compile(r"(\d+)\s*min\s*(\d+)\s*sec", re.I)
 
 
 def parse_minutes(payload: Any, key: str) -> float:
-    """Extract minutes from `{key: {"formatted": "M min SS sec"}}`, tolerating stray whitespace in the key."""
+
     if not isinstance(payload, dict):
         raise MLError("malformed_response")
     value = next((v for k, v in payload.items() if isinstance(k, str) and k.strip() == key), None)
@@ -86,7 +76,7 @@ def ist_now() -> datetime:
 
 class MLClient:
     def __init__(self, base_url: str, timeout: float = 8, transport: httpx.AsyncBaseTransport | None = None):
-        # Vercel/Render cold starts can be slow, so the default is more generous than the backend's 4 s.
+
         self._http = httpx.AsyncClient(base_url=base_url, timeout=timeout, transport=transport)
 
     async def aclose(self) -> None:
@@ -94,7 +84,7 @@ class MLClient:
 
     async def _post(self, path: str, body: dict) -> dict:
         last: MLError | None = None
-        for _ in range(2):  # one retry, only for network errors and 5xx
+        for _ in range(2): 
             try:
                 resp = await self._http.post(path, json=body)
             except httpx.TimeoutException:
@@ -107,7 +97,7 @@ class MLClient:
                 last = MLError("service_unavailable")
                 continue
             if resp.status_code >= 400:
-                raise MLError("rejected_input")  # 4xx: retrying will not help
+                raise MLError("rejected_input")  
             try:
                 return resp.json()
             except ValueError:
@@ -128,12 +118,7 @@ class MLClient:
         avg_consult_min: float,
         now: datetime | None = None,
     ) -> float:
-        """Minutes a patient with `people_ahead` waiting patients in front should expect to wait.
 
-        Assumptions (same as the backend's ML integration): standard complexity, follow-up visit,
-        no urgency. The patient-facing API doesn't expose the current consultation's elapsed time,
-        so the doctor is treated as busy whenever somebody is ahead.
-        """
         now = now or ist_now()
         avg = max(float(avg_consult_min), 1.0)
         busy = 1 if people_ahead > 0 else 0
@@ -181,11 +166,7 @@ class MLClient:
 
 
 class LocalML(MLClient):
-    """Same interface as MLClient, but runs the models inside this process instead of calling another service.
 
-    It reuses MLClient's request building and answer parsing, and only replaces the transport, so the chatbot
-    behaves identically whether the models are local or remote.
-    """
 
     def __init__(self, predictor):
         self._predictor = predictor

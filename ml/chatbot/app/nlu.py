@@ -1,8 +1,4 @@
-"""Rule-based language understanding: intents plus fuzzy department/doctor matching.
 
-No external model is needed, so replies are fast, free and predictable. Matching is
-done against the live directory, so new departments/doctors work without code changes.
-"""
 
 import re
 from difflib import get_close_matches
@@ -58,7 +54,6 @@ def pick_number(norm: str) -> int | None:
     return int(m.group(1)) if m else None
 
 
-# ---------------------------------------------------------------- intents
 _RULES: list[tuple[str, str]] = [
     ("emergency", r"\b(emergency|heart attack|stroke|cant breathe|cannot breathe|unconscious|severe bleeding|bleeding heavily|overdose|poison|suicide|suicidal|kill myself|self harm)\b"),
     ("ambulance", r"\bambulance\b"),
@@ -87,7 +82,6 @@ def detect_intent(norm: str) -> str:
     return "unknown"
 
 
-# --------------------------------------------------------------- matching
 def _words(norm: str) -> list[str]:
     return norm.split()
 
@@ -131,8 +125,7 @@ def _name_tokens(name: str) -> list[str]:
 
 
 def match_doctors(norm: str, doctors: list[dict], max_ties: int = 6) -> list[dict]:
-    """Doctors whose name appears in the text. Returns the best-scoring group
-    (several only when the user was ambiguous, e.g. just a shared surname)."""
+
     words = _words(norm)
     scored: list[tuple[float, dict]] = []
     for doc in doctors:

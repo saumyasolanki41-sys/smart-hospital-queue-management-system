@@ -31,7 +31,6 @@ class SessionStore:
         now = time.monotonic()
         for sid in [s for s, v in self._data.items() if now - v.touched > self._ttl]:
             del self._data[sid]
-        # hard cap: drop the least recently used
         while len(self._data) >= self._max:
             oldest = min(self._data.values(), key=lambda v: v.touched)
             del self._data[oldest.id]

@@ -50,7 +50,7 @@ def create_app(
         settings.backend_base_url, settings.request_timeout, settings.cache_ttl_seconds,
         summary_path=settings.queue_summary_path,
     )
-    # One process serves the models and the chatbot. Set ML_BASE_URL only to use a separate, already-deployed model service.
+
     predictor = predictor or Predictor(Path(settings.models_dir))
     if ml is not None:
         ml_client = ml
@@ -112,7 +112,6 @@ def create_app(
 
     @app.get("/admin/stats", include_in_schema=False)
     async def admin_stats(x_admin_key: str | None = Header(default=None)) -> dict:
-        """Anonymous usage counters (common inquiries, fallbacks). Disabled unless ADMIN_API_KEY is set."""
         if not settings.admin_api_key:
             raise HTTPException(status_code=404)
         if not x_admin_key or not secrets.compare_digest(x_admin_key, settings.admin_api_key):
@@ -125,13 +124,7 @@ def create_app(
         request: Request,
         authorization: str | None = Header(default=None, include_in_schema=False),
     ) -> ChatResponse:
-        """Send a message. Authentication and permissions are handled by the backend.
-
-        The chatbot does no authentication itself: apps send the patient's backend access token as
-        `Authorization: Bearer <token>` (accepted, but hidden from this page) and the backend decides what the
-        patient may do. Without it, public questions (doctors, queue numbers, FAQ, help) still work. With
-        DEV_PATIENT_TOKEN set, requests made directly from this computer use that test token.
-        """
+        
         token = _bearer(authorization)
         if not token and settings.dev_patient_token and _is_direct_local_request(request):
             token = settings.dev_patient_token
@@ -145,7 +138,7 @@ def create_app(
             source=reply.source,
         )
 
-    # The demo chat page is optional: delete app/static and the API still works.
+
     if STATIC.is_dir():
         @app.get("/", include_in_schema=False)
         async def demo() -> FileResponse:

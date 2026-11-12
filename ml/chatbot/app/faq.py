@@ -1,12 +1,3 @@
-"""Common inquiries answered instantly and consistently, without calling a model.
-
-Entries live in a JSON file (default app/data/faq.json, override with FAQ_FILE) so hospital staff can
-add hospital-specific answers (visiting hours, address, parking...) without touching code:
-
-  {"id": "visiting_hours", "patterns": ["visiting (hours|time)"], "answer": "Visiting hours are ..."}
-
-`patterns` are regular expressions matched against the lower-cased message with punctuation removed.
-"""
 
 import json
 import re

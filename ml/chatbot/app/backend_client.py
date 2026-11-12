@@ -1,8 +1,4 @@
-"""Async client for the Express backend.
 
-Public routes (departments, doctors) need no login. Queue routes forward the
-patient's own access token; the chatbot never stores or logs it.
-"""
 
 import time
 from typing import Any
@@ -85,7 +81,7 @@ class BackendClient:
         self._cache[key] = (now + self._cache_ttl, value)
         return value
 
-    # ---- public directory -------------------------------------------------
+
     async def departments(self) -> list[dict]:
         return await self._cached("departments", lambda: self._paged("/api/departments", "departments"))
 
@@ -104,7 +100,6 @@ class BackendClient:
         path = self._summary_path.replace("{id}", doctor_id) + f"/tokens/{int(number)}"
         return await self._request("GET", path)
 
-    # ---- patient queue (needs the patient's access token) -----------------
     async def my_tokens(self, token: str) -> list[dict]:
         data = await self._request("GET", "/api/queue/tokens/mine", token=token, params={"limit": 50})
         return data.get("tokens", [])
@@ -118,7 +113,6 @@ class BackendClient:
     async def cancel(self, token: str, token_id: str) -> dict:
         return await self._request("PATCH", f"/api/queue/tokens/{token_id}/cancel", token=token, json={})
 
-    # ---- ambulance requests (patient token) --------------------------------
     async def create_ambulance_request(self, token: str, address: str, lat: float, lng: float, phone: str) -> dict:
         body = {"pickupAddress": address, "latitude": lat, "longitude": lng, "contactPhone": phone}
         return await self._request("POST", "/api/ambulance-requests", token=token, json=body)
