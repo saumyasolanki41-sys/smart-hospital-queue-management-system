@@ -7,7 +7,7 @@
       "\\bhow (to|do i|can i) (join|get in) (the )?(queue|line)\\b",
       "\\bexplain (the )?(token|queue)"
     ],
-    "answer": "Here's how it works: log in as a patient, pick a doctor who is accepting patients, and you get a token number for today. Your token moves from waiting to called when it's your turn. You can see people ahead of you and the estimated wait any time by asking 'my token status'.",
+    "answer": "Pick a doctor who is accepting patients to get a token number for today. Your token moves from waiting to called when it's your turn. You can see people ahead of you and the estimated wait any time by asking 'my token status'.",
     "suggestions": [
       "Available doctors",
       "Book a token",
@@ -87,7 +87,7 @@
     "patterns": [
       "\\b(logged out|session (expired|ended)|keeps? logging out|login (expires|expired)|why am i logged out)\\b"
     ],
-    "answer": "For your security, a login lasts about 15 minutes. If the chat says your session has expired, just log in again; your queue token isn't lost."
+    "answer": "For your security, a patient session lasts about 15 minutes. If it expires, your queue token isn't lost, but personal actions are unavailable until an active patient session is provided."
   },
   {
     "id": "payments",

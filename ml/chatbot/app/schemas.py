@@ -24,5 +24,4 @@ class ChatResponse(BaseModel):
     reply: str
     intent: str
     suggestions: list[str] = []
-    requires_login: bool = False
     source: Literal["rules", "gemini", "fallback"] = "rules"

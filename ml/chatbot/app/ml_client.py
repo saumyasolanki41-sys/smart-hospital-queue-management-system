@@ -178,3 +178,42 @@ class MLClient:
             "Emergency_Level": emergency_level,
         }
         return parse_minutes(await self._post("/predict/ambulance-eta", body), "ambulance")
+
+
+class LocalML(MLClient):
+    """Same interface as MLClient, but runs the models inside this process instead of calling another service.
+
+    It reuses MLClient's request building and answer parsing, and only replaces the transport, so the chatbot
+    behaves identically whether the models are local or remote.
+    """
+
+    def __init__(self, predictor):
+        self._predictor = predictor
+
+    async def aclose(self) -> None:
+        return None
+
+    async def health(self) -> bool:
+        return all(self._predictor.status.values())
+
+    async def _post(self, path: str, body: dict) -> dict:
+        from pydantic import ValidationError
+        from starlette.concurrency import run_in_threadpool
+
+        from .prediction.predictor import ModelUnavailable, PredictionFailed, format_duration
+        from .prediction.schemas import AmbulanceInput, QueueInput
+
+        try:
+            if path == "/predict/queue-time":
+                minutes = await run_in_threadpool(self._predictor.queue_minutes, QueueInput(**body))
+                return {"wait_time": format_duration(round(minutes, 2))}
+            if path == "/predict/ambulance-eta":
+                minutes = await run_in_threadpool(self._predictor.ambulance_minutes, AmbulanceInput(**body))
+                return {"ambulance": format_duration(round(minutes, 2))}
+        except ValidationError:
+            raise MLError("rejected_input")
+        except PredictionFailed:
+            raise MLError("rejected_input")
+        except ModelUnavailable:
+            raise MLError("service_unavailable")
+        raise MLError("malformed_response")

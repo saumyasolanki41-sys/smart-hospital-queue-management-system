@@ -33,7 +33,6 @@ class Reply:
     text: str
     intent: str
     suggestions: list[str] = field(default_factory=list)
-    requires_login: bool = False
     source: str = "rules"  # rules | gemini | fallback
     private: bool = False  # true while collecting personal details: never stored in Gemini history
 
@@ -128,6 +127,7 @@ def _ambulance_conditions(norm: str) -> dict:
     return {"traffic_level": traffic, "weather_severity": weather, "region": region, "road": road, "emergency_level": level}
 
 
+_TOKEN_NO = re.compile(r"\btoken\s*(?:number|no|num)?\s*(\d{1,6})\b")
 _ETA_WORDS = re.compile(r"\b(eta|how long|how much time|estimate|estimated|minutes|take|takes|time)\b")
 _BOOK_AMB = re.compile(r"\b(book|request|need|send|arrange|want|get|call|require|order)\b")
 _STATUS_AMB = re.compile(r"\b(status|track|assigned|my ambulance|my request|my ambulance request)\b")
@@ -287,6 +287,7 @@ class ChatEngine:
             return Reply(faq.answer, "faq", list(faq.suggestions) or self._menu())
 
         handler = {
+            "token_lookup": self._token_lookup,
             "queue_info": self._queue_info,
             "ambulance": self._ambulance,
             "cancel": self._start_cancel,
@@ -351,6 +352,17 @@ class ChatEngine:
             if is_no(norm):
                 return Reply("No problem. Anything else I can do?", "declined", self._menu())
             return await self._book_target(sess, norm)
+
+        if kind == "ask_lookup_doctor":
+            if is_no(norm):
+                return Reply("No problem. Anything else I can do?", "declined", self._menu())
+            cands = pending["doctors"]
+            n = pick_number(norm)
+            chosen = cands[n - 1] if n and 1 <= n <= len(cands) else None
+            if not chosen:
+                m = match_doctors(norm, cands or await self.backend.doctors())
+                chosen = m[0] if len(m) == 1 else None
+            return await self._token_lookup_do(chosen, pending["number"]) if chosen else None
 
         if kind == "ask_queue_target":
             if is_no(norm):
@@ -549,6 +561,74 @@ class ChatEngine:
             return reply
         return Reply("Sorry, I didn't quite get that. I can help with departments, doctors, joining a queue, "
                      "checking or cancelling your token, and ambulance requests.", "unknown", self._menu(), source="fallback")
+
+    # ------------------------------------- public token lookup (no login)
+    async def _token_lookup(self, sess: Session, norm: str, token: str | None) -> Reply:
+        """'How many people are before token 12 for Dr X?' answered from the token number alone."""
+        m = _TOKEN_NO.search(norm)
+        if not m:
+            return await self._queue_info(sess, norm, token)
+        number = int(m.group(1))
+        if number < 1:
+            return Reply("Token numbers start at 1.", "token_lookup", self._menu())
+        doctors = await self.backend.doctors()
+        depts = await self.backend.departments()
+        named = match_doctors(norm, doctors)
+        if len(named) == 1:
+            return await self._token_lookup_do(named[0], number)
+        cands = named
+        if not cands:
+            hits = match_departments(norm, depts) or match_by_symptom(norm, depts)
+            ids = {h["_id"] for h in hits}
+            cands = [d for d in doctors if isinstance(d.get("department"), dict) and d["department"].get("_id") in ids]
+        cands = cands[:MAX_LIST]
+        sess.pending = {"type": "ask_lookup_doctor", "number": number, "doctors": cands}
+        if cands:
+            return Reply(f"Token numbers are per doctor. Which doctor is token #{number} for?\n{_numbered(cands)}\n"
+                         "Reply with a number or a doctor's name.", "token_lookup", [str(i) for i in range(1, len(cands) + 1)][:5])
+        return Reply(f"Token numbers are per doctor. Which doctor is token #{number} for?", "token_lookup",
+                     [d["name"] for d in depts[:4]])
+
+    async def _token_lookup_do(self, doc: dict, number: int) -> Reply:
+        name = doc.get("name", "the doctor")
+        try:
+            data = await self.backend.token_lookup(doc["_id"], number)
+        except BackendError as exc:
+            if exc.code == "TOKEN_NOT_FOUND":
+                return Reply(f"There's no token #{number} with {name} today.", "token_lookup", self._menu())
+            if exc.status == 404 and exc.code == "NOT_FOUND":
+                self.stats.event("token_lookup_endpoint_missing")
+                return Reply("Looking up a token by number isn't switched on yet. Personal token details aren't "
+                             "available through this lookup.", "token_lookup", ["Show departments"])
+            raise
+        self.stats.event("token_lookup")
+        state = data.get("state")
+        if state == "called":
+            text = f"Token #{number} with {name} is being called right now."
+        elif state == "waiting":
+            people = data.get("peopleAhead")
+            text = f"Token #{number} with {name} is waiting"
+            if isinstance(people, int):
+                text += f": {people} {'person' if people == 1 else 'people'} ahead"
+                minutes, source = None, ""
+                specialty = map_specialty(_dept_name(doc), doc.get("specialization"))
+                if self.ml and specialty:
+                    try:
+                        avg = float(data.get("averageConsultationMinutes") or doc.get("averageConsultationMinutes") or 10)
+                        minutes = await self.ml.predict_queue(specialty, people, avg)
+                        source = " (predicted)"
+                        self.stats.event("ml_queue_direct")
+                    except MLError:
+                        self.stats.event("ml_queue_fallback")
+                if minutes is None and isinstance(data.get("estimatedWaitMinutes"), (int, float)):
+                    minutes = float(data["estimatedWaitMinutes"])
+                if minutes is not None:
+                    text += f", estimated wait {_minutes_text(minutes)}{source}"
+            text += "."
+        else:
+            text = f"Token #{number} with {name} is no longer in today's queue."
+        return Reply(text + "\nI can only show token numbers, never who holds a token.", "token_lookup",
+                 ["Book a token", "Show departments"])
 
     # --------------------------------------------- live queue inquiries
     async def _summary(self, doctor_id: str) -> dict | None:
@@ -861,14 +941,16 @@ class ChatEngine:
                      "ambulance_eta", ["Show departments", "My token status"])
 
     def _login_needed(self, action: str) -> Reply:
-        return Reply(f"Please log in with your patient account to {action}. Browsing doctors and departments doesn't need a login.",
-                     "login_required", ["Show departments"], requires_login=True)
+        return Reply(f"I can't {action} from this request because a patient session wasn't provided. "
+                     "I can still help with public information, including departments, doctors, and queue estimates.",
+                     "login_required", ["Show departments"])
 
     def _error_reply(self, exc: BackendError) -> Reply:
         code, status = exc.code, exc.status
         self.stats.event(f"backend_error_{code}")
         if status == 401:
-            return Reply("Your session has expired. Please log in again.", "error", requires_login=True)
+            return Reply("The patient session is unavailable or has expired. I can't complete this personal action "
+                         "from the current request.", "error")
         if status == 403:
             return Reply("This is only available from a patient account.", "error")
         known = {

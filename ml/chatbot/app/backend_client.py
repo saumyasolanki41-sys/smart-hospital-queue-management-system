@@ -98,6 +98,12 @@ class BackendClient:
         path = self._summary_path.replace("{id}", doctor_id)
         return await self._request("GET", path)
 
+    async def token_lookup(self, doctor_id: str, number: int) -> dict:
+        """Public status of one token number for a doctor today (no identity). Needs the backend endpoint
+        GET /api/doctors/:id/queue/tokens/:number from integration/backend-patches."""
+        path = self._summary_path.replace("{id}", doctor_id) + f"/tokens/{int(number)}"
+        return await self._request("GET", path)
+
     # ---- patient queue (needs the patient's access token) -----------------
     async def my_tokens(self, token: str) -> list[dict]:
         data = await self._request("GET", "/api/queue/tokens/mine", token=token, params={"limit": 50})

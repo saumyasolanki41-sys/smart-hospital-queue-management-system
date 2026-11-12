@@ -1,24 +1,36 @@
 from contextlib import asynccontextmanager
 from pathlib import Path
 
+import logging
 import secrets
 
-from fastapi import FastAPI, Header, HTTPException
+from fastapi import FastAPI, Header, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from .backend_client import BackendClient
+from .backend_client import BackendClient, BackendError
 from .config import load_settings
 from .engine import ChatEngine
 from .faq import Faq
 from .gemini_client import GeminiClient
-from .ml_client import MLClient
+from .ml_client import LocalML, MLClient
+from .prediction.predictor import Predictor
+from .prediction.routes import build_router
 from .schemas import ChatRequest, ChatResponse
 from .sessions import SessionStore
 from .stats import Stats
 
 STATIC = Path(__file__).parent / "static"
+log = logging.getLogger("chatbot")
+_LOOPBACK = {"127.0.0.1", "::1", "localhost"}
+_PROXY_HEADERS = ("x-forwarded-for", "forwarded", "x-real-ip")
+
+
+def _is_direct_local_request(request: Request) -> bool:
+    """True only for a request that comes straight from this computer, never through a proxy."""
+    client = request.client.host if request.client else ""
+    return client in _LOOPBACK and not any(h in request.headers for h in _PROXY_HEADERS)
 
 
 def _bearer(authorization: str | None) -> str | None:
@@ -31,17 +43,27 @@ def create_app(
     backend: BackendClient | None = None,
     ml: MLClient | None = None,
     gemini: GeminiClient | None = None,
+    predictor: Predictor | None = None,
 ) -> FastAPI:
     settings = load_settings()
     client = backend or BackendClient(
         settings.backend_base_url, settings.request_timeout, settings.cache_ttl_seconds,
         summary_path=settings.queue_summary_path,
     )
-    ml_client = ml or MLClient(settings.ml_base_url, settings.ml_timeout)
+    # One process serves the models and the chatbot. Set ML_BASE_URL only to use a separate, already-deployed model service.
+    predictor = predictor or Predictor(Path(settings.models_dir))
+    if ml is not None:
+        ml_client = ml
+    elif settings.ml_base_url:
+        ml_client = MLClient(settings.ml_base_url, settings.ml_timeout)
+    else:
+        ml_client = LocalML(predictor)
     gemini_client = gemini
     if gemini_client is None and settings.gemini_api_key:
         gemini_client = GeminiClient(settings.gemini_api_key, settings.gemini_model, settings.gemini_timeout)
     stats = Stats()
+    if settings.dev_patient_token:
+        log.warning("DEV_PATIENT_TOKEN is set: local requests without a login use it. Never set it on a deployed server.")
     engine = ChatEngine(client, SessionStore(settings.session_ttl_seconds), ml_client,
                         gemini_client, settings.gemini_max_calls_per_session,
                         faq=Faq.load(settings.faq_file), stats=stats)
@@ -54,7 +76,7 @@ def create_app(
         if gemini_client:
             await gemini_client.aclose()
 
-    app = FastAPI(title="Smart Hospital Queue Chatbot", version="1.0.0", lifespan=lifespan)
+    app = FastAPI(title="Smart Hospital API: predictions + chatbot", version="2.0.0", lifespan=lifespan)
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.cors_origins,
@@ -62,16 +84,28 @@ def create_app(
         allow_headers=["Authorization", "Content-Type"],
     )
 
-    @app.get("/health")
+    app.include_router(build_router(predictor))
+
+    @app.get("/health", tags=["health"])
     async def health() -> dict:
-        return {"status": "ok"}
+        """Always 200 while the service is up (use this for the platform health check). `degraded` means a model
+        failed to load; the chatbot then falls back to the backend's own estimates."""
+        models = predictor.status if ml is None and not settings.ml_base_url else {"remote": await ml_client.health()}
+        return {"status": "ok" if all(models.values()) else "degraded", "models": models,
+                "chatbot": True, "gemini": gemini_client is not None}
 
-    @app.get("/health/ml")
-    async def health_ml() -> dict:
-        """Whether the prediction API is reachable. The chatbot keeps working without it (falls back)."""
-        return {"ml_available": await ml_client.health()}
+    @app.get("/health/chatbot", tags=["health"])
+    async def health_chatbot() -> dict:
+        """Chatbot status: whether the hospital backend answers (needed for doctors, tokens, queues)."""
+        try:
+            await client.departments()
+            reachable = True
+        except BackendError as exc:  # an HTTP error reply still proves the backend is up
+            reachable = exc.code != "BACKEND_UNREACHABLE"
+        return {"status": "ok" if reachable else "degraded", "backend_reachable": reachable,
+                "gemini_enabled": gemini_client is not None}
 
-    @app.get("/health/gemini")
+    @app.get("/health/gemini", tags=["health"])
     async def health_gemini() -> dict:
         """Whether the Gemini guide assistant is configured (no call is made to Google)."""
         return {"gemini_enabled": gemini_client is not None}
@@ -85,26 +119,44 @@ def create_app(
             raise HTTPException(status_code=401, detail="Invalid admin key")
         return stats.snapshot()
 
-    @app.post("/chat", response_model=ChatResponse)
-    async def chat(req: ChatRequest, authorization: str | None = Header(default=None)) -> ChatResponse:
-        """Send a message. Pass the patient's backend access token as
-        `Authorization: Bearer <token>` to enable booking, status and cancellation."""
+    @app.post("/chat", response_model=ChatResponse, tags=["chatbot"])
+    async def chat(
+        req: ChatRequest,
+        request: Request,
+        authorization: str | None = Header(default=None, include_in_schema=False),
+    ) -> ChatResponse:
+        """Send a message. Authentication and permissions are handled by the backend.
+
+        The chatbot does no authentication itself: apps send the patient's backend access token as
+        `Authorization: Bearer <token>` (accepted, but hidden from this page) and the backend decides what the
+        patient may do. Without it, public questions (doctors, queue numbers, FAQ, help) still work. With
+        DEV_PATIENT_TOKEN set, requests made directly from this computer use that test token.
+        """
+        token = _bearer(authorization)
+        if not token and settings.dev_patient_token and _is_direct_local_request(request):
+            token = settings.dev_patient_token
         location = (req.latitude, req.longitude) if req.latitude is not None and req.longitude is not None else None
-        sess, reply = await engine.handle(req.session_id, req.message, _bearer(authorization), req.mode, location)
+        sess, reply = await engine.handle(req.session_id, req.message, token, req.mode, location)
         return ChatResponse(
             session_id=sess.id,
             reply=reply.text,
             intent=reply.intent,
             suggestions=reply.suggestions,
-            requires_login=reply.requires_login,
             source=reply.source,
         )
 
-    @app.get("/", include_in_schema=False)
-    async def demo() -> FileResponse:
-        return FileResponse(STATIC / "index.html")
+    # The demo chat page is optional: delete app/static and the API still works.
+    if STATIC.is_dir():
+        @app.get("/", include_in_schema=False)
+        async def demo() -> FileResponse:
+            return FileResponse(STATIC / "index.html")
 
-    app.mount("/static", StaticFiles(directory=STATIC), name="static")
+        app.mount("/static", StaticFiles(directory=STATIC), name="static")
+    else:
+        @app.get("/", include_in_schema=False)
+        async def root() -> dict:
+            return {"service": "Smart Hospital API", "docs": "/docs"}
+
     return app
 
 

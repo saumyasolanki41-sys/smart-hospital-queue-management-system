@@ -64,10 +64,12 @@ _RULES: list[tuple[str, str]] = [
     ("ambulance", r"\bambulance\b"),
     ("cancel", r"\b(cancel|withdraw|leave the queue|remove my token)\b"),
     ("status", r"\b(ahead of me|before me|in front of me|my turn|my position)\b"),
+    ("token_lookup", r"^(?!.*\b(book|join|register|my|mine)\b).*\btoken\s*(?:number|no|num)?\s*\d{1,6}\b"),
+        ("queue_info", r"^(?!.*\b(?:my|mine)\b).*\b(?:estimate(?:d)?(?: wait(?:ing)?)? time|wait(?:ing)? time)\b"),
     ("queue_info", r"\b(how many (people|patients)|queue (length|size|status)|crowd\w*|now serving|currently serving|current token|which token|"
                    r"who is being served|next token|how busy|is it busy|how long is the (queue|wait|line)|waiting (for|at|outside)|people waiting|patients waiting)\b"),
     ("book", r"\b(book|join|appointment|get a token|take a token|new token|register for|consult)\b"),
-    ("status", r"\b(status|my token|my tokens|my turn|my queue|my booking|my bookings|where am i|my position|wait|waiting|how long|how many people|how many patients|eta|turn)\b"),
+    ("status", r"\b(status|my token|my tokens|my turn|my queue|my booking|my bookings|where am i|my position|estimate(?:d)?(?: wait(?:ing)?)? time|wait(?:ing)? time|wait|waiting|how long|how many people|how many patients|eta|turn)\b"),
     ("doctor_info", r"\b(fee|fees|cost|price|charge|charges|experience)\b"),
     ("list_departments", r"\b(department|departments|specialities|specialties|speciality|specialty)\b"),
     ("list_doctors", r"\b(doctor|doctors|dr|physician|specialist|available)\b"),
@@ -104,7 +106,7 @@ def match_departments(norm: str, departments: list[dict]) -> list[dict]:
     for d in departments:
         tokens = [t for t in normalize(d.get("name", "")).split() if len(t) >= 4 and t not in {"care", "department"}]
         for w in words:
-            if w in tokens or get_close_matches(w, tokens, n=1, cutoff=0.84):
+            if any(token.startswith(w) for token in tokens) or get_close_matches(w, tokens, n=1, cutoff=0.84):
                 hits.append(d)
                 break
     return hits
