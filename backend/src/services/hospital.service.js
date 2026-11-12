@@ -112,7 +112,7 @@ async function checkDepartment(id) {
   }
 }
 
-const doctorSelection = 'name department specialization experienceYears consultationFee isAvailable averageConsultationMinutes';
+const doctorSelection = 'name department specialization experienceYears consultationFee isAvailable averageConsultationMinutes queuePaused queuePauseReason queuePausedAt';
 
 async function listDoctors(query) {
   const { page, limit } = pagination(query, ['page', 'limit', 'departmentId', 'isAvailable']);

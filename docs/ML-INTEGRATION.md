@@ -10,7 +10,7 @@ or a guarantee of ambulance arrival. The frontend calls this backend, not ML dir
 Add these variables privately in backend/.env and Railway Variables:
 
 ```text
-ML_SERVICE_URL=https://smart-hospital-queue-management-sys-ten.vercel.app
+ML_SERVICE_URL=https://smart-hospital-api.508z112c8xp8p.ap-southeast-2.cs.amazonlightsail.com
 OPENROUTESERVICE_API_KEY=YOUR_PRIVATE_ROUTING_KEY
 ```
 
@@ -149,6 +149,21 @@ these are test values, not a real booking. End-to-end assigned-request ETA still
 requires a fresh vehicle location and an owner/staff token. No runtime dependencies changed.
 
 ## Next steps for the team
+
+### Current AWS replacement
+
+On 2026-11-11, the local backend configuration and example were switched to the
+AWS Lightsail origin shown above. Both endpoints passed through the existing
+backend adapter with synthetic inputs: queue 9.2 minutes and ambulance 20.43
+minutes, source `ml`, reason null. Local elapsed times were approximately 1.94
+seconds and 0.33 seconds; these are observations, not latency guarantees or model
+accuracy measurements. No adapter schema, timeout, chatbot routes or proxy/rate
+settings were changed. Set the same ML_SERVICE_URL in Railway and deploy, then
+verify the hosted integration. This local change does not update Railway Variables.
+
+### Historical deployment checks
+
+The checks below refer to earlier service deployments, not the AWS replacement.
 
 Replacement service verified on 2026-10-20: `/health` returned HTTP 200 with both
 models loaded. The existing backend ML adapter successfully called queue and

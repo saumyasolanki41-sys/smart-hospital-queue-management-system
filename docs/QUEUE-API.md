@@ -1,5 +1,10 @@
 # Patient queue tokens
 
+Visit history, private completed-visit feedback and queue pause behavior are
+documented in [VISIT-HISTORY-FEEDBACK-PAUSE-API.md](VISIT-HISTORY-FEEDBACK-PAUSE-API.md).
+While a doctor queue is paused, today's waiting tokens keep peopleAhead but return
+a null wait and prediction reason queue_paused. Inspect data.queueState.
+
 This step implements same-day OPD queue tokens, not appointment time slots.
 Local base URL: `http://localhost:8080`. The new routes are available on the shared
 HTTPS URL only after this revision is pushed and deployed.

@@ -7,6 +7,8 @@ ML setup, prediction sources and fallback behavior are in [ML-INTEGRATION.md](ML
 
 Department and doctor endpoints are documented in [HOSPITAL-API.md](HOSPITAL-API.md).
 Patient queue tokens are documented in [QUEUE-API.md](QUEUE-API.md).
+Visit history, private feedback and doctor pause/resume are documented in
+[VISIT-HISTORY-FEEDBACK-PAUSE-API.md](VISIT-HISTORY-FEEDBACK-PAUSE-API.md).
 Staff queue management is documented in [STAFF-QUEUE-API.md](STAFF-QUEUE-API.md).
 Staff dashboard counts are documented in [DASHBOARD-API.md](DASHBOARD-API.md).
 Doctor dashboard counts are documented in [DOCTOR-DASHBOARD-API.md](DOCTOR-DASHBOARD-API.md).

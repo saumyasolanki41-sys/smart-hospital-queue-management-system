@@ -1,6 +1,7 @@
 const Department = require('../models/Department');
 const Doctor = require('../models/Doctor');
 const QueueToken = require('../models/QueueToken');
+const queueState = require('./queue-state.service');
 
 function dashboardError() {
   const error = new Error('Use only a real date in YYYY-MM-DD format.');
@@ -58,7 +59,7 @@ async function getDashboard(query) {
 async function getDoctorDashboard(userId, query) {
   const date = dashboardDate(query);
   const doctor = await Doctor.findOne({ user: userId })
-    .select('name department specialization isAvailable averageConsultationMinutes')
+    .select('name department specialization isAvailable averageConsultationMinutes queuePaused queuePauseReason queuePausedAt')
     .populate('department', 'name').lean();
   if (!doctor) {
     const error = new Error('No doctor profile is linked to your account. Ask an admin to link it.');
@@ -74,7 +75,7 @@ async function getDoctorDashboard(userId, query) {
       .select('patient doctor queueDate tokenNumber status calledAt createdAt')
       .populate('patient', 'name').lean(),
   ]);
-  return { date, doctor, tokens: countTokens(tokenCounts), currentToken };
+  return { date, doctor, tokens: countTokens(tokenCounts), currentToken, queueState: queueState(doctor) };
 }
 
 module.exports = { getDashboard, getDoctorDashboard };
