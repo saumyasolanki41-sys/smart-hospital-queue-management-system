@@ -1,7 +1,5 @@
-
-
 import re
-from difflib import get_close_matches
+from difflib import SequenceMatcher, get_close_matches
 
 TITLES = {"dr", "doctor", "prof", "mr", "mrs", "ms"}
 # Words that appear in doctor names in test data or in everyday chat; never match on these.
@@ -86,6 +84,13 @@ def _words(norm: str) -> list[str]:
     return norm.split()
 
 
+def _loose_match(word: str, tokens: list[str]) -> bool:
+    """Heavily misspelled long words ("orthopadeatrics"): same first 5 letters and mostly the same spelling."""
+    return len(word) >= 8 and any(
+        len(t) >= 6 and word[:5] == t[:5] and SequenceMatcher(None, word, t).ratio() >= 0.7 for t in tokens
+    )
+
+
 def match_departments(norm: str, departments: list[dict]) -> list[dict]:
     """Departments mentioned by name (typos tolerated)."""
     hits = []
@@ -100,7 +105,7 @@ def match_departments(norm: str, departments: list[dict]) -> list[dict]:
     for d in departments:
         tokens = [t for t in normalize(d.get("name", "")).split() if len(t) >= 4 and t not in {"care", "department"}]
         for w in words:
-            if any(token.startswith(w) for token in tokens) or get_close_matches(w, tokens, n=1, cutoff=0.84):
+            if any(token.startswith(w) for token in tokens) or get_close_matches(w, tokens, n=1, cutoff=0.84) or _loose_match(w, tokens):
                 hits.append(d)
                 break
     return hits

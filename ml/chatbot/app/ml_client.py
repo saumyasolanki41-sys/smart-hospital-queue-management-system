@@ -53,7 +53,11 @@ class MLError(Exception):
         self.reason = reason
 
 
-_DURATION = re.compile(r"(\d+)\s*min\s*(\d+)\s*sec", re.I)
+_DURATION = re.compile(
+    r"(?:(\d+)\s*(?:hours?|hrs?|h)\s*)?(\d+)\s*(?:minutes?|mins?|min|m)\b"
+    r"(?:\s*(\d+)\s*(?:seconds?|secs?|sec|s)\b)?",
+    re.I,
+)
 
 
 def parse_minutes(payload: Any, key: str) -> float:
@@ -67,7 +71,7 @@ def parse_minutes(payload: Any, key: str) -> float:
     m = _DURATION.search(text) if isinstance(text, str) else None
     if not m:
         raise MLError("malformed_response")
-    return int(m.group(1)) + int(m.group(2)) / 60.0
+    return int(m.group(1) or 0) * 60 + int(m.group(2)) + int(m.group(3) or 0) / 60.0
 
 
 def ist_now() -> datetime:

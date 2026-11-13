@@ -1,5 +1,3 @@
-
-
 import asyncio
 import re
 import time
@@ -73,7 +71,13 @@ def _token_doctor_name(token: dict) -> str:
 def _minutes_text(minutes: float) -> str:
     if minutes < 1:
         return "under a minute"
-    return f"about {round(minutes)} min"
+    hours, remaining_minutes = divmod(round(minutes), 60)
+    parts = []
+    if hours:
+        parts.append(f"{hours} {'hour' if hours == 1 else 'hours'}")
+    if remaining_minutes:
+        parts.append(f"{remaining_minutes} {'minute' if remaining_minutes == 1 else 'minutes'}")
+    return f"about {' '.join(parts)}"
 
 
 def _wait_text(data: dict, ml_minutes: float | None = None) -> str:
@@ -125,8 +129,13 @@ def _ambulance_conditions(norm: str) -> dict:
     return {"traffic_level": traffic, "weather_severity": weather, "region": region, "road": road, "emergency_level": level}
 
 
+# Words that mean "this particular kind of doctor / this particular detail", not "show me any doctors"
+_SPECIFIC_REQUEST = re.compile(
+    r"\b(experience|fees?|cost|price|charges?)\b|\b\w{4,}(ologist|ologists|iatrist|iatrists|ician|icians|therapist|surgeon|dentist)\b"
+)
 _TOKEN_NO = re.compile(r"\btoken\s*(?:number|no|num)?\s*(\d{1,6})\b")
 _ETA_WORDS = re.compile(r"\b(eta|how long|how much time|estimate|estimated|minutes|take|takes|time)\b")
+_AMB_HOWTO = re.compile(r"\b(can i|could i|can we|how (?:do|can|to|should)|is it possible|is there a way|where (?:do|can)|possible to)\b")
 _BOOK_AMB = re.compile(r"\b(book|request|need|send|arrange|want|get|call|require|order)\b")
 _STATUS_AMB = re.compile(r"\b(status|track|assigned|my ambulance|my request|my ambulance request)\b")
 _COORDS = re.compile(r"(-?\d{1,3}(?:\.\d+)?)\s*[, ]\s*(-?\d{1,3}(?:\.\d+)?)")
@@ -509,6 +518,9 @@ class ChatEngine:
         depts = await self.backend.departments()
         if not depts:
             return Reply("I couldn't find any departments right now.", "list_departments")
+        # "doctors in cardiology department": a department was named, so show its doctors, not every department
+        if match_departments(norm, depts):
+            return await self._list_doctors(sess, norm, token)
         body = "\n".join(f"- {d['name']}" for d in depts)
         return Reply(f"We have these departments:\n{body}\nTell me one to see its doctors.", "list_departments",
                      [d["name"] for d in depts[:4]])
@@ -531,6 +543,13 @@ class ChatEngine:
             more = f"\n...and {len(docs) - MAX_LIST} more." if len(docs) > MAX_LIST else ""
             return Reply(f"Doctors in {' / '.join(h['name'] for h in hits)}:\n{_numbered(docs[:MAX_LIST])}{more}",
                          "list_doctors", ["Book a token"])
+
+        # They asked about something specific (a specialist type, or a fee / experience question) that matched no
+        # doctor or department: say so instead of listing arbitrary doctors.
+        if _SPECIFIC_REQUEST.search(norm):
+            names = "\n".join(f"- {d['name']}" for d in depts)
+            return Reply("I couldn't find a department or doctor matching that. We have these departments:\n"
+                         f"{names}\nTell me one to see its doctors.", "list_doctors", [d["name"] for d in depts[:4]])
 
         avail = [d for d in doctors if d.get("isAvailable", True)]
         if not avail:
@@ -904,6 +923,14 @@ class ChatEngine:
             return await self._amb_cancel_start(sess, token)
         if _STATUS_AMB.search(norm):
             return await self._amb_status(sess, token)
+        if _AMB_HOWTO.search(norm) and _BOOK_AMB.search(norm) and not _ETA_WORDS.search(norm):
+            # A question about whether/how to request one ("can i book an ambulance from here?"), not a request to start
+            return Reply("Yes. You can request an ambulance using the ambulance booking feature on this website, or right here in "
+                         "chat once you're logged in as a patient. To do it here, say 'book an ambulance' and I'll ask for "
+                         "the pickup address, your phone number and your location, then send the request to hospital staff, "
+                         "who assign a vehicle. I can also estimate the travel time ('ambulance eta 8 km') and show your "
+                         "request status.\n\n" + AMB_NOTE, "ambulance_info",
+                         ["Book an ambulance", "Ambulance ETA", "Ambulance status"])
         distance = _parse_distance(norm)
         if not _ETA_WORDS.search(norm) and _BOOK_AMB.search(norm):
             return await self._amb_book_start(sess, token)
