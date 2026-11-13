@@ -35,7 +35,7 @@ def build_router(predictor: Predictor) -> APIRouter:
         except PredictionFailed as exc:
             raise HTTPException(status_code=400, detail=str(exc))
         formatted = format_duration(minutes)
-        return {"wait_time": formatted, "wait_time_minutes": minutes}
+        return {"wait_time": formatted}
 
     @router.post("/predict/ambulance-eta", tags=["prediction"])
     async def predict_ambulance(data: AmbulanceInput) -> dict:
@@ -45,6 +45,6 @@ def build_router(predictor: Predictor) -> APIRouter:
             raise HTTPException(status_code=503, detail=str(exc))
         except PredictionFailed as exc:
             raise HTTPException(status_code=400, detail=str(exc))
-        return {"ambulance": format_duration(minutes), "eta_minutes": minutes}
+        return {"ambulance": format_duration(minutes)}
 
     return router

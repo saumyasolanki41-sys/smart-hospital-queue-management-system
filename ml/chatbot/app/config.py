@@ -2,7 +2,10 @@ import os
 from pathlib import Path
 from dataclasses import dataclass
 
+from dotenv import load_dotenv
+
 DEFAULT_BACKEND = "https://smart-hospital-queue-management-system-production.up.railway.app"
+load_dotenv(Path(__file__).resolve().parents[1] / ".env")
 
 
 @dataclass(frozen=True)

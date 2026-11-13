@@ -35,8 +35,13 @@ class PredictionFailed(Exception):
 
 
 def format_duration(total_minutes: float) -> dict:
-    minutes, seconds = divmod(round(total_minutes * 60), 60)
-    return {"formatted": f"{minutes} min {seconds:02d} sec"}
+    hours, minutes = divmod(round(total_minutes), 60)
+    parts = []
+    if hours:
+        parts.append(f"{hours} {'hour' if hours == 1 else 'hours'}")
+    if minutes or not hours:
+        parts.append(f"{minutes} {'minute' if minutes == 1 else 'minutes'}")
+    return {"formatted": " ".join(parts)}
 
 
 class Predictor:
