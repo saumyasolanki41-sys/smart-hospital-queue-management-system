@@ -16,6 +16,8 @@ const limiter = rateLimit({
 router.use(authenticate, allowRoles('admin', 'receptionist', 'doctor'));
 router.get('/doctors/:doctorId/tokens', controller.listQueue);
 router.post('/doctors/:doctorId/call-next', limiter, controller.callNext);
+router.patch('/doctors/:doctorId/pause', limiter, controller.pauseQueue);
+router.patch('/doctors/:doctorId/resume', limiter, controller.resumeQueue);
 router.patch('/doctors/:doctorId/tokens/:tokenId/complete', limiter, controller.completeToken);
 router.patch('/doctors/:doctorId/tokens/:tokenId/skip', limiter, controller.skipToken);
 

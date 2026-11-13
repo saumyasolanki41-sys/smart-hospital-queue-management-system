@@ -10,6 +10,14 @@ const queueTokenSchema = new mongoose.Schema({
   calledAt: { type: Date },
   completedAt: { type: Date },
   skippedAt: { type: Date },
+  feedback: {
+    type: new mongoose.Schema({
+      rating: { type: Number, required: true, min: 1, max: 5, validate: Number.isInteger },
+      comment: { type: String, maxlength: 1000, default: '' },
+      submittedAt: { type: Date, required: true },
+    }, { _id: false }),
+    default: undefined,
+  },
 }, { timestamps: true });
 
 queueTokenSchema.index({ doctor: 1, queueDate: 1, tokenNumber: 1 }, { unique: true });
