@@ -1,3 +1,4 @@
+
 class DoctorModel {
   final String id;
   final String name;
@@ -6,6 +7,8 @@ class DoctorModel {
   final String? specialization;
   final String? qualification;
   final String? imageUrl;
+  final int? experienceYears;
+  final double? consultationFee;
   final bool isAvailable;
 
   const DoctorModel({
@@ -16,6 +19,8 @@ class DoctorModel {
     this.specialization,
     this.qualification,
     this.imageUrl,
+    this.experienceYears,
+    this.consultationFee,
     this.isAvailable = true,
   });
 
@@ -27,7 +32,9 @@ class DoctorModel {
 
     if (department is Map<String, dynamic>) {
       extractedDepartmentId =
-          (department['_id'] ?? department['id'] ?? department['departmentId'])
+          (department['_id'] ??
+                  department['id'] ??
+                  department['departmentId'])
               ?.toString();
 
       extractedDepartmentName =
@@ -38,25 +45,38 @@ class DoctorModel {
 
     return DoctorModel(
       id: (json['_id'] ?? json['id'] ?? json['doctorId'] ?? '').toString(),
-      name:
-          (json['name'] ??
-                  json['fullName'] ??
-                  json['doctorName'] ??
-                  'Unknown Doctor')
-              .toString(),
-      departmentId: (json['departmentId'] ?? extractedDepartmentId)?.toString(),
-      departmentName: (json['departmentName'] ?? extractedDepartmentName)
-          ?.toString(),
-      specialization: (json['specialization'] ?? json['speciality'])
-          ?.toString(),
+
+      name: (json['name'] ??
+              json['fullName'] ??
+              json['doctorName'] ??
+              'Unknown Doctor')
+          .toString(),
+
+      departmentId:
+          (json['departmentId'] ?? extractedDepartmentId)?.toString(),
+
+      departmentName:
+          (json['departmentName'] ?? extractedDepartmentName)?.toString(),
+
+      specialization:
+          (json['specialization'] ?? json['speciality'])?.toString(),
+
       qualification:
           (json['qualification'] ??
                   json['qualifications'] ??
                   json['degree'] ??
                   json['education'])
               ?.toString(),
-      imageUrl: (json['imageUrl'] ?? json['photoUrl'] ?? json['image'])
-          ?.toString(),
+
+      imageUrl:
+          (json['imageUrl'] ?? json['photoUrl'] ?? json['image'])?.toString(),
+
+      experienceYears:
+          (json['experienceYears'] as num?)?.toInt(),
+
+      consultationFee:
+          (json['consultationFee'] as num?)?.toDouble(),
+
       isAvailable: json['isAvailable'] != false && json['isAvailable'] != 0,
     );
   }
@@ -70,6 +90,8 @@ class DoctorModel {
       'specialization': specialization,
       'qualification': qualification,
       'imageUrl': imageUrl,
+      'experienceYears': experienceYears,
+      'consultationFee': consultationFee,
       'isAvailable': isAvailable,
     };
   }

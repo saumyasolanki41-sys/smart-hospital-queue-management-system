@@ -1,3 +1,4 @@
+
 name: hospital_queue_manament
 description: "A new Flutter project."
 publish_to: 'none'
@@ -31,6 +32,9 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+
+  assets:
+    - lib/assets/
 
 flutter_launcher_icons:
   android: true
