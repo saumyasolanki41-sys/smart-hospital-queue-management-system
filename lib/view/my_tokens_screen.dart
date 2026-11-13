@@ -512,12 +512,12 @@ class _MyTokensScreenState extends State<MyTokensScreen> {
                   },
                 ),
                 const _BottomNavItem(
-                  icon: Icons.history_rounded,
+                   icon: Icons.confirmation_number_outlined,
                   label: 'My Tokens',
                   selected: true,
                 ),
                 _BottomNavItem(
-                  icon: Icons.local_hospital_outlined,
+               icon: Icons.airport_shuttle_rounded,
                   label: 'Ambulance',
                   onTap: () {
                     Navigator.push(
