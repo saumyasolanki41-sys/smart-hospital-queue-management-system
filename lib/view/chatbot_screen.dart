@@ -3,7 +3,6 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-
 import '../services/storage_service.dart';
 
 class ChatbotScreen extends StatefulWidget {
@@ -94,7 +93,6 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
         'mode': 'auto',
       };
 
-      // Reuse the existing session for subsequent messages.
       if (_sessionId != null && _sessionId!.isNotEmpty) {
         requestBody['session_id'] = _sessionId;
       }
@@ -104,7 +102,6 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
         'Accept': 'application/json',
       };
 
-      // Include the logged-in patient's access token.
       if (accessToken != null && accessToken.trim().isNotEmpty) {
         headers['Authorization'] =
             'Bearer ${accessToken.trim()}';
@@ -263,7 +260,6 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
             ],
           ),
 
-          // Display suggestions returned by the chatbot API.
           if (!message.isUser &&
               message.suggestions.isNotEmpty)
             Padding(
@@ -396,7 +392,6 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
             ),
           ),
 
-          // Message input section.
           SafeArea(
             top: false,
             child: Container(
