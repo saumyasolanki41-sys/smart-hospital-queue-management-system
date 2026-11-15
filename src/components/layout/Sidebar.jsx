@@ -11,6 +11,7 @@ import {
   Menu,
   X,
   User,
+  History,
 } from "lucide-react";
 import { useAuth, ROLE_HOME } from "../context/AuthContext";
 import { useOwnDoctorId } from "../../hooks/useOwnDoctorId";
@@ -26,6 +27,7 @@ const NAV_BY_ROLE = {
     { label: "Home", to: "/home", icon: LayoutDashboard },
     { label: "Departments", to: "/departments", icon: Stethoscope },
     { label: "My Queue", to: "/queue", icon: Ticket },
+    { label: "Visit History", to: "/history", icon: History },
     { label: "Ambulance", to: "/request-ambulance", icon: Ambulance },
     { label: "About", to: "/about", icon: Info },
   ],
@@ -148,12 +150,12 @@ export default function Sidebar() {
         </button>
       </div>
 
-      {/* Desktop sidebar */}
+      {/* Desktop sidebar — FIXED so it never scrolls away */}
       <aside className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-30 lg:block w-72 p-4">
         <Panel ownDoctorId={ownDoctorId} />
       </aside>
 
-      
+      {/* Invisible spacer that reserves the 18rem (w-72) for the fixed sidebar */}
       <div className="hidden lg:block w-72 shrink-0" aria-hidden="true" />
 
       {/* Mobile drawer */}

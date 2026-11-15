@@ -12,6 +12,7 @@ import Departments from "./pages/Departments";
 import DoctorProfile from "./pages/DoctorProfile";
 import Home from "./pages/Home";
 import MyQueue from "./pages/MyQueue";
+import VisitHistory from "./pages/VisitHistory";
 import QueueStatus from "./pages/QueueStatus";
 import QueueDashboard from "./pages/QueueDashboard";
 import AmbulanceDashboard from "./pages/AmbulanceDashboard";
@@ -42,6 +43,7 @@ export default function App() {
             <Route element={<ProtectedRoute roles={["patient"]} />}>
               <Route path="/home" element={<Home />} />
               <Route path="/queue" element={<MyQueue />} />
+              <Route path="/history" element={<VisitHistory />} />
               <Route path="/queue/:tokenId" element={<QueueStatus />} />
               <Route path="/request-ambulance" element={<RequestAmbulance />} />
             </Route>

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { Briefcase, Clock, Wallet, Info } from "lucide-react";
+import { Briefcase, Clock, Wallet, Info, PauseCircle } from "lucide-react";
 import Navbar from "../components/layout/Navbar";
 import DoctorCard from "../components/hospital/DoctorCard";
 import { useAuth } from "../components/context/AuthContext";
@@ -195,13 +195,21 @@ function Profile({ doctorId }) {
                 </Link>
               )}
             </div>
-            <span
-              className={`shrink-0 rounded-full px-3 py-1 text-sm font-medium ${
-                doctor.isAvailable ? "bg-green-100 text-green-800" : "bg-slate-100 text-slate-600"
-              }`}
-            >
-              {doctor.isAvailable ? "Accepting patients" : "Not accepting patients"}
-            </span>
+            <div className="flex flex-col items-end gap-1.5 shrink-0">
+              <span
+                className={`rounded-full px-3 py-1 text-sm font-medium ${
+                  doctor.isAvailable ? "bg-green-100 text-green-800" : "bg-slate-100 text-slate-600"
+                }`}
+              >
+                {doctor.isAvailable ? "Accepting patients" : "Not accepting patients"}
+              </span>
+              {doctor.queuePaused && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-semibold text-amber-800 border border-amber-200">
+                  <PauseCircle className="h-3.5 w-3.5 text-amber-600" />
+                  Queue paused
+                </span>
+              )}
+            </div>
           </div>
         </section>
 
@@ -231,6 +239,20 @@ function Profile({ doctorId }) {
             Join today's queue to get a token number. You'll then see how many patients are ahead of you and an
             estimated wait. Queues are for the same day, so there are no appointment slots to book.
           </p>
+
+          {doctor.queuePaused && (
+            <div className="mt-4 flex items-start gap-3 rounded-2xl bg-amber-500/10 border border-amber-500/25 p-4 text-sm text-amber-950">
+              <PauseCircle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
+              <div>
+                <p className="font-bold">
+                  Doctor's queue is temporarily paused ({doctor.queuePauseReason === "temporary_delay" ? "temporary delay" : "on break"})
+                </p>
+                <p className="mt-0.5 text-xs text-amber-800">
+                  You can still join the queue now to secure your token number. Consultations will resume as soon as the doctor returns.
+                </p>
+              </div>
+            </div>
+          )}
 
           {notice && (
             <div

@@ -1,19 +1,42 @@
 // src/pages/QueueDashboard.jsx
 import { useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { PhoneCall, Check, SkipForward, RefreshCw } from "lucide-react";
+import {
+  PhoneCall,
+  Check,
+  SkipForward,
+  RefreshCw,
+  Pause,
+  Play,
+  PauseCircle,
+  X,
+  AlertCircle,
+  Clock,
+} from "lucide-react";
 import Navbar from "../components/layout/Navbar";
 import AllDoctorsOverview from "../components/staff/AllDoctorsOverview";
 import { useAuth } from "../components/context/AuthContext";
 import { getDoctors } from "../api/hospital";
-import { getDoctorQueue, callNext, completeToken, skipToken, getDashboardSummary } from "../api/staff";
+import {
+  getDoctorQueue,
+  callNext,
+  completeToken,
+  skipToken,
+  pauseDoctorQueue,
+  resumeDoctorQueue,
+  getDashboardSummary,
+} from "../api/staff";
 import { getDoctorDashboard } from "../api/doctor";
+import { timeAgo } from "../utils/time";
 
 const REFRESH_MS = 10000;
-const LIST_LIMIT = 50; 
+const LIST_LIMIT = 50;
 
 const ACTION_MESSAGES = {
-  QUEUE_BUSY: "Another patient is already being served. The queue has been refreshed.",
+  QUEUE_BUSY:
+    "An active consultation is in progress. Please complete or skip the current consultation before pausing the queue or calling another patient.",
+  QUEUE_PAUSED:
+    "The queue is currently paused. Please resume the queue before calling the next patient.",
   QUEUE_EMPTY: "No patients are waiting right now.",
   TOKEN_NOT_CALLED: "That patient is no longer in the called state. The queue has been refreshed.",
   RATE_LIMITED: "Too many actions in a short time. Please wait a few minutes.",
@@ -44,7 +67,10 @@ const TOKEN_TILES = [
 function SummaryStrip({ summary }) {
   const { tokens, doctors, departments } = summary;
   return (
-    <section aria-label="Today's summary" className="mb-6 rounded-3xl bg-white/90 backdrop-blur-md p-5 shadow-xl shadow-cyan-950/5 border border-white/70">
+    <section
+      aria-label="Today's summary"
+      className="mb-6 rounded-3xl bg-white/90 backdrop-blur-md p-5 shadow-xl shadow-cyan-950/5 border border-white/70"
+    >
       <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">Hospital-wide today</h2>
         <p className="text-sm text-slate-600">
@@ -100,6 +126,112 @@ function DoctorSummaryStrip({ summary }) {
   );
 }
 
+function PauseQueueModal({ isOpen, onClose, onConfirm, busy }) {
+  const [reason, setReason] = useState("break");
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="relative w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl border border-slate-100 sm:p-7">
+        <button
+          type="button"
+          onClick={onClose}
+          className="absolute right-5 top-5 rounded-full p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
+          aria-label="Close modal"
+        >
+          <X className="h-5 w-5" />
+        </button>
+
+        <div className="mb-5">
+          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-100 text-amber-700 mb-3">
+            <Pause className="h-6 w-6" />
+          </div>
+          <h2 className="text-xl font-bold text-slate-900">Pause Queue</h2>
+          <p className="mt-1 text-sm text-slate-600">
+            Temporarily halt calling next patients. Existing tokens and waiting order will be preserved.
+          </p>
+        </div>
+
+        <div className="space-y-3 mb-6">
+          <label className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+            Select Pause Reason
+          </label>
+
+          <label
+            className={`flex items-start gap-3 rounded-2xl border p-4 cursor-pointer transition-all ${
+              reason === "break"
+                ? "border-amber-400 bg-amber-50/60 ring-2 ring-amber-400/20"
+                : "border-slate-200 bg-white hover:bg-slate-50"
+            }`}
+          >
+            <input
+              type="radio"
+              name="pause-reason"
+              value="break"
+              checked={reason === "break"}
+              onChange={() => setReason("break")}
+              className="mt-0.5 h-4 w-4 accent-amber-600"
+            />
+            <div>
+              <p className="text-sm font-bold text-slate-900">Doctor's Break</p>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Tea, lunch, or short rest break.
+              </p>
+            </div>
+          </label>
+
+          <label
+            className={`flex items-start gap-3 rounded-2xl border p-4 cursor-pointer transition-all ${
+              reason === "temporary_delay"
+                ? "border-amber-400 bg-amber-50/60 ring-2 ring-amber-400/20"
+                : "border-slate-200 bg-white hover:bg-slate-50"
+            }`}
+          >
+            <input
+              type="radio"
+              name="pause-reason"
+              value="temporary_delay"
+              checked={reason === "temporary_delay"}
+              onChange={() => setReason("temporary_delay")}
+              className="mt-0.5 h-4 w-4 accent-amber-600"
+            />
+            <div>
+              <p className="text-sm font-bold text-slate-900">Temporary Delay</p>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Ward rounds, emergency case, or clinical meeting.
+              </p>
+            </div>
+          </label>
+        </div>
+
+        <div className="rounded-xl bg-slate-50 p-3 text-xs text-slate-600 mb-6 border border-slate-200/60">
+          <span className="font-semibold text-slate-700">Note:</span> If a patient is currently being consulted, complete or skip their visit first.
+        </div>
+
+        <div className="flex gap-3">
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={busy}
+            className="flex-1 rounded-xl border border-slate-200 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => onConfirm(reason)}
+            className="flex-1 rounded-xl bg-amber-600 hover:bg-amber-700 py-2.5 text-sm font-semibold text-white shadow-md shadow-amber-600/20 transition-colors disabled:opacity-60"
+          >
+            {busy ? "Pausing…" : "Confirm Pause"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function QueueDashboard({ mode }) {
   const { token: accessToken, signOut } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -110,7 +242,8 @@ export default function QueueDashboard({ mode }) {
   const [setupError, setSetupError] = useState("");
 
   // Queue
-  const [queue, setQueue] = useState(null); // { tokens, currentToken, date }
+  const [queue, setQueue] = useState(null); // { tokens, currentToken, date, queueState }
+  const [queueState, setQueueState] = useState(null); // { paused, reason, pausedAt }
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [updatedAt, setUpdatedAt] = useState(null);
@@ -118,6 +251,9 @@ export default function QueueDashboard({ mode }) {
   const [confirmSkip, setConfirmSkip] = useState(false);
   const [summary, setSummary] = useState(null); // hospital-wide counts (staff mode only)
   const [doctorSummary, setDoctorSummary] = useState(null);
+
+  // Pause Modal
+  const [showPauseModal, setShowPauseModal] = useState(false);
 
   const selection = searchParams.get("doctor") || "all";
   const isAll = mode === "staff" && selection === "all";
@@ -135,6 +271,7 @@ export default function QueueDashboard({ mode }) {
           setDoctorSummary(dashboard);
           setDoctors([dashboard.doctor]);
           setOwnDoctorId(dashboard.doctor._id);
+          if (dashboard.queueState) setQueueState(dashboard.queueState);
           return;
         }
 
@@ -174,8 +311,11 @@ export default function QueueDashboard({ mode }) {
         ]);
         setDoctorSummary(dashboard);
         setQueue({ ...result, currentToken: dashboard.currentToken, date: dashboard.date });
+        setQueueState(result?.queueState ?? dashboard?.queueState ?? null);
       } else {
-        setQueue(await getDoctorQueue(accessToken, doctorId, { limit: LIST_LIMIT }));
+        const result = await getDoctorQueue(accessToken, doctorId, { limit: LIST_LIMIT });
+        setQueue(result);
+        setQueueState(result?.queueState ?? null);
       }
       setUpdatedAt(new Date());
       setError("");
@@ -196,7 +336,6 @@ export default function QueueDashboard({ mode }) {
       setSummary(await getDashboardSummary(accessToken));
     } catch (err) {
       if (err.code === "UNAUTHORIZED") signOut();
-      
     }
   }, [mode, accessToken, signOut]);
 
@@ -216,13 +355,13 @@ export default function QueueDashboard({ mode }) {
 
   function changeDoctor(id) {
     setQueue(null);
+    setQueueState(null);
     setLoading(true);
     setError("");
     setConfirmSkip(false);
     setSearchParams({ doctor: id }, { replace: true });
   }
 
-  
   async function run(action) {
     setActing(true);
     setError("");
@@ -240,6 +379,27 @@ export default function QueueDashboard({ mode }) {
     loadSummary();
     setActing(false);
   }
+
+  async function handlePauseConfirm(reason) {
+    setShowPauseModal(false);
+    await run(async () => {
+      const res = await pauseDoctorQueue(accessToken, doctorId, reason);
+      if (res?.queueState) setQueueState(res.queueState);
+    });
+  }
+
+  async function handleResumeClick() {
+    await run(async () => {
+      const res = await resumeDoctorQueue(accessToken, doctorId);
+      if (res?.queueState) setQueueState(res.queueState);
+    });
+  }
+
+  const isPaused = queueState?.paused === true || (!queueState && doctor?.queuePaused === true);
+  const pauseReason = queueState?.reason || doctor?.queuePauseReason;
+  const pauseReasonText =
+    pauseReason === "temporary_delay" ? "Temporary Delay" : "Doctor on Break";
+  const pausedTime = queueState?.pausedAt || doctor?.queuePausedAt;
 
   const current = queue?.currentToken ?? null;
   const waiting = queue?.tokens ?? [];
@@ -279,6 +439,39 @@ export default function QueueDashboard({ mode }) {
           <p role="alert" className="mb-5 rounded-xl bg-red-50 p-3 text-sm text-red-700">
             {error}
           </p>
+        )}
+
+        {/* Prominent Paused Banner */}
+        {isPaused && (
+          <div className="mb-6 flex flex-wrap items-center justify-between gap-4 rounded-3xl bg-amber-500/10 border-2 border-amber-500/30 p-5 backdrop-blur-md shadow-lg shadow-amber-950/5">
+            <div className="flex items-start gap-3.5">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-amber-500 text-white shadow-md shadow-amber-500/30">
+                <PauseCircle className="h-6 w-6" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-base font-bold text-amber-950">Queue Paused</h3>
+                  <span className="rounded-full bg-amber-200/80 px-2.5 py-0.5 text-xs font-bold text-amber-900 uppercase tracking-wide">
+                    {pauseReasonText}
+                  </span>
+                </div>
+                <p className="mt-1 text-xs text-amber-800">
+                  {pausedTime
+                    ? `Paused since ${fmtTime(pausedTime)} (${timeAgo(pausedTime)})`
+                    : "Consultations temporarily suspended"} · Calling next patients is disabled until resumed.
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              disabled={acting}
+              onClick={handleResumeClick}
+              className="inline-flex items-center gap-2 rounded-2xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-emerald-700/20 hover:bg-emerald-700 transition-all disabled:opacity-60"
+            >
+              <Play className="h-4 w-4" />
+              Resume Queue
+            </button>
+          </div>
         )}
 
         <div className="grid gap-6 lg:grid-cols-5">
@@ -352,13 +545,22 @@ export default function QueueDashboard({ mode }) {
                 <p className="mt-3 text-slate-600">No patient is being served right now.</p>
                 <button
                   type="button"
-                  disabled={acting || waiting.length === 0}
+                  disabled={acting || waiting.length === 0 || isPaused}
                   onClick={() => run(() => callNext(accessToken, doctorId))}
                   className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-primary/70 px-5 py-3 font-medium text-white shadow-md transition-colors hover:bg-primary/80 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <PhoneCall className="h-5 w-5" />
-                  {waiting.length === 0 ? "No patients waiting" : "Call next patient"}
+                  {isPaused
+                    ? "Queue is paused"
+                    : waiting.length === 0
+                    ? "No patients waiting"
+                    : "Call next patient"}
                 </button>
+                {isPaused && (
+                  <p className="mt-2 text-center text-xs text-amber-700 font-medium">
+                    Resume queue above to call the next patient.
+                  </p>
+                )}
               </>
             )}
           </section>
@@ -461,15 +663,41 @@ export default function QueueDashboard({ mode }) {
                 </select>
               </div>
             )}
+
+            {/* Pause / Resume Controls in Header */}
             {doctorId && queue && (
-              <button
-                type="button"
-                onClick={load}
-                className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-primary/70"
-              >
-                <RefreshCw className="h-4 w-4" />
-                {updatedAt ? `Updated ${updatedAt.toLocaleTimeString()}` : "Refresh"}
-              </button>
+              <div className="flex items-center gap-2">
+                {isPaused ? (
+                  <button
+                    type="button"
+                    disabled={acting}
+                    onClick={handleResumeClick}
+                    className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 transition-colors disabled:opacity-60"
+                  >
+                    <Play className="h-4 w-4" />
+                    Resume Queue
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    disabled={acting}
+                    onClick={() => setShowPauseModal(true)}
+                    className="inline-flex items-center gap-1.5 rounded-xl border border-amber-300 bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-800 shadow-sm hover:bg-amber-100 transition-colors disabled:opacity-60"
+                  >
+                    <Pause className="h-4 w-4" />
+                    Pause Queue
+                  </button>
+                )}
+
+                <button
+                  type="button"
+                  onClick={load}
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600 shadow-sm hover:text-primary/70"
+                >
+                  <RefreshCw className={`h-4 w-4 ${acting ? "animate-spin" : ""}`} />
+                  {updatedAt ? `Updated ${updatedAt.toLocaleTimeString()}` : "Refresh"}
+                </button>
+              </div>
             )}
           </div>
         </header>
@@ -478,6 +706,14 @@ export default function QueueDashboard({ mode }) {
         {mode === "doctor" && doctorSummary && <DoctorSummaryStrip summary={doctorSummary} />}
 
         {body}
+
+        {/* Reason selector modal */}
+        <PauseQueueModal
+          isOpen={showPauseModal}
+          onClose={() => setShowPauseModal(false)}
+          onConfirm={handlePauseConfirm}
+          busy={acting}
+        />
       </main>
     </div>
   );

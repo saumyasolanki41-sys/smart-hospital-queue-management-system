@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { Users, Hourglass, RefreshCw, Info } from "lucide-react";
+import { Users, Hourglass, RefreshCw, Info, PauseCircle, Star } from "lucide-react";
 import Navbar from "../components/layout/Navbar";
 import StatusBadge from "../components/queue/StatusBadge";
+import FeedbackModal from "../components/queue/FeedbackModal";
 import { useAuth } from "../components/context/AuthContext";
 import { getTokenStatus, cancelToken } from "../api/queue";
 import { getDoctor } from "../api/hospital";
@@ -37,13 +38,16 @@ export default function QueueStatus() {
   const { tokenId } = useParams();
   const { token: accessToken, signOut } = useAuth();
 
-  const [data, setData] = useState(null); 
+  const [data, setData] = useState(null);
   const [doctor, setDoctor] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [updatedAt, setUpdatedAt] = useState(null);
   const [confirming, setConfirming] = useState(false);
   const [cancelling, setCancelling] = useState(false);
+
+  // Feedback modal state
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -53,7 +57,7 @@ export default function QueueStatus() {
       setError("");
     } catch (err) {
       if (err.code === "UNAUTHORIZED") {
-        signOut(); 
+        signOut();
         return;
       }
       setError(err.status === 404 ? "We couldn't find that token." : err.message);
@@ -79,7 +83,7 @@ export default function QueueStatus() {
     let ignore = false;
     getDoctor(doctorId)
       .then((d) => !ignore && setDoctor(d))
-      .catch(() => {}); // the name is optional
+      .catch(() => {});
     return () => {
       ignore = true;
     };
@@ -104,11 +108,26 @@ export default function QueueStatus() {
     }
   }
 
+  function handleFeedbackSaved(id, feedback) {
+    setData((prev) =>
+      prev ? { ...prev, token: { ...prev.token, feedback } } : prev
+    );
+  }
+
   const t = data?.token;
   const end = t ? END_MESSAGES[t.status] : null;
+
+  // Pause state from queueState (or doctor record fallback)
+  const isPaused = data?.queueState?.paused === true || (!data?.queueState && doctor?.queuePaused === true);
+  const pauseReason = data?.queueState?.reason || doctor?.queuePauseReason;
+  const pauseReasonLabel =
+    pauseReason === "temporary_delay" ? "temporary delay" : "doctor break";
+
+  // Estimated wait formatting
   const est = data?.estimatedWaitMinutes;
-  const waitText = formatWait(est);
-  const mlEstimate = data?.prediction?.source === "ml"; 
+  const waitText = isPaused ? "Queue paused" : formatWait(est);
+  const mlEstimate = data?.prediction?.source === "ml";
+
   const date = t
     ? new Date(`${t.queueDate}T00:00:00`).toLocaleDateString("en-IN", {
         day: "numeric",
@@ -168,7 +187,64 @@ export default function QueueStatus() {
               </p>
             )}
 
+            {/* Paused Alert for Patients */}
+            {t.status === "waiting" && isPaused && (
+              <div className="mt-5 flex items-start gap-3 rounded-2xl bg-amber-500/10 border border-amber-500/25 p-4 text-sm text-amber-950">
+                <PauseCircle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
+                <div>
+                  <p className="font-bold">Queue is temporarily paused ({pauseReasonLabel})</p>
+                  <p className="mt-0.5 text-xs text-amber-800">
+                    The doctor has paused calling next patients. Your position (#{t.tokenNumber}) is safely reserved. Estimated wait will resume as soon as consultations restart.
+                  </p>
+                </div>
+              </div>
+            )}
+
             {end && <p className={`mt-6 rounded-2xl p-4 ${end.style}`}>{end.text}</p>}
+
+            {/* Completed Feedback Banner */}
+            {t.status === "completed" && (
+              <div className="mt-6 rounded-2xl bg-cyan-50/70 border border-cyan-100 p-4">
+                {t.feedback ? (
+                  <div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-semibold text-slate-700">Your Feedback</span>
+                      <div className="flex gap-0.5">
+                        {[1, 2, 3, 4, 5].map((s) => (
+                          <Star
+                            key={s}
+                            className={`h-4 w-4 ${
+                              s <= t.feedback.rating
+                                ? "fill-amber-400 text-amber-400"
+                                : "text-slate-200"
+                            }`}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                    {t.feedback.comment && (
+                      <p className="mt-2 text-xs italic text-slate-600 bg-white/80 p-2.5 rounded-xl border border-cyan-100">
+                        "{t.feedback.comment}"
+                      </p>
+                    )}
+                  </div>
+                ) : (
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-bold text-slate-800">How was your consultation?</p>
+                      <p className="text-xs text-slate-500">Your feedback helps improve hospital care.</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setShowFeedbackModal(true)}
+                      className="rounded-xl bg-[#197092] hover:bg-[#145d7a] px-4 py-2 text-xs font-semibold text-white shadow-sm transition-colors"
+                    >
+                      Leave Feedback
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
 
             {t.status === "waiting" && (
               <>
@@ -183,7 +259,9 @@ export default function QueueStatus() {
                     label="Estimated wait"
                     value={waitText}
                     hint={
-                      mlEstimate
+                      isPaused
+                        ? "Doctor is currently on a pause"
+                        : mlEstimate
                         ? "Predicted from today's queue"
                         : data.averageConsultationMinutes
                         ? `Based on about ${data.averageConsultationMinutes} min per patient`
@@ -192,7 +270,7 @@ export default function QueueStatus() {
                   />
                 </div>
 
-                {data.consultationOverdue && (
+                {!isPaused && data.consultationOverdue && (
                   <p className="mt-4 rounded-xl bg-yellow-50 p-3 text-sm text-yellow-900">
                     The current consultation is taking longer than usual, so your wait may be longer.
                   </p>
@@ -200,10 +278,12 @@ export default function QueueStatus() {
 
                 <p className="mt-4 flex items-start gap-2 text-xs text-slate-500">
                   <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-                  {mlEstimate
+                  {isPaused
+                    ? "Consultations will resume shortly. It refreshes automatically every 15 seconds."
+                    : mlEstimate
                     ? "This is an estimate from our prediction model, based on today's queue, not an exact appointment time."
                     : "This is an estimate based on the doctor's average consultation time, not an exact appointment time."}{" "}
-                  It refreshes automatically every 15 seconds.
+                  {!isPaused && "It refreshes automatically every 15 seconds."}
                 </p>
               </>
             )}
@@ -259,6 +339,17 @@ export default function QueueStatus() {
               </button>
             </div>
           </div>
+        )}
+
+        {/* Feedback Modal */}
+        {showFeedbackModal && t && (
+          <FeedbackModal
+            token={{ ...t, doctor }}
+            isOpen={showFeedbackModal}
+            onClose={() => setShowFeedbackModal(false)}
+            onFeedbackSaved={handleFeedbackSaved}
+            accessToken={accessToken}
+          />
         )}
       </main>
     </div>

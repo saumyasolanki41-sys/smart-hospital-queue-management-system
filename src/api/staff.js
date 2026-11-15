@@ -21,5 +21,18 @@ export const skipToken = (accessToken, doctorId, tokenId) =>
     (d) => d.token
   );
 
+export const pauseDoctorQueue = (accessToken, doctorId, reason = "break") =>
+  request(`${base(doctorId)}/pause`, {
+    method: "PATCH",
+    body: { reason },
+    token: accessToken,
+  });
+
+export const resumeDoctorQueue = (accessToken, doctorId) =>
+  request(`${base(doctorId)}/resume`, {
+    method: "PATCH",
+    token: accessToken,
+  });
+
 export const getDashboardSummary = (accessToken) =>
   request("/api/staff/dashboard", { token: accessToken });

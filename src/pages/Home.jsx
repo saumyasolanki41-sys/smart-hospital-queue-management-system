@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Ticket, Stethoscope, Info, Users, Hourglass, ArrowRight } from "lucide-react";
+import { Ticket, Stethoscope, Info, Users, Hourglass, ArrowRight, PauseCircle } from "lucide-react";
 import Navbar from "../components/layout/Navbar";
 import StatusBadge from "../components/queue/StatusBadge";
 import DepartmentCard from "../components/hospital/DepartmentCard";
@@ -33,8 +33,10 @@ function MiniStat({ icon: Icon, label, value }) {
 }
 
 function ActiveTokenCard({ token, detail }) {
+  const isPaused = detail?.queueState?.paused === true || token?.doctor?.queuePaused === true;
+  const pauseReason = detail?.queueState?.reason || token?.doctor?.queuePauseReason;
   const est = detail?.estimatedWaitMinutes;
-  const waitText = formatWait(est);
+  const waitText = isPaused ? "Queue paused" : formatWait(est);
 
   return (
     <article className="rounded-3xl bg-white/90 backdrop-blur-md p-6 shadow-xl shadow-cyan-950/5 border border-white/70">
@@ -53,6 +55,15 @@ function ActiveTokenCard({ token, detail }) {
         <StatusBadge status={token.status} />
       </div>
 
+      {isPaused && token.status === "waiting" && (
+        <div className="mt-4 flex items-center gap-2 rounded-2xl bg-amber-500/10 border border-amber-500/25 px-3.5 py-2 text-xs font-semibold text-amber-900">
+          <PauseCircle className="h-4 w-4 shrink-0 text-amber-600" />
+          <span>
+            Queue paused ({pauseReason === "temporary_delay" ? "Temporary delay" : "Doctor on break"}) · Your place is reserved
+          </span>
+        </div>
+      )}
+
       {token.status === "called" ? (
         <p className="mt-5 rounded-2xl bg-primary/5 p-4 text-primary/90">
           You've been called. Please go to the doctor now.
@@ -65,7 +76,9 @@ function ActiveTokenCard({ token, detail }) {
               <MiniStat icon={Hourglass} label="Estimated wait" value={waitText} />
             </div>
             <p className="mt-3 text-xs text-slate-500">
-              An estimate, not an exact appointment time.
+              {isPaused
+                ? "Estimates will resume when the doctor resumes the queue."
+                : "An estimate, not an exact appointment time."}
             </p>
           </>
         )
