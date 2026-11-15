@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/token_model.dart';
@@ -22,7 +23,6 @@ class _MyTokensScreenState extends State<MyTokensScreen> {
   static const Color _accent = Color(0xFF7ED3E8);
   static const Color _muted = Color(0xFF648994);
   static const Color _lightBlue = Color(0xFFDDF4F8);
-  // static const Color _border = Color(0xFFD2EAF0);
 
   int _selectedTab = 0;
   bool _isRefreshing = false;
@@ -484,25 +484,33 @@ class _MyTokensScreenState extends State<MyTokensScreen> {
       ),
 
       bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
-          color: Color(0xFF174A5B),
-          borderRadius: BorderRadius.vertical(
-            top: Radius.circular(23),
+        decoration: BoxDecoration(
+          color: isDark ? colors.surfaceContainer : Colors.white,
+          borderRadius: const BorderRadius.vertical(
+            top: Radius.circular(24),
           ),
+          boxShadow: [
+            BoxShadow(
+              color: _primary.withValues(alpha: 0.12),
+              blurRadius: 18,
+              offset: const Offset(0, -4),
+            ),
+          ],
         ),
         child: SafeArea(
           top: false,
           child: Padding(
             padding: const EdgeInsets.symmetric(
-              horizontal: 12,
-              vertical: 10,
+              horizontal: 5,
+              vertical: 8,
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
                 _BottomNavItem(
-                  icon: Icons.home_outlined,
+                  icon: Icons.home_rounded,
                   label: 'Home',
+                  isDark: isDark,
                   onTap: () {
                     if (Navigator.canPop(context)) {
                       Navigator.pop(context);
@@ -511,14 +519,16 @@ class _MyTokensScreenState extends State<MyTokensScreen> {
                     }
                   },
                 ),
-                const _BottomNavItem(
+                _BottomNavItem(
                   icon: Icons.confirmation_number_outlined,
                   label: 'My Tokens',
                   selected: true,
+                  isDark: isDark,
                 ),
                 _BottomNavItem(
-                icon: Icons.airport_shuttle_rounded,
+                  icon: Icons.airport_shuttle_rounded,
                   label: 'Ambulance',
+                  isDark: isDark,
                   onTap: () {
                     Navigator.push(
                       context,
@@ -529,8 +539,9 @@ class _MyTokensScreenState extends State<MyTokensScreen> {
                   },
                 ),
                 _BottomNavItem(
-                  icon: Icons.person_outline_rounded,
+                  icon: Icons.person_rounded,
                   label: 'Profile',
+                  isDark: isDark,
                   onTap: () {
                     Navigator.push(
                       context,
@@ -643,7 +654,9 @@ class _AppointmentCard extends StatelessWidget {
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
-                              color: isDark ? colors.onSurface : const Color(0xFF174A5B),
+                              color: isDark
+                                  ? colors.onSurface
+                                  : const Color(0xFF174A5B),
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
                             ),
@@ -695,7 +708,9 @@ class _AppointmentCard extends StatelessWidget {
                         textAlign: TextAlign.end,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          color: isDark ? colors.onSurface : const Color(0xFF174A5B),
+                          color: isDark
+                              ? colors.onSurface
+                              : const Color(0xFF174A5B),
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
                         ),
@@ -895,7 +910,9 @@ class _HistoryMessage extends StatelessWidget {
             message,
             textAlign: TextAlign.center,
             style: TextStyle(
-              color: isDark ? colors.onSurface : const Color(0xFF174A5B),
+              color: isDark
+                  ? colors.onSurface
+                  : const Color(0xFF174A5B),
               fontSize: 17,
               fontWeight: FontWeight.bold,
             ),
@@ -940,46 +957,64 @@ class _BottomNavItem extends StatelessWidget {
   final String label;
   final VoidCallback? onTap;
   final bool selected;
+  final bool isDark;
 
   const _BottomNavItem({
     required this.icon,
     required this.label,
+    required this.isDark,
     this.onTap,
     this.selected = false,
   });
 
+  static const Color primaryBlue = Color(0xFF174A5B);
+  static const Color darkText = Color(0xFF174A5B);
+
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+
+    final itemColor = selected
+        ? primaryBlue
+        : isDark
+            ? colors.onSurfaceVariant
+            : const Color(0xFF648994);
+
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(14),
-      child: Container(
+      borderRadius: BorderRadius.circular(15),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
         padding: const EdgeInsets.symmetric(
-          horizontal: 10,
-          vertical: 6,
+          horizontal: 9,
+          vertical: 7,
         ),
         decoration: BoxDecoration(
           color: selected
-              ? Colors.white.withValues(alpha: 0.18)
+              ? const Color(0xFFDDF4F8)
               : Colors.transparent,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(15),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
               icon,
-              color: Colors.white,
-              size: 24,
+              size: 23,
+              color: itemColor,
             ),
             const SizedBox(height: 4),
             Text(
               label,
               style: TextStyle(
-                color: Colors.white,
-                fontSize: 10,
+                color: selected
+                    ? darkText
+                    : isDark
+                        ? colors.onSurface
+                        : itemColor,
+                fontSize: 9,
                 fontWeight:
-                    selected ? FontWeight.w600 : FontWeight.normal,
+                    selected ? FontWeight.bold : FontWeight.w500,
               ),
             ),
           ],
