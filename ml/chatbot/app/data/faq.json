@@ -1,0 +1,133 @@
+[
+  {
+    "id": "how_tokens_work",
+    "patterns": [
+      "\\bhow (does|do|is) (the )?(token|queue)( system)? work",
+      "\\bwhat is (a|the) (queue )?token\\b",
+      "\\bhow (to|do i|can i) (join|get in) (the )?(queue|line)\\b",
+      "\\bexplain (the )?(token|queue)"
+    ],
+    "answer": "Pick a doctor who is accepting patients to get a token number for today. Your token moves from waiting to called when it's your turn. You can see people ahead of you and the estimated wait any time by asking 'my token status'.",
+    "suggestions": [
+      "Available doctors",
+      "Book a token",
+      "My token status"
+    ]
+  },
+  {
+    "id": "no_time_slots",
+    "patterns": [
+      "\\b(time slot|time slots|appointment time|specific time|book (for )?(tomorrow|next week|another day|later date)|advance booking|future (date|booking|appointment))\\b"
+    ],
+    "answer": "This system uses same-day queue tokens, not time-slot appointments, and tokens can't be booked for another day. You join the queue for a doctor on the day you visit.",
+    "suggestions": [
+      "Available doctors",
+      "Book a token"
+    ]
+  },
+  {
+    "id": "token_states",
+    "patterns": [
+      "\\bwhat (does|do) (waiting|called|skipped|completed|cancelled) mean\\b",
+      "\\b(token )?status (meaning|means|explained)\\b",
+      "\\bmeaning of (called|skipped|waiting)\\b"
+    ],
+    "answer": "Token states: waiting = you're in line; called = it's your turn, please go to the consultation room; completed = your consultation is done; skipped = you weren't present when called, so you'll need a new token; cancelled = you left the queue.",
+    "suggestions": [
+      "My token status"
+    ]
+  },
+  {
+    "id": "why_skipped",
+    "patterns": [
+      "\\bwhy (was |is |did )?(my )?(token )?(get )?skipped\\b",
+      "\\bmy token (got |was |is )skipped\\b"
+    ],
+    "answer": "A token is skipped by hospital staff when the patient isn't present after being called. A skipped token can't be revived here, so join the queue again and tell the reception if you think it was a mistake.",
+    "suggestions": [
+      "Book a token"
+    ]
+  },
+  {
+    "id": "wait_accuracy",
+    "patterns": [
+      "\\b(how accurate|is the wait (time )?(accurate|correct|exact)|why (did|has|is) the (wait|estimate)|wait time (changed|is wrong|wrong)|estimate (is )?(wrong|accurate))\\b"
+    ],
+    "answer": "The waiting time is an estimate based on how many people are ahead of you and how long consultations usually take. It changes as the queue moves, for example when a consultation runs long or someone is skipped, so treat it as a guide, not a promise.",
+    "suggestions": [
+      "My token status"
+    ]
+  },
+  {
+    "id": "how_to_login",
+    "patterns": [
+      "\\bhow (to|do i|can i) (log ?in|sign ?in|register|sign ?up|create (an )?account)\\b",
+      "\\b(register|sign up|create account) (as|for) (a )?patient\\b"
+    ],
+    "answer": "Patients can register with an email and password and verify with the OTP sent to that email, or sign in with Google. After logging in you can join queues, check or cancel your token and request an ambulance. Browsing doctors and departments needs no login."
+  },
+  {
+    "id": "password_reset",
+    "patterns": [
+      "\\b(forgot|forget|reset|change|lost) (my |the )?password\\b"
+    ],
+    "answer": "Use 'Forgot password' on the login screen: enter your email, then the code you receive, then choose a new password. For your safety I can't see or reset passwords myself, and I'll never ask for your password or OTP."
+  },
+  {
+    "id": "otp_problem",
+    "patterns": [
+      "\\botp\\b.{0,20}\\b(not|didnt|did not|never|expired|invalid|wrong|late)\\b",
+      "\\b(not|didnt|never) (received|get|got).{0,12}\\botp\\b",
+      "\\bresend otp\\b"
+    ],
+    "answer": "OTP codes expire after a few minutes. Check your spam folder, make sure the email address is spelled correctly, and request a new code from the screen where you entered it. Don't share the code with anyone, including me."
+  },
+  {
+    "id": "session_expired",
+    "patterns": [
+      "\\b(logged out|session (expired|ended)|keeps? logging out|login (expires|expired)|why am i logged out)\\b"
+    ],
+    "answer": "For your security, a patient session lasts about 15 minutes. If it expires, your queue token isn't lost, but personal actions are unavailable until an active patient session is provided."
+  },
+  {
+    "id": "payments",
+    "patterns": [
+      "\\b(pay|payment|payments|upi|credit card|debit card|refund|invoice|bill)\\b"
+    ],
+    "answer": "This system doesn't take payments or issue bills. The consultation fee shown with each doctor is for information only; the hospital will tell you how and where to pay.",
+    "suggestions": [
+      "Available doctors"
+    ]
+  },
+  {
+    "id": "data_privacy",
+    "patterns": [
+      "\\b(is my data (safe|secure|private)|who can see my|privacy|data protection|is this secure)\\b"
+    ],
+    "answer": "You can only see your own tokens and ambulance requests. This chatbot shows general queue numbers, but never other patients' names or details, medical records or account data, and it never asks for passwords or OTPs."
+  },
+  {
+    "id": "missed_turn",
+    "patterns": [
+      "\\b(i )?(missed|late for) my (turn|token|number)\\b",
+      "\\bwhat if i (am|m) late\\b",
+      "\\bnot (present|there) when (called|my turn)\\b"
+    ],
+    "answer": "If you're not present when your token is called, staff may skip it and you'd need to join the queue again. If you're running late, tell the reception desk as soon as you arrive.",
+    "suggestions": [
+      "My token status"
+    ]
+  },
+  {
+    "id": "change_doctor",
+    "patterns": [
+      "\\b(change|switch|swap) (my )?(doctor|token)\\b",
+      "\\bwrong doctor\\b"
+    ],
+    "answer": "A token is tied to one doctor. To switch, cancel your waiting token ('cancel my token') and then join the queue of the doctor you want. Note that you'll get a new token number at the end of that doctor's queue.",
+    "suggestions": [
+      "Cancel my token",
+      "Available doctors"
+    ]
+  }
+]
