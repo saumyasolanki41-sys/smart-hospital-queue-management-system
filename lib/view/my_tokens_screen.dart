@@ -1,10 +1,13 @@
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import '../models/token_model.dart';
 import '../models/doctor_model.dart';
 import '../controller/token_controller.dart';
 import '../controller/doctor_controller.dart';
+import '../controller/feedback_controller.dart';
+import '../models/feedback_model.dart';
 import 'token_details_screen.dart';
 import 'ambulance_screen.dart';
 import 'profile_screen.dart';
@@ -37,6 +40,11 @@ class _MyTokensScreenState extends State<MyTokensScreen> {
     });
   }
 
+  bool _isCompleted(TokenModel token) {
+    final status = _safeText(token.status, '').toLowerCase();
+    return status == 'completed' || status == 'served';
+  }
+
   Future<void> _refreshTokens() async {
     if (_isRefreshing || !mounted) return;
 
@@ -47,6 +55,23 @@ class _MyTokensScreenState extends State<MyTokensScreen> {
     try {
       await context.read<TokenController>().fetchMyTokens(
         refresh: true,
+      );
+
+      if (!mounted) return;
+
+      final feedbackController = context.read<FeedbackController>();
+      final completedTokens = context
+          .read<TokenController>()
+          .tokens
+          .where(_isCompleted)
+          .toList();
+
+      await Future.wait(
+        completedTokens.map((token) async {
+          if (!feedbackController.hasLoadedFeedback(token.id)) {
+            await feedbackController.fetchFeedback(token.id);
+          }
+        }),
       );
     } catch (error, stackTrace) {
       debugPrint('Refresh tokens failed.');
@@ -249,9 +274,7 @@ class _MyTokensScreenState extends State<MyTokensScreen> {
                     ),
                   ],
                 ),
-
                 const SizedBox(height: 24),
-
                 Container(
                   padding: const EdgeInsets.all(21),
                   decoration: BoxDecoration(
@@ -338,9 +361,7 @@ class _MyTokensScreenState extends State<MyTokensScreen> {
                     ],
                   ),
                 ),
-
                 const SizedBox(height: 25),
-
                 Container(
                   height: 57,
                   padding: const EdgeInsets.all(5),
@@ -380,9 +401,7 @@ class _MyTokensScreenState extends State<MyTokensScreen> {
                     ],
                   ),
                 ),
-
                 const SizedBox(height: 25),
-
                 Row(
                   children: [
                     Container(
@@ -415,9 +434,7 @@ class _MyTokensScreenState extends State<MyTokensScreen> {
                     ),
                   ],
                 ),
-
                 const SizedBox(height: 15),
-
                 if (tokenController.isLoading &&
                     tokenController.tokens.isEmpty)
                   const Padding(
@@ -473,6 +490,7 @@ class _MyTokensScreenState extends State<MyTokensScreen> {
                         _safeText(token.status, 'pending'),
                       ),
                       isPast: _isPast(token),
+                      isCompleted: _isCompleted(token),
                       onTap: () => _openTokenDetails(token),
                     ),
                   ),
@@ -482,7 +500,6 @@ class _MyTokensScreenState extends State<MyTokensScreen> {
           ),
         ),
       ),
-
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: isDark ? colors.surfaceContainer : Colors.white,
@@ -566,6 +583,7 @@ class _AppointmentCard extends StatelessWidget {
   final String departmentName;
   final Color statusColor;
   final bool isPast;
+  final bool isCompleted;
   final VoidCallback onTap;
 
   const _AppointmentCard({
@@ -574,13 +592,209 @@ class _AppointmentCard extends StatelessWidget {
     required this.departmentName,
     required this.statusColor,
     required this.isPast,
+    required this.isCompleted,
     required this.onTap,
   });
+
+  Future<void> _showFeedbackDialog(BuildContext context) async {
+    final controller = context.read<FeedbackController>();
+    final commentController = TextEditingController();
+    int selectedRating = 0;
+    bool isSubmitting = false;
+
+    final submitted = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              backgroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(22),
+              ),
+              title: const Text(
+                'Share Your Feedback',
+                style: TextStyle(
+                  color: Color(0xFF174A5B),
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'How was your consultation?',
+                      style: TextStyle(
+                        color: Color(0xFF648994),
+                        fontSize: 14,
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(5, (index) {
+                        final rating = index + 1;
+                        return IconButton(
+                          visualDensity: VisualDensity.compact,
+                          onPressed: isSubmitting
+                              ? null
+                              : () {
+                                  setDialogState(() {
+                                    selectedRating = rating;
+                                  });
+                                },
+                          icon: Icon(
+                            rating <= selectedRating
+                                ? Icons.star_rounded
+                                : Icons.star_border_rounded,
+                            color: const Color(0xFFFFB52E),
+                            size: 34,
+                          ),
+                        );
+                      }),
+                    ),
+                    Center(
+                      child: Text(
+                        selectedRating == 0
+                            ? 'Select your rating'
+                            : '$selectedRating out of 5 stars',
+                        style: const TextStyle(
+                          color: Color(0xFF174A5B),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    const Text(
+                      'Your comment (optional)',
+                      style: TextStyle(
+                        color: Color(0xFF174A5B),
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: commentController,
+                      enabled: !isSubmitting,
+                      maxLines: 4,
+                      maxLength: 1000,
+                      decoration: InputDecoration(
+                        hintText: 'Share your experience...',
+                        filled: true,
+                        fillColor: const Color(0xFFF3FAFB),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 5),
+                    const Text(
+                      'Please do not include medical or personal health details in your comment.',
+                      style: TextStyle(
+                        color: Color(0xFF648994),
+                        fontSize: 12,
+                        height: 1.4,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: isSubmitting
+                      ? null
+                      : () => Navigator.pop(dialogContext, false),
+                  child: const Text(
+                    'Cancel',
+                    style: TextStyle(color: Color(0xFF648994)),
+                  ),
+                ),
+                ElevatedButton(
+                  onPressed: isSubmitting
+                      ? null
+                      : () async {
+                          if (selectedRating == 0) {
+                            ScaffoldMessenger.of(dialogContext).showSnackBar(
+                              const SnackBar(
+                                content: Text('Please select a star rating.'),
+                              ),
+                            );
+                            return;
+                          }
+
+                          setDialogState(() {
+                            isSubmitting = true;
+                          });
+
+                          final success = await controller.submitFeedback(
+                            tokenId: token.id,
+                            rating: selectedRating,
+                            comment: commentController.text,
+                          );
+
+                          if (!dialogContext.mounted) return;
+
+                          if (success) {
+                            Navigator.pop(dialogContext, true);
+                          } else {
+                            setDialogState(() {
+                              isSubmitting = false;
+                            });
+
+                            ScaffoldMessenger.of(dialogContext).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  controller.errorFor(token.id) ??
+                                      'Unable to submit feedback. Please try again.',
+                                ),
+                              ),
+                            );
+                          }
+                        },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF174A5B),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(11),
+                    ),
+                  ),
+                  child: isSubmitting
+                      ? const SizedBox(
+                          height: 18,
+                          width: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Text('Submit Feedback'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    commentController.dispose();
+
+    if (submitted == true && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Thank you! Your feedback has been submitted.'),
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final feedbackController = context.watch<FeedbackController>();
 
     final doctor = safeText(
       token.doctorName,
@@ -589,6 +803,10 @@ class _AppointmentCard extends StatelessWidget {
 
     final department = departmentName;
     final status = safeText(token.status, 'Pending');
+
+    final savedFeedback = feedbackController.feedbackFor(token.id);
+    final isFeedbackLoading = feedbackController.isLoading(token.id);
+    final isFeedbackSubmitting = feedbackController.isSubmitting(token.id);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 17),
@@ -609,199 +827,320 @@ class _AppointmentCard extends StatelessWidget {
       child: Material(
         color: Colors.transparent,
         borderRadius: BorderRadius.circular(21),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(21),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              InkWell(
+                onTap: onTap,
+                borderRadius: BorderRadius.circular(15),
+                child: Column(
                   children: [
-                    Container(
-                      height: 57,
-                      width: 57,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFDDF4F8),
-                        borderRadius: BorderRadius.circular(17),
-                      ),
-                      child: const Icon(
-                        Icons.medical_services_rounded,
-                        color: Color(0xFF24758B),
-                        size: 30,
-                      ),
-                    ),
-                    const SizedBox(width: 13),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            isPast
-                                ? 'Previous Appointment'
-                                : 'Appointment',
-                            style: const TextStyle(
-                              color: Color(0xFF648994),
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                            ),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          height: 57,
+                          width: 57,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFDDF4F8),
+                            borderRadius: BorderRadius.circular(17),
                           ),
-                          const SizedBox(height: 5),
-                          Text(
-                            doctor,
-                            maxLines: 2,
+                          child: const Icon(
+                            Icons.medical_services_rounded,
+                            color: Color(0xFF24758B),
+                            size: 30,
+                          ),
+                        ),
+                        const SizedBox(width: 13),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                isPast
+                                    ? 'Previous Appointment'
+                                    : 'Appointment',
+                                style: const TextStyle(
+                                  color: Color(0xFF648994),
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              const SizedBox(height: 5),
+                              Text(
+                                doctor,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  color: isDark
+                                      ? colors.onSurface
+                                      : const Color(0xFF174A5B),
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                department,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  color: Color(0xFF648994),
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 5),
+                        const Icon(
+                          Icons.chevron_right_rounded,
+                          color: Color(0xFF648994),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    const Divider(
+                      color: Color(0xFFD2EAF0),
+                      height: 1,
+                    ),
+                    const SizedBox(height: 14),
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.confirmation_number_outlined,
+                          color: Color(0xFF24758B),
+                          size: 19,
+                        ),
+                        const SizedBox(width: 8),
+                        const Text(
+                          'Token number',
+                          style: TextStyle(
+                            color: Color(0xFF648994),
+                            fontSize: 13,
+                          ),
+                        ),
+                        const Spacer(),
+                        Flexible(
+                          child: Text(
+                            safeText(token.tokenNumber),
+                            textAlign: TextAlign.end,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
                               color: isDark
                                   ? colors.onSurface
                                   : const Color(0xFF174A5B),
-                              fontSize: 16,
+                              fontSize: 14,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          const SizedBox(height: 4),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 13),
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.circle,
+                          size: 10,
+                          color: Color(0xFF648994),
+                        ),
+                        const SizedBox(width: 9),
+                        const Text(
+                          'Appointment status',
+                          style: TextStyle(
+                            color: Color(0xFF648994),
+                            fontSize: 13,
+                          ),
+                        ),
+                        const Spacer(),
+                        Flexible(
+                          child: Align(
+                            alignment: Alignment.centerRight,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 11,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                color: statusColor.withValues(alpha: 0.11),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text(
+                                status,
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: statusColor,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 11,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFDDF4F8),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.visibility_outlined,
+                            color: Color(0xFF174A5B),
+                            size: 18,
+                          ),
+                          SizedBox(width: 8),
                           Text(
-                            department,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              color: Color(0xFF648994),
+                            'View Appointment Details',
+                            style: TextStyle(
+                              color: Color(0xFF174A5B),
                               fontSize: 13,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
                         ],
                       ),
                     ),
-                    const SizedBox(width: 5),
-                    const Icon(
-                      Icons.chevron_right_rounded,
-                      color: Color(0xFF648994),
-                    ),
                   ],
                 ),
-
-                const SizedBox(height: 16),
-                const Divider(color: Color(0xFFD2EAF0), height: 1),
-                const SizedBox(height: 14),
-
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.confirmation_number_outlined,
-                      color: Color(0xFF24758B),
-                      size: 19,
-                    ),
-                    const SizedBox(width: 8),
-                    const Text(
-                      'Token number',
-                      style: TextStyle(
-                        color: Color(0xFF648994),
-                        fontSize: 13,
+              ),
+              if (isCompleted) ...[
+                const SizedBox(height: 15),
+                const Divider(color: Color(0xFFD2EAF0)),
+                const SizedBox(height: 8),
+                if (isFeedbackLoading)
+                  const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(12),
+                      child: CircularProgressIndicator(
+                        color: Color(0xFF24758B),
+                        strokeWidth: 2,
                       ),
                     ),
-                    const Spacer(),
-                    Flexible(
-                      child: Text(
-                        safeText(token.tokenNumber),
-                        textAlign: TextAlign.end,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: isDark
-                              ? colors.onSurface
-                              : const Color(0xFF174A5B),
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
+                  )
+                else if (savedFeedback != null)
+                  _SavedFeedback(feedback: savedFeedback)
+                else
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: isFeedbackSubmitting
+                          ? null
+                          : () => _showFeedbackDialog(context),
+                      icon: const Icon(Icons.star_rounded),
+                      label: const Text('Leave Feedback'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF174A5B),
+                        foregroundColor: Colors.white,
+                        disabledBackgroundColor: Colors.grey.shade400,
+                        padding: const EdgeInsets.symmetric(vertical: 13),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
                         ),
                       ),
                     ),
-                  ],
-                ),
-
-                const SizedBox(height: 13),
-
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.circle,
-                      size: 10,
-                      color: Color(0xFF648994),
-                    ),
-                    const SizedBox(width: 9),
-                    const Text(
-                      'Appointment status',
-                      style: TextStyle(
-                        color: Color(0xFF648994),
-                        fontSize: 13,
-                      ),
-                    ),
-                    const Spacer(),
-                    Flexible(
-                      child: Align(
-                        alignment: Alignment.centerRight,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 11,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: statusColor.withValues(alpha: 0.11),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text(
-                            status,
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: statusColor,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 16),
-
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 11,
                   ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFDDF4F8),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.visibility_outlined,
-                        color: Color(0xFF174A5B),
-                        size: 18,
-                      ),
-                      SizedBox(width: 8),
-                      Text(
-                        'View Appointment Details',
-                        style: TextStyle(
-                          color: Color(0xFF174A5B),
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
               ],
-            ),
+            ],
           ),
         ),
       ),
     );
+  }
+}
+
+class _SavedFeedback extends StatelessWidget {
+  final FeedbackModel feedback;
+
+  const _SavedFeedback({required this.feedback});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFEAF8FB),
+        borderRadius: BorderRadius.circular(13),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(
+                Icons.verified_rounded,
+                color: Color(0xFF24758B),
+                size: 19,
+              ),
+              SizedBox(width: 7),
+              Text(
+                'Feedback Submitted',
+                style: TextStyle(
+                  color: Color(0xFF174A5B),
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 9),
+          Row(
+            children: List.generate(
+              5,
+              (index) => Icon(
+                index < feedback.rating
+                    ? Icons.star_rounded
+                    : Icons.star_border_rounded,
+                color: const Color(0xFFFFB52E),
+                size: 22,
+              ),
+            ),
+          ),
+          if (feedback.hasComment) ...[
+            const SizedBox(height: 9),
+            Text(
+              feedback.comment!,
+              style: const TextStyle(
+                color: Color(0xFF174A5B),
+                fontSize: 13,
+                height: 1.5,
+              ),
+            ),
+          ],
+          if (feedback.submittedAt != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              'Submitted on ${_formatDate(feedback.submittedAt!)}',
+              style: const TextStyle(
+                color: Color(0xFF648994),
+                fontSize: 11,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  String _formatDate(DateTime date) {
+    final localDate = date.toLocal();
+    final day = localDate.day.toString().padLeft(2, '0');
+    final month = localDate.month.toString().padLeft(2, '0');
+
+    return '$day/$month/${localDate.year}';
   }
 }
 
@@ -918,10 +1257,10 @@ class _HistoryMessage extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 9),
-          const Text(
-            'Please check your connection and try again.',
+          Text(
+            subtitle,
             textAlign: TextAlign.center,
-            style: TextStyle(
+            style: const TextStyle(
               color: Color(0xFF648994),
               fontSize: 13,
               height: 1.5,
