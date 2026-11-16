@@ -2,6 +2,9 @@
 
 **Live website:** [Open Smart Hospital](https://smart-hospital-queue-managment-syst.vercel.app/)
 
+**Backend API:** [Render backend](https://smart-hospital-queue-management-system-keft.onrender.com)  
+**Health check:** [API health](https://smart-hospital-queue-management-system-keft.onrender.com/api/health)
+
 A hospital queue management project with a React website, Flutter mobile app,
 shared Node.js backend, and external prediction service. Patients can find doctors,
 join same-day queues, track tokens and estimated waits, and request an ambulance.
@@ -36,7 +39,8 @@ uncommitted work.
 - Department and doctor directory, availability and doctor account/profile linking.
 - Daily doctor-specific queue numbering, transactional booking and duplicate protection.
 - Patient token listing, status, waiting estimates and waiting-token cancellation.
-- Staff queue listing, call-next, consultation completion and skipping.
+- Staff queue listing, call-next, consultation completion, skipping and pause/resume.
+- Patient visit history with filters and private one-time feedback after completion.
 - Staff/admin and linked-doctor dashboards.
 - Ambulance inventory, location updates, requests, assignment and ETA lookup.
 - ML integration with queue/routing fallbacks when applicable.
@@ -203,15 +207,15 @@ token, authorizes subsequent API requests.
 
 ## API overview
 
-The backend defines **37 method-and-route endpoints**, including health. External
+The backend defines **42 method-and-route endpoints**, including health. External
 ML service endpoints are not part of this count.
 
 | Module | Prefix | Count | Documentation |
 | --- | --- | ---: | --- |
 | Authentication | /api/auth | 9 | [Authentication](https://github.com/saumyasolanki41-sys/smart-hospital-queue-management-system/blob/backend/docs/AUTH-INTEGRATION.md) |
 | Directory | /api/departments and /api/doctors | 6 | [Hospital API](https://github.com/saumyasolanki41-sys/smart-hospital-queue-management-system/blob/backend/docs/HOSPITAL-API.md) |
-| Patient queue | /api/queue | 4 | [Queue API](https://github.com/saumyasolanki41-sys/smart-hospital-queue-management-system/blob/backend/docs/QUEUE-API.md) |
-| Staff queue | /api/staff/queues | 4 | [Staff queue](https://github.com/saumyasolanki41-sys/smart-hospital-queue-management-system/blob/backend/docs/STAFF-QUEUE-API.md) |
+| Patient queue | /api/queue | 7 | [Queue API](https://github.com/saumyasolanki41-sys/smart-hospital-queue-management-system/blob/backend/docs/QUEUE-API.md) |
+| Staff queue | /api/staff/queues | 6 | [Staff queue](https://github.com/saumyasolanki41-sys/smart-hospital-queue-management-system/blob/backend/docs/STAFF-QUEUE-API.md) |
 | Dashboards | /api/staff/dashboard and /api/doctor/dashboard | 2 | [Staff](https://github.com/saumyasolanki41-sys/smart-hospital-queue-management-system/blob/backend/docs/DASHBOARD-API.md), [Doctor](https://github.com/saumyasolanki41-sys/smart-hospital-queue-management-system/blob/backend/docs/DOCTOR-DASHBOARD-API.md) |
 | Ambulance inventory | /api/ambulances | 4 | [Inventory API](https://github.com/saumyasolanki41-sys/smart-hospital-queue-management-system/blob/backend/docs/AMBULANCE-API.md) |
 | Ambulance requests and ETA | /api/ambulance-requests | 7 | [Request API](https://github.com/saumyasolanki41-sys/smart-hospital-queue-management-system/blob/backend/docs/AMBULANCE-REQUEST-API.md) |
@@ -250,26 +254,37 @@ when estimation fails after a booking has already committed.
 
 | Component | Platform |
 | --- | --- |
-| Backend | Railway |
+| Backend | Render (migrated from Railway) |
 | Web frontend | Vercel |
 | Database | MongoDB Atlas |
-| Current configured ML service | Vercel; previously Render |
+| Current configured ML service | AWS Lightsail; previously Vercel and Render |
 | Email | Brevo or Gmail SMTP |
 | OAuth configuration | Google Cloud Console |
 
 Configured addresses:
 
-- Backend: https://smart-hospital-queue-management-system-production.up.railway.app
+- Backend: https://smart-hospital-queue-management-system-keft.onrender.com
 - Web: https://smart-hospital-queue-managment-syst.vercel.app
-- ML: https://smart-hospital-queue-management-sys-ten.vercel.app
+- ML: https://smart-hospital-api.508z112c8xp8p.ap-southeast-2.cs.amazonlightsail.com
 
 These addresses are deployment references, not a guarantee of current service
 health. Verify the deployed revision and environment variables when troubleshooting.
 
-Railway configuration: branch `backend`, root `backend`, install `npm ci`, start
-`npm run start:prod`, health check `/api/health`. Store secrets in Railway Variables.
+Render configuration: branch `backend`, root directory `backend`, build command
+`npm ci`, start command `npm run start:prod`, health check `/api/health`.
+Store secrets in the Render service's Environment settings.
 Production startup uses hosting variables rather than a checked-in `.env` file.
-See [Deployment guide](https://github.com/saumyasolanki41-sys/smart-hospital-queue-management-system/blob/backend/docs/DEPLOYMENT.md).
+
+For Render Free, use `EMAIL_PROVIDER=brevo` with the Brevo HTTPS API. The free
+service blocks outbound SMTP ports 25, 465 and 587. It also sleeps after 15 minutes
+without incoming traffic; the next request can take about a minute to wake it.
+Clients should show a loading state and allow for this delay. Free usage is subject
+to monthly limits. See [Render Free documentation](https://render.com/docs/free).
+
+After migrating from Railway, update the backend base URL in the React and Flutter
+clients and rebuild/redeploy them. Keep the existing `/api/...` endpoint paths.
+Update the external chatbot service's `BACKEND_BASE_URL` to the Render address and
+redeploy that service. `ML_SERVICE_URL` continues to point to the AWS service.
 
 Configure browser origins separately in backend CORS and Google OAuth. Native
 mobile HTTP requests do not use browser CORS. Email acceptance does not guarantee
@@ -291,6 +306,8 @@ records and remove them afterwards. Never share authentication tokens in bug rep
 
 ## Integration guides
 
+- [Visit history, feedback and doctor pause/resume API](https://github.com/saumyasolanki41-sys/smart-hospital-queue-management-system/blob/backend/docs/VISIT-HISTORY-FEEDBACK-PAUSE-API.md)
+- [Visit features Postman collection](https://github.com/saumyasolanki41-sys/smart-hospital-queue-management-system/blob/backend/docs/visit-features.postman_collection.json)
 - [ML integration](https://github.com/saumyasolanki41-sys/smart-hospital-queue-management-system/blob/backend/docs/ML-INTEGRATION.md)
 - [Frontend handoff](https://github.com/saumyasolanki41-sys/smart-hospital-queue-management-system/blob/backend/docs/FRONTEND-INTEGRATION-GUIDE.docx)
 - [Mobile handoff](https://github.com/saumyasolanki41-sys/smart-hospital-queue-management-system/blob/backend/docs/MOBILE-APP-INTEGRATION-GUIDE.docx)
