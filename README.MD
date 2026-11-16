@@ -15,7 +15,9 @@ Doctors and staff manage queues and transport requests through authorized APIs.
 
 ## Repository branches
 
-Component code lives in separate branches with different directory layouts.
+This README is the project entry point for the `main` branch. Use the component
+branches below for source code, installation and integration work. Component
+branches have different directory layouts.
 
 | Branch | Component |
 | --- | --- |
@@ -45,8 +47,61 @@ uncommitted work.
 - Ambulance inventory, location updates, requests, assignment and ETA lookup.
 - ML integration with queue/routing fallbacks when applicable.
 
+### Visit history, consultation feedback and doctor breaks
+
+| Feature | Behavior |
+| --- | --- |
+| Patient visit history | Patients can view their own tokens across dates, filter by date/status and browse paginated results. Completed visits are shown by default. |
+| Feedback after consultation | A patient can submit one rating from 1 to 5 and an optional comment for their own completed token. Feedback remains private. |
+| Doctor pause/resume | A linked doctor or authorized staff member can pause a queue for a break or temporary delay and resume it later. |
+
+During a pause, existing token order is preserved and new bookings remain allowed
+when the doctor is available. Call-next is blocked until the queue resumes. Patients
+can still see their queue position, while the waiting-time estimate is unavailable.
+An ongoing consultation must be completed or skipped before pausing.
+
 Backend support does not imply every client screen is integrated. Review and test
 the relevant client branch before a demonstration or release.
+
+## Main workflows
+
+1. **Patient registration and login:** Register with email/password, verify the
+   email OTP, then log in and verify the login OTP to receive a backend access token.
+   Google sign-in is also supported, with explicit linking for existing accounts.
+2. **Book and track a token:** Browse departments, choose an available doctor and
+   join the doctor's same-day queue. The backend assigns a daily token number.
+   Refresh token status to view patients ahead and the latest waiting estimate.
+3. **Manage consultations:** The doctor or authorized staff calls the next waiting
+   patient, then completes or skips that consultation. Queue status changes are
+   visible to clients when they refresh. Doctors can pause and resume their queue.
+4. **Review a visit:** After completion, the patient can find the visit in their
+   history and submit a one-time rating and comment.
+5. **Request an ambulance:** The patient submits pickup details. Staff assigns an
+   available ambulance. ETA lookup uses its fresh location, road routing, weather
+   and prediction service where available. Staff completes the request afterwards.
+
+## Chatbot service
+
+The external AWS service exposes `POST /chat` for conversational assistance.
+Web and mobile clients integrate this service separately from the Express API.
+
+```http
+POST https://smart-hospital-api.508z112c8xp8p.ap-southeast-2.cs.amazonlightsail.com/chat
+Content-Type: application/json
+```
+
+```json
+{
+  "message": "Show departments",
+  "mode": "auto"
+}
+```
+
+Render the returned `reply` and reuse the returned `session_id` in subsequent
+messages. Responses also include `intent`, `suggestions` and `source`. For patient
+actions and personal token details, send the patient's backend access token in the
+`Authorization: Bearer ...` header. Client integration and authenticated chatbot
+actions require separate verification. `/chat` is outside the 42 Express endpoints.
 
 ## Technology stack
 
