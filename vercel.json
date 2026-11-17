@@ -1,3 +1,12 @@
 {
-  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+  "rewrites": [
+    {
+      "source": "/api/chatbot",
+      "destination": "https://smart-hospital-api.508z112c8xp8p.ap-southeast-2.cs.amazonlightsail.com/chat"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
 }

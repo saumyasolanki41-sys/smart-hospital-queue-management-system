@@ -2,7 +2,7 @@ import axios from "axios";
 
 const CHATBOT_URL =
   import.meta.env.VITE_CHATBOT_API_URL ||
-  "/chat";
+  "/api/chatbot";
 
 const TIMEOUT_MS = 25000;
 
