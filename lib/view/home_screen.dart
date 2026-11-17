@@ -11,6 +11,7 @@ import 'doctor_details_screen.dart';
 import 'live_queue_screen.dart';
 import 'my_tokens_screen.dart';
 import 'profile_screen.dart';
+import 'chatbot_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -38,79 +39,79 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  Future<void> _logout() async {
-    if (!mounted) return;
+  // Future<void> _logout() async {
+  //   if (!mounted) return;
 
-    final shouldLogout = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(22),
-        ),
-        title: const Text(
-          'Logout',
-          style: TextStyle(
-            color: _darkText,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        content: const Text(
-          'Are you sure you want to logout?',
-          style: TextStyle(color: _darkText),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text(
-              'Cancel',
-              style: TextStyle(color: _primary),
-            ),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(dialogContext, true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: _primary,
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('Logout'),
-          ),
-        ],
-      ),
-    );
+  //   final shouldLogout = await showDialog<bool>(
+  //     context: context,
+  //     builder: (dialogContext) => AlertDialog(
+  //       backgroundColor: Colors.white,
+  //       shape: RoundedRectangleBorder(
+  //         borderRadius: BorderRadius.circular(22),
+  //       ),
+  //       title: const Text(
+  //         'Logout',
+  //         style: TextStyle(
+  //           color: _darkText,
+  //           fontWeight: FontWeight.bold,
+  //         ),
+  //       ),
+  //       content: const Text(
+  //         'Are you sure you want to logout?',
+  //         style: TextStyle(color: _darkText),
+  //       ),
+  //       actions: [
+  //         TextButton(
+  //           onPressed: () => Navigator.pop(dialogContext, false),
+  //           child: const Text(
+  //             'Cancel',
+  //             style: TextStyle(color: _primary),
+  //           ),
+  //         ),
+  //         ElevatedButton(
+  //           onPressed: () => Navigator.pop(dialogContext, true),
+  //           style: ElevatedButton.styleFrom(
+  //             backgroundColor: _primary,
+  //             foregroundColor: Colors.white,
+  //           ),
+  //           child: const Text('Logout'),
+  //         ),
+  //       ],
+  //     ),
+  //   );
 
-    if (!mounted || shouldLogout != true) return;
+  //   if (!mounted || shouldLogout != true) return;
 
-    final authController = context.read<AuthController>();
-    final tokenController = context.read<TokenController>();
-    final messenger = ScaffoldMessenger.of(context);
+  //   final authController = context.read<AuthController>();
+  //   final tokenController = context.read<TokenController>();
+  //   final messenger = ScaffoldMessenger.of(context);
 
-    try {
-      await authController.logout();
+  //   try {
+  //     await authController.logout();
 
-      if (!mounted) return;
+  //     if (!mounted) return;
 
-      tokenController.clearTokens();
+  //     tokenController.clearTokens();
 
-      Navigator.pushNamedAndRemoveUntil(
-        context,
-        '/login',
-        (route) => false,
-      );
-    } catch (error, stackTrace) {
-      debugPrint('Logout failed: $error');
-      debugPrintStack(stackTrace: stackTrace);
+  //     Navigator.pushNamedAndRemoveUntil(
+  //       context,
+  //       '/login',
+  //       (route) => false,
+  //     );
+  //   } catch (error, stackTrace) {
+  //     debugPrint('Logout failed: $error');
+  //     debugPrintStack(stackTrace: stackTrace);
 
-      if (!mounted) return;
+  //     if (!mounted) return;
 
-      messenger.showSnackBar(
-        const SnackBar(
-          content: Text('Unable to logout. Please try again.'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    }
-  }
+  //     messenger.showSnackBar(
+  //       const SnackBar(
+  //         content: Text('Unable to logout. Please try again.'),
+  //         backgroundColor: Colors.red,
+  //       ),
+  //     );
+  //   }
+  // }
 
   Future<void> _refreshBackend() async {
     if (!mounted) return;
@@ -1051,6 +1052,55 @@ class _HomeScreenState extends State<HomeScreen> {
                 ],
               ),
             ),
+
+            // Floating Chatbot Button
+            Positioned(
+              right: 18,
+              bottom: 18,
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ChatbotScreen(),
+                      ),
+                    );
+                  },
+                  borderRadius: BorderRadius.circular(35),
+                  child: Container(
+                    height: 62,
+                    width: 62,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: const LinearGradient(
+                        colors: [
+                          Color(0xFF7ED3E8),
+                          Color(0xFF174A5B),
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: _primary.withValues(alpha: 0.3),
+                          blurRadius: 14,
+                          offset: const Offset(0, 5),
+                        ),
+                      ],
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(9),
+                      child: Image.asset(
+                        'lib/assets/chatbot_heart.png',
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
           ],
         ),
       ),
@@ -1097,33 +1147,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   isDark: isDark,
                   onTap: () => _navigate(const AmbulanceScreen()),
                 ),
-                InkWell(
-                  onTap: _logout,
-                  borderRadius: BorderRadius.circular(15),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 7,
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.logout_rounded,
-                          size: 23,
-                          color: isDark ? colors.onSurface : _muted,
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Logout',
-                          style: TextStyle(
-                            fontSize: 9,
-                            color: isDark ? colors.onSurface : _muted,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                _BottomNavItem(
+                  icon: Icons.person_rounded,
+                  label: 'Profile',
+                  isDark: isDark,
+                  onTap: () => _navigate(const ProfileScreen()),
                 ),
               ],
             ),

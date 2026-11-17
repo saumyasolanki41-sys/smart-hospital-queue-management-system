@@ -1,6 +1,8 @@
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../controller/token_controller.dart';
+import '../controller/doctor_controller.dart';
 import '../models/doctor_model.dart';
 
 class BookTokenScreen extends StatefulWidget {
@@ -25,25 +27,56 @@ class _BookTokenScreenState extends State<BookTokenScreen> {
   static const String _bookingErrorMessage =
       'Unable to book your token. Please try again.';
 
+  static const String _doctorBreakMessage =
+      'Doctor is on break. Please choose another doctor.';
+
+  static const String _statusErrorMessage =
+      'Unable to verify doctor status. Please try again.';
+
   static const Set<String> _friendlyMessages = {
     'Token already booked.',
     'You already have an active token for this doctor.',
     'Your queue has been updated. Please try again.',
   };
 
+  bool _isCheckingDoctor = false;
+
   Future<void> _bookToken() async {
-    final controller = context.read<TokenController>();
+    if (_isCheckingDoctor) return;
+
+    final doctorController = context.read<DoctorController>();
+    final tokenController = context.read<TokenController>();
+
+    setState(() {
+      _isCheckingDoctor = true;
+    });
 
     try {
-      final token = await controller.bookToken(
+      final latestDoctor = await doctorController.getDoctorById(
+        widget.doctor.id,
+      );
+
+      if (!mounted) return;
+
+      if (latestDoctor.isQueuePaused) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(_doctorBreakMessage),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+
+      final token = await tokenController.bookToken(
         doctorId: widget.doctor.id,
       );
 
       if (!mounted) return;
 
       if (token != null) {
-        final isExistingToken = controller.error == null &&
-            controller.tokens.any(
+        final isExistingToken = tokenController.error == null &&
+            tokenController.tokens.any(
               (item) => item.id.trim() == token.id.trim(),
             );
 
@@ -62,7 +95,7 @@ class _BookTokenScreenState extends State<BookTokenScreen> {
         return;
       }
 
-      final controllerError = controller.error;
+      final controllerError = tokenController.error;
       final message = controllerError != null &&
               _friendlyMessages.contains(controllerError)
           ? controllerError
@@ -79,16 +112,23 @@ class _BookTokenScreenState extends State<BookTokenScreen> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text(_bookingErrorMessage),
+          content: Text(_statusErrorMessage),
           backgroundColor: Colors.red,
         ),
       );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isCheckingDoctor = false;
+        });
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final tokenController = context.watch<TokenController>();
+    final isProcessing = _isCheckingDoctor || tokenController.isBooking;
 
     return Scaffold(
       backgroundColor: _background,
@@ -391,9 +431,7 @@ class _BookTokenScreenState extends State<BookTokenScreen> {
                   width: double.infinity,
                   height: 55,
                   child: ElevatedButton(
-                    onPressed: tokenController.isBooking
-                        ? null
-                        : _bookToken,
+                    onPressed: isProcessing ? null : _bookToken,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: _heading,
                       foregroundColor: Colors.white,
@@ -403,7 +441,7 @@ class _BookTokenScreenState extends State<BookTokenScreen> {
                         borderRadius: BorderRadius.circular(15),
                       ),
                     ),
-                    child: tokenController.isBooking
+                    child: isProcessing
                         ? const SizedBox(
                             height: 24,
                             width: 24,

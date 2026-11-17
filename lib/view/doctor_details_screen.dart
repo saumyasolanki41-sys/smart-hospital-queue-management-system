@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/doctor_model.dart';
@@ -74,6 +75,16 @@ class _DoctorDetailsScreenState extends State<DoctorDetailsScreen> {
         doctor.specialization?.trim().isNotEmpty == true
             ? doctor.specialization!.trim()
             : 'Medical Specialist';
+
+    final experienceText = doctor.experienceYears != null
+        ? '${doctor.experienceYears} Years'
+        : 'Not available';
+
+    final fee = doctor.consultationFee;
+
+    final consultationFeeText = fee == null
+        ? 'Not available'
+        : '₹${fee == fee.roundToDouble() ? fee.toStringAsFixed(0) : fee.toStringAsFixed(2)}';
 
     return Scaffold(
       backgroundColor: _background,
@@ -370,6 +381,22 @@ class _DoctorDetailsScreenState extends State<DoctorDetailsScreen> {
                             icon: Icons.medical_services_outlined,
                             label: 'Specialization',
                             value: specialization,
+                          ),
+
+                          const SizedBox(height: 20),
+
+                          _InfoRow(
+                            icon: Icons.work_outline_rounded,
+                            label: 'Experience',
+                            value: experienceText,
+                          ),
+
+                          const SizedBox(height: 20),
+
+                          _InfoRow(
+                            icon: Icons.currency_rupee_rounded,
+                            label: 'Consultation Fee',
+                            value: consultationFeeText,
                           ),
                         ],
                       ),
