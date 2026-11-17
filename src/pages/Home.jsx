@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Ticket, Stethoscope, Info, Users, Hourglass, ArrowRight, PauseCircle } from "lucide-react";
+import { Ticket, Stethoscope, Info, Users, Hourglass, ArrowRight, PauseCircle, Bot } from "lucide-react";
 import Navbar from "../components/layout/Navbar";
 import StatusBadge from "../components/queue/StatusBadge";
 import DepartmentCard from "../components/hospital/DepartmentCard";
@@ -260,6 +260,19 @@ export default function Home() {
               text="Browse departments and join a queue"
             />
             <ActionTile to="/queue" icon={Ticket} title="My queue" text="All of today's tokens" />
+            <button
+              type="button"
+              onClick={() => window.dispatchEvent(new CustomEvent("open-hospital-chatbot"))}
+              className="flex w-full items-center gap-4 rounded-2xl bg-white/90 p-4 shadow-md transition hover:shadow-lg text-left"
+            >
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-cyan-50 text-[#197092] border border-cyan-100">
+                <Bot className="h-6 w-6" />
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="font-semibold text-slate-900">Ask AI Assistant</p>
+                <p className="text-xs text-slate-500">Live help with doctors, queues &amp; care</p>
+              </div>
+            </button>
             <ActionTile
               to="/about#how-it-works"
               icon={Info}

@@ -17,6 +17,7 @@ import QueueStatus from "./pages/QueueStatus";
 import QueueDashboard from "./pages/QueueDashboard";
 import AmbulanceDashboard from "./pages/AmbulanceDashboard";
 import RequestAmbulance from "./pages/RequestAmbulance";
+import ChatbotWidget from "./components/chatbot/ChatbotWidget";
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID ?? "";
 
@@ -25,19 +26,16 @@ export default function App() {
     <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
       <AuthProvider>
         <Routes>
-          {/* These two have their own centered layout */}
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
 
-          {/* Everything else: logged-in users get the left sidebar, visitors get the top navbar */}
           <Route element={<AppShell />}>
             {/* Public */}
             <Route path="/" element={<LandingPage />} />
             <Route path="/about" element={<About />} />
             <Route path="/departments" element={<Departments />} />
             <Route path="/doctors/:doctorId" element={<DoctorProfile />} />
-            {/* Add your other public pages here, e.g. your "How it works" page */}
 
             {/* Patients only */}
             <Route element={<ProtectedRoute roles={["patient"]} />}>
@@ -48,18 +46,17 @@ export default function App() {
               <Route path="/request-ambulance" element={<RequestAmbulance />} />
             </Route>
 
-            {/* Staff (admin, receptionist) manage any doctor's queue and the ambulances */}
             <Route element={<ProtectedRoute roles={["receptionist", "admin"]} />}>
               <Route path="/staff" element={<QueueDashboard mode="staff" />} />
               <Route path="/ambulance" element={<AmbulanceDashboard />} />
             </Route>
 
-            {/* Doctors manage only their own queue */}
             <Route element={<ProtectedRoute roles={["doctor"]} />}>
               <Route path="/doctor" element={<QueueDashboard mode="doctor" />} />
             </Route>
           </Route>
         </Routes>
+        <ChatbotWidget />
       </AuthProvider>
     </GoogleOAuthProvider>
   );
