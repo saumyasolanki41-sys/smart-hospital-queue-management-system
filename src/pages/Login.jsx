@@ -114,7 +114,7 @@ export default function Login() {
               setServerError("");
               setErrors({});
             }}
-            className="font-medium text-primary/70 hover:underline"
+            className="font-semibold text-[#197092] hover:text-[#0c4764] hover:underline"
           >
             Back to login
           </button>
@@ -139,7 +139,7 @@ export default function Login() {
             type="button"
             onClick={requestCode}
             disabled={cooldown > 0 || loading}
-            className="w-full text-sm font-medium text-primary/70 hover:underline disabled:cursor-not-allowed disabled:text-slate-400 disabled:no-underline"
+            className="w-full text-xs font-semibold text-[#197092] hover:text-[#0c4764] hover:underline disabled:cursor-not-allowed disabled:text-slate-400 disabled:no-underline"
           >
             {cooldown > 0 ? `Resend code in ${cooldown}s` : "Resend code"}
           </button>
@@ -155,7 +155,7 @@ export default function Login() {
       footer={
         <>
           New here?{" "}
-          <Link to="/register" className="font-medium text-primary/70 hover:underline">
+          <Link to="/register" className="font-semibold text-[#197092] hover:text-[#0c4764] hover:underline">
             Create an account
           </Link>
         </>
@@ -190,7 +190,7 @@ export default function Login() {
           <Link
             to="/forgot-password"
             state={{ email: form.email }}
-            className="text-sm font-medium text-primary/70 hover:underline"
+            className="text-xs font-semibold text-[#197092] hover:text-[#0c4764] hover:underline"
           >
             Forgot password?
           </Link>

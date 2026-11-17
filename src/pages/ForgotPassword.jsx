@@ -100,7 +100,7 @@ export default function ForgotPassword() {
               setServerError("");
               setErrors({});
             }}
-            className="font-medium text-primary/70 hover:underline"
+            className="font-semibold text-[#197092] hover:text-[#0c4764] hover:underline"
           >
             Use a different email
           </button>
@@ -141,7 +141,7 @@ export default function ForgotPassword() {
             type="button"
             onClick={sendCode}
             disabled={cooldown > 0 || loading}
-            className="w-full text-sm font-medium text-primary/70 hover:underline disabled:cursor-not-allowed disabled:text-slate-400 disabled:no-underline"
+            className="w-full text-xs font-semibold text-[#197092] hover:text-[#0c4764] hover:underline disabled:cursor-not-allowed disabled:text-slate-400 disabled:no-underline"
           >
             {cooldown > 0 ? `Resend code in ${cooldown}s` : "Resend code"}
           </button>
@@ -161,7 +161,7 @@ export default function ForgotPassword() {
       footer={
         <>
           Remembered it?{" "}
-          <Link to="/login" className="font-medium text-primary/70 hover:underline">
+          <Link to="/login" className="font-semibold text-[#197092] hover:text-[#0c4764] hover:underline">
             Back to login
           </Link>
         </>
