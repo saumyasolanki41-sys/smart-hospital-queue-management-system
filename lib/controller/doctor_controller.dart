@@ -1,3 +1,4 @@
+
 import 'package:flutter/foundation.dart';
 import '../models/doctor_model.dart';
 import '../services/api_service.dart';
@@ -63,6 +64,10 @@ class DoctorController extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
     }
+  }
+
+  Future<DoctorModel> getDoctorById(String doctorId) async {
+    return await _doctorService.getDoctorById(doctorId);
   }
 
   Future<void> filterByDepartment(String? departmentId) async {
