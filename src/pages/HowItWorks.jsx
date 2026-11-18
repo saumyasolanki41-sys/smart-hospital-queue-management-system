@@ -42,7 +42,7 @@ export function HowItWorksSection() {
             <img
               src={image}
               alt={alt}
-              className="aspect-[4/3] w-full bg-primary/5 object-contain"
+              className="aspect-video w-full bg-primary/5 object-cover"
             />
             <div className="p-6">
               <p className="mb-2 text-sm font-semibold text-primary/70">Step {index + 1}</p>

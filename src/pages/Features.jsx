@@ -44,7 +44,7 @@ export default function Features() {
             <img
               src={image}
               alt={title}
-              className="aspect-video w-full object-cover"
+              className="aspect-video w-full fill bg-primary/5 object-contain"
             />
             <div className="p-4">
               <h3 className="text-lg font-semibold text-slate-900">{title}</h3>
