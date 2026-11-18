@@ -151,7 +151,7 @@ export default function About() {
             </div>
             <Link
               to="/login"
-              className="rounded-xl bg-white px-7 py-3 font-medium text-primary/80 transition-colors hover:bg-primary/5"
+              className="rounded-xl bg-white px-7 py-3 font-medium text-primary/80 transition-colors"
             >
               Get Started
             </Link>
